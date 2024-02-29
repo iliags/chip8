@@ -1,6 +1,6 @@
 {
-  "name": "egui Template PWA",
-  "short_name": "egui-template-pwa",
+  "name": "chip8 PWA",
+  "short_name": "chip8-pwa",
   "icons": [
     {
       "src": "./icon-256.png",
