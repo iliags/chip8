@@ -96,8 +96,9 @@ impl App {
         }
     }
 
-    // Load ROM into memory after the font data
+    // Loads ROM and font data into memory
     fn load_rom(&mut self, rom: Vec<u8>) {
+        self.load_font();
         for (i, &byte) in rom.iter().enumerate() {
             self.memory[i + 512] = byte;
         }
@@ -141,6 +142,9 @@ impl App {
     }
 
     fn update_display_image(&mut self) {
+        // Clear image
+        self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
+
         for y in 0..SCREEN_HEIGHT {
             for x in 0..SCREEN_WIDTH {
                 let index = (x + y * 64) as usize;
@@ -160,6 +164,23 @@ impl App {
 
         if self.step_counter >= STEP_INTERVAL {
             self.step_counter = 0.0;
+
+            // Update timers
+            if self.delay_timer > 0 {
+                self.delay_timer = self.delay_timer.saturating_sub(1);
+
+                if self.delay_timer == 0 {
+                    println!("Delay timer at 0");
+                }
+            }
+
+            if self.sound_timer > 0 {
+                self.sound_timer = self.sound_timer.saturating_sub(1);
+
+                if self.sound_timer == 0 {
+                    println!("Sound timer at 0");
+                }
+            }
 
             // Do stuff
         }
