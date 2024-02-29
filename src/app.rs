@@ -1,12 +1,12 @@
 use bevy_tasks::futures_lite::future;
 use egui::{Color32, TextureOptions, Vec2};
-use rand::prelude::*;
 use rfd::AsyncFileDialog;
-use std::sync::Arc;
+use std::io::Write;
+use std::{fs::File, sync::Arc};
 
 pub struct App {
     memory: Vec<u8>,
-    display: Vec<u8>,
+    vram: Vec<u8>,
     index_register: u16,
     program_counter: u16,
     stack: Vec<u16>,
@@ -21,25 +21,7 @@ pub struct App {
 
     rom_file: Option<Vec<u8>>,
     is_running: bool,
-}
-
-enum Registers {
-    V0,
-    V1,
-    V2,
-    V3,
-    V4,
-    V5,
-    V6,
-    V7,
-    V8,
-    V9,
-    VA,
-    VB,
-    VC,
-    VD,
-    VE,
-    VF,
+    log_file: File,
 }
 
 // Font data
@@ -73,9 +55,9 @@ impl Default for App {
             memory: vec![0; 4096],
 
             // 64x32 display
-            display: vec![0; 64 * 32],
+            vram: vec![0; 64 * 32],
             index_register: 0,
-            program_counter: 0,
+            program_counter: 0x200,
             stack: vec![],
             delay_timer: 0,
             sound_timer: 0,
@@ -87,8 +69,9 @@ impl Default for App {
             display_handle: None,
             step_counter: 0.0,
             rom_file: None,
-            cpu_speed: 500,
+            cpu_speed: 10,
             is_running: false,
+            log_file: File::create("log.txt").expect("Unable to create file"),
         }
     }
 }
@@ -108,7 +91,6 @@ impl App {
 
     // Loads ROM and font data into memory
     fn load_rom(&mut self, rom: Vec<u8>) {
-        self.load_font();
         for (i, &byte) in rom.iter().enumerate() {
             self.memory[i + 512] = byte;
         }
@@ -135,11 +117,11 @@ impl App {
         let index = (pos_x + pos_y * 64) as usize;
 
         // Pixels are XORed on the display
-        self.display[index] ^= 1;
+        self.vram[index] ^= 1;
     }
 
     fn clear_screen(&mut self) {
-        self.display = vec![0; 64 * 32];
+        //self.display = vec![0; 64 * 32];
     }
 
     fn test_display(&mut self) {
@@ -150,12 +132,12 @@ impl App {
 
     fn update_display_image(&mut self) {
         // Clear image
-        self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
+        //self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
 
         for y in 0..SCREEN_HEIGHT {
             for x in 0..SCREEN_WIDTH {
                 let index = (x + y * 64) as usize;
-                let color = if self.display[index] == 1 {
+                let color = if self.vram[index] == 1 {
                     Color32::WHITE
                 } else {
                     Color32::BLACK
@@ -189,15 +171,22 @@ impl App {
             for _ in 0..self.cpu_speed {
                 let opcode = (self.memory[self.program_counter as usize] as u16) << 8
                     | (self.memory[(self.program_counter + 1) as usize] as u16);
+
                 self.execute_instruction(opcode);
             }
         }
 
         // Update the image texture from the display data
+        //self.test_display();
         self.update_display_image();
     }
 
     fn execute_instruction(&mut self, opcode: u16) {
+        // Increment the program counter
+        self.program_counter += 2;
+        //println!("Executing opcode: {:#X}", opcode);
+        writeln!(self.log_file, "Executing opcode: {:#X}", opcode).unwrap();
+
         // Not all of the opcodes use the upper/lower bits, but enough do to make it worth extracting them
 
         // Upper bits
@@ -288,7 +277,7 @@ impl App {
                         let (result, overflow) =
                             self.registers[x].overflowing_add(self.registers[y]);
                         self.registers[x] = result;
-                        self.registers[Registers::VF as usize] = overflow as u8;
+                        self.registers[0xF] = overflow as u8;
                     }
                     0x5 => {
                         // Subtract Vy from Vx, set VF to 0 if there's a borrow
@@ -296,12 +285,12 @@ impl App {
                         let (result, overflow) =
                             self.registers[x].overflowing_sub(self.registers[y]);
                         self.registers[x] = result;
-                        self.registers[Registers::VF as usize] = !overflow as u8;
+                        self.registers[0xF] = !overflow as u8;
                     }
                     0x6 => {
                         // Shift Vx right by 1, set VF to the least significant bit of Vx before the shift
 
-                        self.registers[Registers::VF as usize] = self.registers[x] & 0x1;
+                        self.registers[0xF as usize] = self.registers[x] & 0x1;
                         self.registers[x] >>= 1;
                     }
                     0x7 => {
@@ -310,12 +299,12 @@ impl App {
                         let (result, overflow) =
                             self.registers[y].overflowing_sub(self.registers[x]);
                         self.registers[x] = result;
-                        self.registers[Registers::VF as usize] = !overflow as u8;
+                        self.registers[0xF] = !overflow as u8;
                     }
                     0xE => {
                         // Shift Vx left by 1, set VF to the most significant bit of Vx before the shift
 
-                        self.registers[Registers::VF as usize] = (self.registers[x] & 0x80) >> 7;
+                        self.registers[0xF] = (self.registers[x] & 0x80) >> 7;
                         self.registers[x] <<= 1;
                     }
                     _ => {
@@ -336,8 +325,7 @@ impl App {
             }
             0xB000 => {
                 // Jump to address NNN + V0
-                self.program_counter =
-                    (opcode & 0x0FFF) + self.registers[Registers::V0 as usize] as u16;
+                self.program_counter = (opcode & 0x0FFF) + self.registers[0] as u16;
             }
             0xC000 => {
                 // Set Vx to a random number & NN
@@ -351,18 +339,18 @@ impl App {
                 let y = self.registers[y] as i32;
                 let height = opcode & 0x000F;
 
-                self.registers[Registers::VF as usize] = 0;
+                self.registers[0xF] = 0;
 
-                for yline in 0..height {
-                    let pixel = self.memory[(self.index_register + yline) as usize];
+                for row in 0..height {
+                    let pixel = self.memory[(self.index_register + row) as usize];
 
-                    for xline in 0..8 {
-                        if (pixel & (0x80 >> xline)) != 0 {
-                            if self.display[(x + xline + ((y + yline as i32) * 64)) as usize] == 1 {
-                                self.registers[Registers::VF as usize] = 1;
+                    for col in 0..8 {
+                        if (pixel & (0x80 >> col)) != 0 {
+                            if self.vram[(x + col + ((y + row as i32) * 64)) as usize] == 1 {
+                                self.registers[0xF] = 1;
                             }
 
-                            self.set_pixel(x + xline, y + yline as i32);
+                            self.set_pixel(x + col, y + row as i32);
                         }
                     }
                 }
@@ -499,7 +487,10 @@ impl eframe::App for App {
 
                     if self.rom_file.is_some() {
                         println!("ROM file loaded");
+                        self.load_font();
                         self.load_rom(self.rom_file.as_ref().unwrap().clone());
+
+                        self.program_counter = 0x200;
                         self.is_running = true;
 
                         //println!("Memory {:?}", self.memory);
