@@ -1,3 +1,6 @@
+use egui::{Color32, TextureOptions, Vec2};
+use std::sync::Arc;
+
 pub struct App {
     memory: Vec<u8>,
     display: Vec<u8>,
@@ -7,6 +10,10 @@ pub struct App {
     delay_timer: u8,
     sound_timer: u8,
     registers: Vec<u8>,
+
+    display_image: egui::ColorImage,
+    display_handle: Option<egui::TextureHandle>,
+    step_counter: f32,
 }
 
 enum Registers {
@@ -50,6 +57,7 @@ static FONT: &'static [u8] = &[
 
 const SCREEN_WIDTH: i32 = 64;
 const SCREEN_HEIGHT: i32 = 32;
+const STEP_INTERVAL: f32 = 0.0167; // 60 FPS
 
 impl Default for App {
     fn default() -> Self {
@@ -65,6 +73,12 @@ impl Default for App {
             delay_timer: 0,
             sound_timer: 0,
             registers: vec![0; 16],
+            display_image: egui::ColorImage::new(
+                [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
+                Color32::BLACK,
+            ),
+            display_handle: None,
+            step_counter: 0.0,
         }
     }
 }
@@ -90,7 +104,7 @@ impl App {
     }
 
     // Using i32 for x and y to allow for wrapping around the screen
-    fn set_pixel(&mut self, x: i32, y: i32, value: u8) {
+    fn set_pixel(&mut self, x: i32, y: i32) {
         // If the pixels are out of bounds, wrap them around
         let mut pos_x = x;
         let mut pos_y = y;
@@ -110,11 +124,48 @@ impl App {
         let index = (pos_x + pos_y * 64) as usize;
 
         // Pixels are XORed on the display
-        self.display[index] ^= value;
+        self.display[index] ^= 1;
     }
 
     fn clear_screen(&mut self) {
         self.display = vec![0; 64 * 32];
+    }
+
+    fn test_display(&mut self) {
+        use rand::Rng;
+        for _ in 0..100 {
+            let x = rand::thread_rng().gen_range(0..64);
+            let y = rand::thread_rng().gen_range(0..32);
+            self.set_pixel(x, y);
+        }
+    }
+
+    fn update_display_image(&mut self) {
+        for y in 0..SCREEN_HEIGHT {
+            for x in 0..SCREEN_WIDTH {
+                let index = (x + y * 64) as usize;
+                let color = if self.display[index] == 1 {
+                    Color32::WHITE
+                } else {
+                    Color32::BLACK
+                };
+
+                self.display_image.pixels[index] = color;
+            }
+        }
+    }
+
+    fn step(&mut self, delta_time: f32) {
+        self.step_counter += delta_time;
+
+        if self.step_counter >= STEP_INTERVAL {
+            self.step_counter = 0.0;
+
+            // Do stuff
+        }
+        // Update the image texture from the display data
+        self.test_display();
+        self.update_display_image();
     }
 }
 
@@ -122,8 +173,11 @@ impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // TODO: Chip-8 behavior
+            // Step the emulator
+            let delta_time = ctx.input(|i| i.stable_dt);
+            self.step(delta_time);
 
+            // Draw the UI
             egui::menu::bar(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
 
@@ -146,13 +200,38 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            egui::Window::new("Display")
+                .resizable(true)
+                .show(ctx, |ui| {
+                    // Create the display texture handle if it doesn't exist
+                    if self.display_handle.is_none() {
+                        self.display_handle = Some(ctx.load_texture(
+                            "DisplayTexture",
+                            egui::ImageData::Color(Arc::new(self.display_image.clone())),
+                            TextureOptions {
+                                magnification: egui::TextureFilter::Nearest,
+                                minification: egui::TextureFilter::Nearest,
+                                wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                            },
+                        ));
+                    }
+
+                    let image = egui::Image::new(self.display_handle.as_ref().unwrap())
+                        .fit_to_exact_size(Vec2::new(512.0, 256.0));
+
+                    ui.add(image);
+                });
+
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);
-
                 egui::warn_if_debug_build(ui);
             });
         });
+
+        // TODO: Only request a repaint if a ROM is loaded.
+        // Refresh the UI
+        ctx.request_repaint();
     }
 }
 
