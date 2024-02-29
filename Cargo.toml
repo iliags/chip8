@@ -15,6 +15,7 @@ eframe = { version = "0.26.0", default-features = false, features = [
 log = "0.4"
 rfd = "0.14.0"
 bevy_tasks = "0.13.0"
+rand = { version = "0.8.5" }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -23,6 +24,7 @@ env_logger = "0.11.2"
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
+getrandom = { version = "0.2", features = ["js"] }
 
 
 [profile.release]
