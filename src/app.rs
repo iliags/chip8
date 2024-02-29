@@ -1,4 +1,6 @@
+use bevy_tasks::{block_on, futures_lite::future};
 use egui::{Color32, TextureOptions, Vec2};
+use rfd::{AsyncFileDialog, FileHandle};
 use std::sync::Arc;
 
 pub struct App {
@@ -14,6 +16,8 @@ pub struct App {
     display_image: egui::ColorImage,
     display_handle: Option<egui::TextureHandle>,
     step_counter: f32,
+
+    rom_file: Option<Vec<u8>>,
 }
 
 enum Registers {
@@ -79,6 +83,7 @@ impl Default for App {
             ),
             display_handle: None,
             step_counter: 0.0,
+            rom_file: None,
         }
     }
 }
@@ -133,12 +138,9 @@ impl App {
     }
 
     fn test_display(&mut self) {
-        use rand::Rng;
-        for _ in 0..100 {
-            let x = rand::thread_rng().gen_range(0..64);
-            let y = rand::thread_rng().gen_range(0..32);
-            self.set_pixel(x, y);
-        }
+        self.set_pixel(0, 0);
+        self.set_pixel(10, 10);
+        self.set_pixel(20, 15);
     }
 
     fn update_display_image(&mut self) {
@@ -182,10 +184,10 @@ impl App {
                 }
             }
 
-            // Do stuff
+            // Cycle CPU
         }
         // Update the image texture from the display data
-        self.test_display();
+        //self.test_display();
         self.update_display_image();
     }
 }
@@ -202,18 +204,41 @@ impl eframe::App for App {
             egui::menu::bar(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
 
-                ui.menu_button("File", |ui| {
-                    if ui.button("Open ROM").clicked() {
-                        // TODO: Open a ROM file
-                    }
-
-                    // No File->Quit on web pages
-                    if !is_web {
+                if !is_web {
+                    ui.menu_button("File", |ui| {
+                        // No File->Quit on web pages
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
+                    });
+                }
+                if ui.button("Open ROM").clicked() {
+                    // TODO: Open a ROM file
+
+                    self.rom_file = future::block_on(async {
+                        let file = AsyncFileDialog::new()
+                            .add_filter("Chip8", &["ch8"])
+                            .set_directory("/")
+                            .pick_file()
+                            .await;
+
+                        ui.close_menu();
+
+                        if let Some(file) = file {
+                            let file = file.read().await;
+                            Some(file)
+                        } else {
+                            None
+                        }
+                    });
+
+                    if self.rom_file.is_some() {
+                        println!("ROM file loaded");
+                        self.load_rom(self.rom_file.as_ref().unwrap().clone());
+
+                        //println!("Memory {:?}", self.memory);
                     }
-                });
+                }
                 ui.add_space(16.0);
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
