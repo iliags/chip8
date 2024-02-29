@@ -1,6 +1,6 @@
-use bevy_tasks::{block_on, futures_lite::future};
+use bevy_tasks::futures_lite::future;
 use egui::{Color32, TextureOptions, Vec2};
-use rfd::{AsyncFileDialog, FileHandle};
+use rfd::AsyncFileDialog;
 use std::sync::Arc;
 
 pub struct App {
