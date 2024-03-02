@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "C8Device.generated.h"
 
+class UC8ROM;
+
 UENUM(BlueprintType)
 enum class EChip8Key : uint8
 {
@@ -40,12 +42,18 @@ class CHIP8_API UC8Device final : public UObject
 public:
 	UC8Device();
 
+	UFUNCTION(BlueprintCallable, Category = "Chip8")
+	void StartDevice();
+
 	/**
 	 * Load a ROM into memory
 	 * @param ROM The ROM to load
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
-	void LoadROM(const TArray<uint8>& ROM);
+	void LoadROMFromBytes(const TArray<uint8>& ROM);
+
+	UFUNCTION(BlueprintCallable, Category = "Chip8")
+	void LoadROMFromBinary(UC8ROM* ROM);
 
 	/**
 	 * Load the font set into memory
@@ -102,7 +110,7 @@ protected:
 	uint8 SoundTimer = 0;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Chip8", meta = (ClampMin = "1", ClampMax = "1000", UIMin = "1", UIMax = "1000"))
-	int32 CPUSpeed = 500;
+	int32 CPUSpeed = 1;
 
 
 	/**

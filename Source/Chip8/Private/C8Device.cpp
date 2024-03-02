@@ -3,6 +3,8 @@
 
 #include "C8Device.h"
 
+#include "Data/C8ROM.h"
+
 constexpr int32 SCREEN_WIDTH = 64;
 constexpr int32 SCREEN_HEIGHT = 32;
 
@@ -32,14 +34,33 @@ UC8Device::UC8Device()
 	Memory.Init(0, 4096);
 	VRAM.Init(0, SCREEN_WIDTH * SCREEN_HEIGHT);
 	Registers.Init(0, 16);
+
+	LoadFont();
 }
 
-void UC8Device::LoadROM(const TArray<uint8>& ROM)
+void UC8Device::StartDevice()
+{
+	// TODO: Check everything is loaded
+	bIsRunning = true;
+}
+
+void UC8Device::LoadROMFromBytes(const TArray<uint8>& ROM)
 {
 	for(int32 i = 0; i < ROM.Num(); i++)
 	{
 		Memory[i + 0x200] = ROM[i];
 	}
+}
+
+void UC8Device::LoadROMFromBinary(UC8ROM* ROM)
+{
+	if(!ROM)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s(): ROM is null"), *FString(__FUNCTION__));
+		return;
+	}
+
+	LoadROMFromBytes(ROM->ROM);
 }
 
 void UC8Device::LoadFont(const int32 Offset)
@@ -144,7 +165,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 	// Common lower bits
 	const uint8 NN = Opcode & 0x00FF;
 	
-	switch(Opcode)
+	switch(Opcode & 0xF000)
 	{
 		case 0x0000:
 			switch (Opcode) {
