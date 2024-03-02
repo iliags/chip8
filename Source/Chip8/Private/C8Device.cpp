@@ -9,7 +9,6 @@ constexpr int32 SCREEN_WIDTH = 64;
 constexpr int32 SCREEN_HEIGHT = 32;
 
 constexpr int32 FONTSET_OFFSET = 0x0;
-constexpr int32 FONTSET_SIZE = 80;
 
 constexpr int32 PROGRAM_OFFSET = 0x200;
 
@@ -39,13 +38,15 @@ UC8Device::UC8Device()
 	Memory.Init(0, 4096);
 	VRAM.Init(0, SCREEN_WIDTH * SCREEN_HEIGHT);
 	Registers.Init(0, 16);
+
+	LoadFont();
 }
 
 void UC8Device::StartDevice()
 {
 	// TODO: Check everything is loaded
 
-	LoadFont();
+	ProgramCounter = PROGRAM_OFFSET;
 	
 	bIsRunning = true;
 }
@@ -76,7 +77,7 @@ void UC8Device::SetKeyState(const EChip8Key Key, const bool bIsPressed)
 
 void UC8Device::LoadFont()
 {
-	for(int32 i = 0; i < FONTSET_SIZE; i++)
+	for(int32 i = 0; i < FONT_SET.Num(); i++)
 	{
 		Memory[FONTSET_OFFSET + i] = FONT_SET[i];
 	}
@@ -84,21 +85,10 @@ void UC8Device::LoadFont()
 
 void UC8Device::Tick(const float DeltaTime)
 {
+	
 	if(bIsRunning)
-	{
+	{		
 		UpdateTimers();
-
-
-		if(false)
-		{
-			SetPixel(0,0);
-			SetPixel(1, 0);
-			SetPixel(2, 0);
-			SetPixel(63, 31);
-			return;
-		}
-		
-		
 
 		for(int32 i = 0; i < CPUSpeed; i++)
 		{
@@ -129,27 +119,14 @@ void UC8Device::ClearScreen()
 
 int32 UC8Device::SetPixel(const int32 X, const int32 Y)
 {
-	const int32 PixelIndex = WrapPixel(X, SCREEN_WIDTH) +
-		(WrapPixel(Y, SCREEN_HEIGHT) * SCREEN_WIDTH);
+	const int32 XPos = X % SCREEN_WIDTH;
+	const int32 YPos = Y % SCREEN_HEIGHT;
+
+	const int32 PixelIndex = XPos + (YPos * SCREEN_WIDTH);
 
 	VRAM[PixelIndex] ^= 1;
 
 	return VRAM[PixelIndex];
-}
-
-int32 UC8Device::WrapPixel(const int32 Location, const int32 MaxValue)
-{
-	if(Location < 0)
-	{
-		return Location + MaxValue;
-	}
-
-	if(Location >= MaxValue)
-	{
-		return Location - MaxValue;
-	}
-
-	return Location;
 }
 
 void UC8Device::UpdateTimers()
@@ -178,15 +155,11 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 {
 	// Increment the program counter by 2
 	ProgramCounter += 2;
-
-	// Upper bits
+	
 	const uint8 X = (Opcode & 0x0F00) >> 8;
-
-	// Lower bits
 	const uint8 Y = (Opcode & 0x00F0) >> 4;
-
-	// Common lower bits
-	const uint8 NN = Opcode & 0x00FF;
+	const uint8 KK = Opcode & 0x00FF;
+	const uint8 NNN = Opcode & 0x0FFF;
 	
 	switch(Opcode & 0xF000)
 	{
@@ -207,24 +180,23 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0x1000:
 				// Jump to address NNN
-				ProgramCounter = Opcode & 0x0FFF;
+				ProgramCounter = NNN;
 			break;
 		case 0x2000:
 				// Call subroutine at NNN
-				//Stack.Push(ProgramCounter);
-				Stack.Add(ProgramCounter);
-				ProgramCounter = Opcode & 0x0FFF;
+				Stack.Push(ProgramCounter);
+				ProgramCounter = NNN;
 			break;
 		case 0x3000:
-				// Skip next instruction if Vx == NN
-				if(Registers[X] == NN)
+				// Skip next instruction if Vx == KK
+				if(Registers[X] == KK)
 				{
 					ProgramCounter += 2;
 				}
 			break;
 		case 0x4000:
-				// Skip next instruction if Vx != NN
-				if(Registers[X] != NN)
+				// Skip next instruction if Vx != KK
+				if(Registers[X] != KK)
 				{
 					ProgramCounter += 2;
 				}
@@ -237,12 +209,12 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 				}
 			break;
 		case 0x6000:
-				// Set Vx to NN
-				Registers[X] = NN;	
+				// Set Vx to KK
+				Registers[X] = KK;	
 			break;
 		case 0x7000:
-				// Add NN to Vx
-				Registers[X] = FMath::Wrap(Registers[X]+NN, 0, 255);
+				// Add KK to Vx
+				Registers[X] = FMath::Wrap(Registers[X]+KK, 0, 255);
 				
 			break;
 		case 0x8000:
@@ -314,14 +286,16 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 				ProgramCounter = (Opcode & 0xFFF) + Registers[0];	
 			break;
 		case 0xC000:
-				// Set Vx to a random number & NN
-				Registers[X] = FMath::RandRange(0, 255) & NN;
+				// Set Vx to a random number & KK
+				Registers[X] = FMath::RandRange(0, 255) & KK;
 			break;
 		case 0xD000:
+			{
 				// Draw a sprite at position Vx, Vy with N bytes of sprite data starting at the address stored in I
 				Registers[0xF] = 0;
+				const uint8 Height = Opcode & 0x000F;
 
-				for(int32 Row = 0; Row < (Opcode & 0xF); Row++)
+				for(int32 Row = 0; Row < Height; Row++)
 				{
 					const uint8 Pixel = Memory[IndexRegister + Row];
 
@@ -341,6 +315,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						}
 					}
 				}
+			}
 			break;
 		case 0xE000:
 			switch (Opcode & 0xFF) {

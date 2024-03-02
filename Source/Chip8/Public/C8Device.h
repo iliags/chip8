@@ -141,14 +141,6 @@ private:
 
 	UPROPERTY(Transient)
 	EChip8Key WaitingForKey = EChip8Key::MAX;
-	
-	/**
-	 * Wrap a pixel location around the screen
-	 * @param Location The location to wrap
-	 * @param MaxValue The maximum value of the location
-	 * @return The wrapped location
-	 */
-	static int32 WrapPixel(int32 Location, int32 MaxValue);
 
 	/**
 	 * Update the timers
@@ -160,4 +152,5 @@ private:
 	 * @param Opcode The opcode to execute
 	 */
 	void ExecuteOpcode(uint16 Opcode);
+	
 };
