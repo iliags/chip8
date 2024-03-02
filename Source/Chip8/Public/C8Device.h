@@ -55,12 +55,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
 	void LoadROMFromBinary(UC8ROM* ROM);
 
+	UFUNCTION(BlueprintCallable, Category = "Chip8")
+	void SetKeyState(EChip8Key Key, bool bIsPressed);
+
 	/**
 	 * Load the font set into memory
 	 * @param Offset The offset to load the font set into
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
-	void LoadFont(int32 Offset = 0);
+	void LoadFont();
 
 	/**
 	 * Tick the device
@@ -74,6 +77,10 @@ public:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Chip8")
 	void PlaySound();
+
+	TArray<uint8> GetMemory() const { return Memory; }
+	TArray<uint8> GetRegisters() const { return Registers; }
+	TArray<uint8> GetVRAM() const { return VRAM; }
 
 protected:
 

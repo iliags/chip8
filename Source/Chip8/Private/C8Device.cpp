@@ -8,6 +8,11 @@
 constexpr int32 SCREEN_WIDTH = 64;
 constexpr int32 SCREEN_HEIGHT = 32;
 
+constexpr int32 FONTSET_OFFSET = 0x0;
+constexpr int32 FONTSET_SIZE = 80;
+
+constexpr int32 PROGRAM_OFFSET = 0x200;
+
 // Font set
 static TArray<uint8> FONT_SET = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -34,13 +39,14 @@ UC8Device::UC8Device()
 	Memory.Init(0, 4096);
 	VRAM.Init(0, SCREEN_WIDTH * SCREEN_HEIGHT);
 	Registers.Init(0, 16);
-
-	LoadFont();
 }
 
 void UC8Device::StartDevice()
 {
 	// TODO: Check everything is loaded
+
+	LoadFont();
+	
 	bIsRunning = true;
 }
 
@@ -48,7 +54,7 @@ void UC8Device::LoadROMFromBytes(const TArray<uint8>& ROM)
 {
 	for(int32 i = 0; i < ROM.Num(); i++)
 	{
-		Memory[i + 0x200] = ROM[i];
+		Memory[PROGRAM_OFFSET + i] = ROM[i];
 	}
 }
 
@@ -63,11 +69,16 @@ void UC8Device::LoadROMFromBinary(UC8ROM* ROM)
 	LoadROMFromBytes(ROM->ROM);
 }
 
-void UC8Device::LoadFont(const int32 Offset)
+void UC8Device::SetKeyState(const EChip8Key Key, const bool bIsPressed)
 {
-	for(int32 i = 0; i < FONT_SET.Num(); i++)
+	Keys.Add(Key, bIsPressed);
+}
+
+void UC8Device::LoadFont()
+{
+	for(int32 i = 0; i < FONTSET_SIZE; i++)
 	{
-		Memory[i + Offset] = FONT_SET[i];
+		Memory[FONTSET_OFFSET + i] = FONT_SET[i];
 	}
 }
 
@@ -76,6 +87,18 @@ void UC8Device::Tick(const float DeltaTime)
 	if(bIsRunning)
 	{
 		UpdateTimers();
+
+
+		if(false)
+		{
+			SetPixel(0,0);
+			SetPixel(1, 0);
+			SetPixel(2, 0);
+			SetPixel(63, 31);
+			return;
+		}
+		
+		
 
 		for(int32 i = 0; i < CPUSpeed; i++)
 		{
@@ -184,12 +207,13 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0x1000:
 				// Jump to address NNN
-				ProgramCounter = Opcode & 0xFFF;
+				ProgramCounter = Opcode & 0x0FFF;
 			break;
 		case 0x2000:
 				// Call subroutine at NNN
-				Stack.Push(ProgramCounter);
-				ProgramCounter = Opcode & 0xFFF;
+				//Stack.Push(ProgramCounter);
+				Stack.Add(ProgramCounter);
+				ProgramCounter = Opcode & 0x0FFF;
 			break;
 		case 0x3000:
 				// Skip next instruction if Vx == NN
@@ -240,14 +264,18 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						Registers[X] ^= Registers[Y];	
 					break;
 				case 0x4:
+					{
 						// Add Vy to Vx, set VF to 1 if there's a carry
-						Registers[0xF] = (Registers[X] + Registers[Y] > 255) ? 1 : 0;
-						Registers[X] = FMath::Wrap(Registers[X]+ Registers[Y], 0, 255);
+						const int32 Sum = Registers[X] + Registers[Y];
+						Registers[0xF] = Sum > 255 ? 1 : 0;
+						
+						Registers[X] = Sum & 0xFF;
+					}
 					break;
 				case 0x5:
 						// Subtract Vy from Vx, set VF to 0 if there's a borrow
 						Registers[0xF] = (Registers[X] > Registers[Y]) ? 1 : 0;
-						Registers[X] = FMath::Wrap(Registers[X] - Registers[Y], 0, 255);
+						Registers[X] = Registers[X] - Registers[Y];
 					break;
 				case 0x6:
 						// Shift Vx right by 1, set VF to the least significant bit of Vx before the shift
