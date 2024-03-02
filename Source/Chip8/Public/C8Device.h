@@ -131,7 +131,7 @@ protected:
 	uint8 SoundTimer = 0;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Chip8", meta = (ClampMin = "1", ClampMax = "1000", UIMin = "1", UIMax = "1000"))
-	int32 CPUSpeed = 500;
+	int32 CPUSpeed = 50;
 
 
 	/**
@@ -152,9 +152,6 @@ protected:
 private:
 	UPROPERTY(Transient)
 	bool bIsRunning = false;
-
-	UPROPERTY(Transient)
-	EChip8Key WaitingForKey = EChip8Key::MAX;
 
 	/**
 	 * Update the timers

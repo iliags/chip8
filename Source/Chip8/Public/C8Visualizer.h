@@ -29,7 +29,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Visualizer")
 	TObjectPtr<UInstancedStaticMeshComponent> VisualizerMesh;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Visualizer")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visualizer")
 	TObjectPtr<UC8ROM> TestROM;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")

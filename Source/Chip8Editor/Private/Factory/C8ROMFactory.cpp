@@ -20,13 +20,10 @@ UObject* UC8ROMFactory::FactoryCreateBinary(UClass* InClass, UObject* InParent, 
 	bool& bOutOperationCanceled)
 {
 	const TObjectPtr<UC8ROM> NewROM = NewObject<UC8ROM>(InParent, InClass, InName, Flags);
-	TArray<uint8> Result;
+	check(NewROM);
 	
-	if(FFileHelper::LoadFileToArray(NewROM->ROM, *CurrentFilename))
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s(): Loaded file"), *FString(__FUNCTION__));
-	}
-	else
+	TArray<uint8> Result;
+	if(!FFileHelper::LoadFileToArray(NewROM->ROM, *CurrentFilename))
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s(): Failed to load file"), *FString(__FUNCTION__));
 	}

@@ -45,8 +45,6 @@ UC8Device::UC8Device()
 void UC8Device::StartDevice()
 {
 	// TODO: Check everything is loaded
-
-	//ProgramCounter = PROGRAM_OFFSET;
 	
 	bIsRunning = true;
 }
@@ -205,7 +203,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0x7000:
 				// Add KK to Vx
-				Registers[X] = FMath::Wrap(Registers[X]+KK, 0, 255);
+				Registers[X] = Registers[X]+KK;
 				
 			break;
 		case 0x8000:
@@ -229,16 +227,19 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 				case 0x4:
 					{
 						// Add Vy to Vx, set VF to 1 if there's a carry
-						const int32 Sum = Registers[X] + Registers[Y];
-						Registers[0xF] = Sum > 255 ? 1 : 0;
-						
-						Registers[X] = Sum & 0xFF;
+						const int32 Result = Registers[X] + Registers[Y];
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+						Registers[0xF] = Result > 255 ? 1 : 0;
+												
 					}
 					break;
 				case 0x5:
+					{
 						// Subtract Vy from Vx, set VF to 0 if there's a borrow
-						Registers[0xF] = (Registers[X] > Registers[Y]) ? 1 : 0;
-						Registers[X] = Registers[X] - Registers[Y];
+						const int32 Result = Registers[X] - Registers[Y];
+						Registers[0xF] = Registers[X] >= Registers[Y] ? 1 : 0;
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+					}
 					break;
 				case 0x6:
 						// Shift Vx right by 1, set VF to the least significant bit of Vx before the shift
@@ -246,9 +247,12 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						Registers[X] >>= 1;
 					break;
 				case 0x7:
+					{
 						// Set Vx to Vy - Vx, set VF to 0 if there's a borrow
-						Registers[0xF] = (Registers[Y] > Registers[X]) ? 1 : 0;
-						Registers[X] = FMath::Wrap(Registers[Y] - Registers[X], 0, 255);
+						const int32 Result = Registers[Y] - Registers[X];
+						Registers[0xF] = Registers[Y] >= Registers[X] ? 1 : 0;
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+					}
 					break;
 				case 0xE:
 						// Shift Vx left by 1, set VF to the most significant bit of Vx before the shift
@@ -339,8 +343,6 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 				case 0x0A:
 					{
 						// Wait for a key press, store the value of the key in Vx
-						//UE_LOG(LogTemp, Warning, TEXT("%s(): Waiting for key"), *FString(__FUNCTION__));
-
 						bool bHasKey = false;
 
 						for(auto& Key : Keys)
