@@ -100,17 +100,7 @@ void UC8Device::Tick(const float DeltaTime)
 			// Decode opcode
 			ExecuteOpcode(Opcode);
 		}
-	}
-	else if(WaitingForKey != EChip8Key::MAX)
-	{
-		if(Keys.FindOrAdd(WaitingForKey) != 0)
-		{
-			Registers[static_cast<int32>(WaitingForKey)] = Keys[WaitingForKey];
-			WaitingForKey = EChip8Key::MAX;
-			bIsRunning = true;
-		}
-	}
-	
+	}	
 }
 
 void UC8Device::ClearScreen()
@@ -140,7 +130,7 @@ void UC8Device::UpdateTimers()
 		if(DelayTimer == 0)
 		{
 			// TODO: DelayTimer event
-			UE_LOG(LogTemp, Warning, TEXT("%s(): Delay timer is 0"), *FString(__FUNCTION__));
+			//UE_LOG(LogTemp, Warning, TEXT("%s(): Delay timer is 0"), *FString(__FUNCTION__));
 		}
 	}
 
@@ -149,7 +139,7 @@ void UC8Device::UpdateTimers()
 		SoundTimer--;
 
 		// Sounds play while the sound timer is greater than 0
-		PlaySound();
+		OnPlaySound.Broadcast();
 	}
 }
 
@@ -168,7 +158,10 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 					break;
 				case 0x00EE:
 						// Return from a subroutine
-						ProgramCounter = Stack.Pop();
+							if(Stack.Num() > 0)
+							{
+								ProgramCounter = Stack.Pop();
+							}
 					break;
 				default: 
 						UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0x0000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
@@ -208,7 +201,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0x6000:
 				// Set Vx to KK
-				Registers[X] = KK;	
+				Registers[X] = KK;
 			break;
 		case 0x7000:
 				// Add KK to Vx
@@ -277,7 +270,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0xA000:
 				// Set index register to NNN
-				Registers[X] = Opcode & 0xFFF;
+				IndexRegister = Opcode & 0x0FFF;
 			break;
 		case 0xB000:
 				// Jump to address NNN + V0
@@ -332,7 +325,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						}	
 					break;
 				default: 
-					//UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xE000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xE000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
 					break;
 			}
 
@@ -344,12 +337,27 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						Registers[X] = DelayTimer;	
 					break;
 				case 0x0A:
+					{
 						// Wait for a key press, store the value of the key in Vx
-						bIsRunning = false;
-						// TODO: Wait for key press event
-						WaitingForKey = static_cast<EChip8Key>(X);
-						UE_LOG(LogTemp, Warning, TEXT("%s(): Waiting for key"), *FString(__FUNCTION__));
-						//bIsRunning = true;
+						//UE_LOG(LogTemp, Warning, TEXT("%s(): Waiting for key"), *FString(__FUNCTION__));
+
+						bool bHasKey = false;
+
+						for(auto& Key : Keys)
+						{
+							if(Key.Value != 0)
+							{
+								bHasKey = true;
+								Registers[X] = static_cast<uint8>(Key.Key);
+								break;
+							}
+						}
+				
+						if(!bHasKey)
+						{
+							ProgramCounter -= 2;
+						}
+					}
 					break;
 				case 0x15:
 						// Set the delay timer to Vx

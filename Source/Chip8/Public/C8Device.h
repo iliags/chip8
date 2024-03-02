@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "C8Device.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlaySound);
+
 class UC8ROM;
 
 UENUM(BlueprintType)
@@ -42,6 +44,9 @@ class CHIP8_API UC8Device final : public UObject
 public:
 	UC8Device();
 
+	UPROPERTY(BlueprintAssignable, Category = "Chip8")
+	FOnPlaySound OnPlaySound;
+
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
 	void StartDevice();
 
@@ -60,7 +65,6 @@ public:
 
 	/**
 	 * Load the font set into memory
-	 * @param Offset The offset to load the font set into
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
 	void LoadFont();
@@ -72,15 +76,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
 	void Tick(float DeltaTime);
 
-	/**
-	 * Play a sound
-	 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Chip8")
-	void PlaySound();
-
 	TArray<uint8> GetMemory() const { return Memory; }
 	TArray<uint8> GetRegisters() const { return Registers; }
-	TArray<uint8> GetVRAM() const { return VRAM; }
+	TArray<int32> GetVRAM() const { return VRAM; }
 
 	UFUNCTION(BlueprintCallable)
 	FString GetVRAMString() const
@@ -110,7 +108,7 @@ protected:
 
 	// Device VRAM
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Chip8")
-	TArray<uint8> VRAM;
+	TArray<int32> VRAM;
 
 	// Technically this is 16-bit, but Blueprints don't support uint16
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Chip8")
@@ -133,7 +131,7 @@ protected:
 	uint8 SoundTimer = 0;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Chip8", meta = (ClampMin = "1", ClampMax = "1000", UIMin = "1", UIMax = "1000"))
-	int32 CPUSpeed = 1;
+	int32 CPUSpeed = 500;
 
 
 	/**

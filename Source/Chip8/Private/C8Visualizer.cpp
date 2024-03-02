@@ -60,7 +60,7 @@ void AC8Visualizer::Tick(const float DeltaTime)
 	{
 		Device->Tick(DeltaTime);
 
-		const TArray<uint8> VRAM = Device->GetVRAM();
+		const TArray<int32> VRAM = Device->GetVRAM();
 		for(int32 i = 0; i < VRAM.Num(); i++)
 		{
 			const bool bIsLast = i == VRAM.Num() - 1;
