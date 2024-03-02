@@ -8,7 +8,7 @@
 constexpr int32 SCREEN_WIDTH = 64;
 constexpr int32 SCREEN_HEIGHT = 32;
 
-constexpr int32 FONTSET_OFFSET = 0x0;
+constexpr uint8 FONTSET_OFFSET = 0x0;
 
 constexpr int32 PROGRAM_OFFSET = 0x200;
 
@@ -46,7 +46,7 @@ void UC8Device::StartDevice()
 {
 	// TODO: Check everything is loaded
 
-	ProgramCounter = PROGRAM_OFFSET;
+	//ProgramCounter = PROGRAM_OFFSET;
 	
 	bIsRunning = true;
 }
@@ -55,7 +55,7 @@ void UC8Device::LoadROMFromBytes(const TArray<uint8>& ROM)
 {
 	for(int32 i = 0; i < ROM.Num(); i++)
 	{
-		Memory[PROGRAM_OFFSET + i] = ROM[i];
+		Memory[i + PROGRAM_OFFSET] = ROM[i];
 	}
 }
 
@@ -85,7 +85,6 @@ void UC8Device::LoadFont()
 
 void UC8Device::Tick(const float DeltaTime)
 {
-	
 	if(bIsRunning)
 	{		
 		UpdateTimers();
@@ -94,6 +93,9 @@ void UC8Device::Tick(const float DeltaTime)
 		{
 			// Fetch opcode
 			const uint16 Opcode = (Memory[ProgramCounter] << 8) | Memory[ProgramCounter + 1];
+
+			// Increment the program counter by 2
+			ProgramCounter += 2;
 
 			// Decode opcode
 			ExecuteOpcode(Opcode);
@@ -153,13 +155,9 @@ void UC8Device::UpdateTimers()
 
 void UC8Device::ExecuteOpcode(const uint16 Opcode)
 {
-	// Increment the program counter by 2
-	ProgramCounter += 2;
-	
-	const uint8 X = (Opcode & 0x0F00) >> 8;
-	const uint8 Y = (Opcode & 0x00F0) >> 4;
-	const uint8 KK = Opcode & 0x00FF;
-	const uint8 NNN = Opcode & 0x0FFF;
+	const int32 X = (Opcode & 0x0F00) >> 8;
+	const int32 Y = (Opcode & 0x00F0) >> 4;
+	const int32 KK = Opcode & 0x00FF;
 	
 	switch(Opcode & 0xF000)
 	{
@@ -180,12 +178,12 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 			break;
 		case 0x1000:
 				// Jump to address NNN
-				ProgramCounter = NNN;
+				ProgramCounter = Opcode & 0x0FFF;
 			break;
 		case 0x2000:
 				// Call subroutine at NNN
 				Stack.Push(ProgramCounter);
-				ProgramCounter = NNN;
+				ProgramCounter = Opcode & 0x0FFF;
 			break;
 		case 0x3000:
 				// Skip next instruction if Vx == KK
@@ -334,7 +332,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 						}	
 					break;
 				default: 
-					UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xE000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					//UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xE000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
 					break;
 			}
 
@@ -367,7 +365,7 @@ void UC8Device::ExecuteOpcode(const uint16 Opcode)
 					break;
 				case 0x29:
 						// Set I to the location of the sprite for the character in Vx
-						IndexRegister = Registers[X] * 5;	
+						IndexRegister = FONTSET_OFFSET + (Registers[X] * 5);	
 					break;
 				case 0x33:
 						// Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2

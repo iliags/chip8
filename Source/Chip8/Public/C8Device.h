@@ -82,6 +82,22 @@ public:
 	TArray<uint8> GetRegisters() const { return Registers; }
 	TArray<uint8> GetVRAM() const { return VRAM; }
 
+	UFUNCTION(BlueprintCallable)
+	FString GetVRAMString() const
+	{
+		FString VRAMString;
+		for(int32 i = 0; i < VRAM.Num(); i++)
+		{
+			if(i % 64 == 0)
+			{
+				VRAMString += "\n";
+			}
+			VRAMString += FString::Printf(TEXT("%d"), VRAM[i]);
+		}
+
+		return VRAMString;
+	}
+
 protected:
 
 	// Device memory
