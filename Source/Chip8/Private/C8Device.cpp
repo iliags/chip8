@@ -139,6 +139,10 @@ void UC8Device::UpdateTimers()
 		// Sounds play while the sound timer is greater than 0
 		OnPlaySound.Broadcast();
 	}
+	else
+	{
+		OnStopSound.Broadcast();
+	}
 }
 
 void UC8Device::ExecuteOpcode(const uint16 Opcode)

@@ -24,6 +24,12 @@ void AC8Visualizer::BeginPlay()
 
 	Device = NewObject<UC8Device>();
 
+	if(Device)
+	{
+		Device->OnPlaySound.AddDynamic(this, &AC8Visualizer::OnBeep);
+		Device->OnStopSound.AddDynamic(this, &AC8Visualizer::OnStopBeep);
+	}
+
 	if(TestROM)
 	{
 		Device->LoadROMFromBinary(TestROM);

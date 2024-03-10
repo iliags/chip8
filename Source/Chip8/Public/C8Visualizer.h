@@ -35,6 +35,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")
 	TObjectPtr<UC8Device> Device;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Visualizer")
+	void OnBeep();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Visualizer")
+	void OnStopBeep();
+
 private:
 	
 	

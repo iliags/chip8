@@ -7,6 +7,7 @@
 #include "C8Device.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlaySound);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStopSound);
 
 class UC8ROM;
 
@@ -46,6 +47,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Chip8")
 	FOnPlaySound OnPlaySound;
+
+	UPROPERTY(BlueprintAssignable, Category = "Chip8")
+	FOnStopSound OnStopSound;
 
 	UFUNCTION(BlueprintCallable, Category = "Chip8")
 	void StartDevice();
