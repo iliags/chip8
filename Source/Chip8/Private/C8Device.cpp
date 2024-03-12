@@ -147,6 +147,10 @@ void UC8Device::UpdateTimers()
 
 void UC8Device::ExecuteOpcode(const uint16 Opcode)
 {
+	/*
+	 * Note: A switch statement is not the most efficient or readable method for opcodes. It's used here for simplicity and should be replaced later.
+	 */
+	
 	const int32 X = (Opcode & 0x0F00) >> 8;
 	const int32 Y = (Opcode & 0x00F0) >> 4;
 	const int32 KK = Opcode & 0x00FF;
