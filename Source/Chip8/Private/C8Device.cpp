@@ -39,47 +39,6 @@ UC8Device::UC8Device()
 	VRAM.Init(0, SCREEN_WIDTH * SCREEN_HEIGHT);
 	Registers.Init(0, 16);
 
-	if(!OpcodeMap.IsEmpty())
-	{
-		OpcodeMap.Empty();
-	}
-
-	//OpcodeMap.Add(EChip8Opcode::None, &UC8Device::Nop);
-	OpcodeMap.Add(EChip8Opcode::ClearScreen, &UC8Device::ClearScreenNative);
-	OpcodeMap.Add(EChip8Opcode::Return, &UC8Device::Return);
-	OpcodeMap.Add(EChip8Opcode::Jump, &UC8Device::Jump);
-	OpcodeMap.Add(EChip8Opcode::Call, &UC8Device::Call);
-	OpcodeMap.Add(EChip8Opcode::SkipIfEqual, &UC8Device::SkipIfEqual);
-	OpcodeMap.Add(EChip8Opcode::SkipIfNotEqual, &UC8Device::SkipIfNotEqual);
-	OpcodeMap.Add(EChip8Opcode::SkipIfRegistersEqual, &UC8Device::SkipIfRegistersEqual);
-	OpcodeMap.Add(EChip8Opcode::SetRegister, &UC8Device::SetRegister);
-	OpcodeMap.Add(EChip8Opcode::AddToRegister, &UC8Device::AddToRegister);
-	OpcodeMap.Add(EChip8Opcode::SetRegisterToRegister, &UC8Device::SetRegisterToRegister);
-	OpcodeMap.Add(EChip8Opcode::OrRegisters, &UC8Device::OrRegisters);
-	OpcodeMap.Add(EChip8Opcode::AndRegisters, &UC8Device::AndRegisters);
-	OpcodeMap.Add(EChip8Opcode::XORRegisters, &UC8Device::XORRegisters);
-	OpcodeMap.Add(EChip8Opcode::AddRegisters, &UC8Device::AddRegisters);
-	OpcodeMap.Add(EChip8Opcode::SubtractRegisters, &UC8Device::SubtractRegisters);
-	OpcodeMap.Add(EChip8Opcode::ShiftRight, &UC8Device::ShiftRight);
-	OpcodeMap.Add(EChip8Opcode::SubtractRegistersReverse, &UC8Device::SubtractRegistersReverse);
-	OpcodeMap.Add(EChip8Opcode::ShiftLeft, &UC8Device::ShiftLeft);
-	OpcodeMap.Add(EChip8Opcode::SkipIfRegistersNotEqual, &UC8Device::SkipIfRegistersNotEqual);
-	OpcodeMap.Add(EChip8Opcode::SetIndexRegister, &UC8Device::SetIndexRegister);
-	OpcodeMap.Add(EChip8Opcode::JumpPlusV0, &UC8Device::JumpPlusV0);
-	OpcodeMap.Add(EChip8Opcode::Random, &UC8Device::Random);
-	OpcodeMap.Add(EChip8Opcode::DrawSprite, &UC8Device::DrawSprite);
-	OpcodeMap.Add(EChip8Opcode::SkipIfKeyPressed, &UC8Device::SkipIfKeyPressed);
-	OpcodeMap.Add(EChip8Opcode::SkipIfKeyNotPressed, &UC8Device::SkipIfKeyNotPressed);
-	OpcodeMap.Add(EChip8Opcode::GetDelayTimer, &UC8Device::GetDelayTimer);
-	OpcodeMap.Add(EChip8Opcode::WaitForKeyPress, &UC8Device::WaitForKeyPress);
-	OpcodeMap.Add(EChip8Opcode::SetDelayTimer, &UC8Device::SetDelayTimer);
-	OpcodeMap.Add(EChip8Opcode::SetSoundTimer, &UC8Device::SetSoundTimer);
-	OpcodeMap.Add(EChip8Opcode::AddToIndexRegister, &UC8Device::AddToIndexRegister);
-	OpcodeMap.Add(EChip8Opcode::SetIndexRegisterToFont, &UC8Device::SetIndexRegisterToFont);
-	OpcodeMap.Add(EChip8Opcode::StoreBCD, &UC8Device::StoreBCD);
-	OpcodeMap.Add(EChip8Opcode::StoreRegisters, &UC8Device::StoreRegisters);
-	OpcodeMap.Add(EChip8Opcode::LoadRegisters, &UC8Device::LoadRegisters);
-	
 	LoadFont();
 }
 
@@ -136,52 +95,8 @@ void UC8Device::Tick(const float DeltaTime)
 			// Increment the program counter by 2
 			ProgramCounter += 2;
 
-			if(ProgramCounter >= Memory.Num())
-			{
-				UE_LOG(LogTemp, Warning, TEXT("%s(): Program counter out of bounds"), *FString(__FUNCTION__));
-				bIsRunning = false;
-				break;
-			}
-
 			// Decode opcode
-			//ExecuteOpcode(Opcode);
-			const int32 X = (Opcode & 0x0F00) >> 8;
-			const int32 Y = (Opcode & 0x00F0) >> 4;
-			const int32 KK = Opcode & 0x00FF;
-
-#if WITH_EDITOR
-			//const EChip8Opcode OpcodeType = static_cast<EChip8Opcode>((Opcode & 0xF000) >> 12);
-			//const EChip8Opcode OpcodeType = static_cast<EChip8Opcode>((Opcode & 0xF000));
-
-			const EChip8Opcode OpcodeType = [&](uint16 CurrentOpcode) -> EChip8Opcode
-			{
-				const EChip8Opcode Key = static_cast<EChip8Opcode>((CurrentOpcode & 0xF000));
-				
-				if(OpcodeMap.Contains(Key))
-				{
-					return Key;
-				}
-
-				if (OpcodeMap.Contains(static_cast<EChip8Opcode>((CurrentOpcode & 0xF000) >> 12)))
-				{
-					return static_cast<EChip8Opcode>((CurrentOpcode & 0xF000) >> 12);
-				}
-
-				return static_cast<EChip8Opcode>(CurrentOpcode);
-			}(Opcode);
-			
-			//UE_LOG(LogTemp, Warning, TEXT("%s(): Opcode 0x%X, %s"), *FString(__FUNCTION__), Opcode, *UEnum::GetValueAsString(OpcodeType));
-			
-
-			const FString HasOpcode = OpcodeMap.Contains(OpcodeType) ? "true" : "false";
-
-			UE_LOG(LogTemp, Warning, TEXT("%s(): Opcode 0x%X, %X, %s"), *FString(__FUNCTION__), Opcode, OpcodeType, *HasOpcode);
-			
-			OpcodeMap[OpcodeType](this, Opcode, X, Y, KK);
-			//OpcodeMap.FindRef(OpcodeType)(this, Opcode, X, Y, KK);
-#else
-			OpcodeMap[static_cast<EChip8Opcode>((Opcode & 0xF000) >> 12)](this, Opcode, X, Y, KK);
-#endif
+			ExecuteOpcode(Opcode);
 		}
 	}	
 }
@@ -230,258 +145,274 @@ void UC8Device::UpdateTimers()
 	}
 }
 
-void UC8Device::ClearScreenNative(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
+void UC8Device::ExecuteOpcode(const uint16 Opcode)
 {
-	Device->ClearScreen();
-}
-
-void UC8Device::Return(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Stack.Num() > 0)
-	{
-		Device->ProgramCounter = Device->Stack.Pop();
-	}
-}
-
-void UC8Device::Jump(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->ProgramCounter = Opcode & 0x0FFF;
-}
-
-void UC8Device::Call(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Stack.Push(Device->ProgramCounter);
-	Device->ProgramCounter = Opcode & 0x0FFF;
-}
-
-void UC8Device::SkipIfEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Registers[X] == KK)
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::SkipIfNotEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Registers[X] != KK)
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::SkipIfRegistersEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Registers[X] == Device->Registers[Y])
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::SetRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Registers.IsValidIndex(X))
-	{
-		Device->Registers[X] = KK;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s(): Invalid register index %d"), *FString(__FUNCTION__), X);
-	}
-}
-
-void UC8Device::AddToRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] += KK;
-}
-
-void UC8Device::SetRegisterToRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] = Device->Registers[Y];
-}
-
-void UC8Device::OrRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] |= Device->Registers[Y];
-}
-
-void UC8Device::AndRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] &= Device->Registers[Y];
-}
-
-void UC8Device::XORRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] ^= Device->Registers[Y];
-}
-
-void UC8Device::AddRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	const int32 Result = Device->Registers[X] + Device->Registers[Y];
-	Device->Registers[X] = static_cast<uint8>(Result) & 0xFF;
-	Device->Registers[0xF] = Result > 255 ? 1 : 0;
-}
-
-void UC8Device::SubtractRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	const int32 Result = Device->Registers[X] - Device->Registers[Y];
-	Device->Registers[0xF] = Device->Registers[X] >= Device->Registers[Y] ? 1 : 0;
-	Device->Registers[X] = static_cast<uint8>(Result) & 0xFF;
-}
-
-void UC8Device::ShiftRight(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[0xF] = Device->Registers[X] & 0x1;
-	Device->Registers[X] >>= 1;
-}
-
-void UC8Device::SubtractRegistersReverse(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	const int32 Result = Device->Registers[Y] - Device->Registers[X];
-	Device->Registers[0xF] = Device->Registers[Y] >= Device->Registers[X] ? 1 : 0;
-	Device->Registers[X] = static_cast<uint8>(Result) & 0xFF;
-}
-
-void UC8Device::ShiftLeft(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[0xF] = (Device->Registers[X] & 0x80) >> 7;
-	Device->Registers[X] <<= 1;
-}
-
-void UC8Device::SkipIfRegistersNotEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Registers[X] != Device->Registers[Y])
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::SetIndexRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->IndexRegister = Opcode & 0x0FFF;
-}
-
-void UC8Device::JumpPlusV0(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->ProgramCounter = (Opcode & 0x0FFF) + Device->Registers[0];
-}
-
-void UC8Device::Random(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] = FMath::RandRange(0, 255) & KK;
-}
-
-void UC8Device::DrawSprite(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[0xF] = 0;
-	const uint8 Height = Opcode & 0x000F;
+	/*
+	 * Note: A switch statement is not the most efficient or readable method for opcodes. It's used here for simplicity and should be replaced later.
+	 */
 	
-	for(int32 Row = 0; Row < Height; Row++)
+	const int32 X = (Opcode & 0x0F00) >> 8;
+	const int32 Y = (Opcode & 0x00F0) >> 4;
+	const int32 KK = Opcode & 0x00FF;
+	
+	switch(Opcode & 0xF000)
 	{
-		const uint8 Pixel = Device->Memory[Device->IndexRegister + Row];
+		case 0x0000:
+			switch (Opcode) {
+				case 0x00E0:
+						ClearScreen();
+					break;
+				case 0x00EE:
+						// Return from a subroutine
+							if(Stack.Num() > 0)
+							{
+								ProgramCounter = Stack.Pop();
+							}
+					break;
+				default: 
+						UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0x0000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					break;
+			}
 
-		for(int32 Col = 0; Col < 8; Col++)
-		{
-			if((Pixel & (0x80 >> Col)) != 0)
-			{
-				const int32 PixelX = Device->Registers[X] + Col;
-				const int32 PixelY = Device->Registers[Y] + Row;
-
-				const int32 PixelValue = Device->SetPixel(PixelX, PixelY);
-
-				if(PixelValue == 0)
+			break;
+		case 0x1000:
+				// Jump to address NNN
+				ProgramCounter = Opcode & 0x0FFF;
+			break;
+		case 0x2000:
+				// Call subroutine at NNN
+				Stack.Push(ProgramCounter);
+				ProgramCounter = Opcode & 0x0FFF;
+			break;
+		case 0x3000:
+				// Skip next instruction if Vx == KK
+				if(Registers[X] == KK)
 				{
-					Device->Registers[0xF] = 1;
+					ProgramCounter += 2;
+				}
+			break;
+		case 0x4000:
+				// Skip next instruction if Vx != KK
+				if(Registers[X] != KK)
+				{
+					ProgramCounter += 2;
+				}
+			break;
+		case 0x5000:
+				// Skip next instruction if Vx == Vy
+				if(Registers[X] == Registers[Y])
+				{
+					ProgramCounter += 2;
+				}
+			break;
+		case 0x6000:
+				// Set Vx to KK
+				Registers[X] = KK;
+			break;
+		case 0x7000:
+				// Add KK to Vx
+				Registers[X] = Registers[X]+KK;
+				
+			break;
+		case 0x8000:
+			switch (Opcode & 0xF) {
+				case 0x0:
+						// Set Vx to Vy
+						Registers[X] = Registers[Y];	
+					break;
+				case 0x1:
+						// Set Vx to Vx | Vy
+						Registers[X] |= Registers[Y];	
+					break;
+				case 0x2:
+						// Set Vx to Vx & Vy
+						Registers[X] &= Registers[Y];	
+					break;
+				case 0x3:
+						// Set Vx to Vx ^ Vy
+						Registers[X] ^= Registers[Y];	
+					break;
+				case 0x4:
+					{
+						// Add Vy to Vx, set VF to 1 if there's a carry
+						const int32 Result = Registers[X] + Registers[Y];
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+						Registers[0xF] = Result > 255 ? 1 : 0;
+												
+					}
+					break;
+				case 0x5:
+					{
+						// Subtract Vy from Vx, set VF to 0 if there's a borrow
+						const int32 Result = Registers[X] - Registers[Y];
+						Registers[0xF] = Registers[X] >= Registers[Y] ? 1 : 0;
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+					}
+					break;
+				case 0x6:
+						// Shift Vx right by 1, set VF to the least significant bit of Vx before the shift
+						Registers[0xF] = Registers[X] & 0x1;
+						Registers[X] >>= 1;
+					break;
+				case 0x7:
+					{
+						// Set Vx to Vy - Vx, set VF to 0 if there's a borrow
+						const int32 Result = Registers[Y] - Registers[X];
+						Registers[0xF] = Registers[Y] >= Registers[X] ? 1 : 0;
+						Registers[X] = static_cast<uint8>(Result) & 0xFF;
+					}
+					break;
+				case 0xE:
+						// Shift Vx left by 1, set VF to the most significant bit of Vx before the shift
+						Registers[0xF] = (Registers[X] & 0x80) >> 7;
+						Registers[X] <<= 1;
+					break;
+				default: 
+					UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0x8000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					break;
+			}
+		
+			break;
+		case 0x9000:
+				// Skip next instruction if Vx != Vy
+				if(Registers[X] != Registers[Y])
+				{
+					ProgramCounter += 2;
+				}
+			break;
+		case 0xA000:
+				// Set index register to NNN
+				IndexRegister = Opcode & 0x0FFF;
+			break;
+		case 0xB000:
+				// Jump to address NNN + V0
+				ProgramCounter = (Opcode & 0xFFF) + Registers[0];	
+			break;
+		case 0xC000:
+				// Set Vx to a random number & KK
+				Registers[X] = FMath::RandRange(0, 255) & KK;
+			break;
+		case 0xD000:
+			{
+				// Draw a sprite at position Vx, Vy with N bytes of sprite data starting at the address stored in I
+				Registers[0xF] = 0;
+				const uint8 Height = Opcode & 0x000F;
+
+				for(int32 Row = 0; Row < Height; Row++)
+				{
+					const uint8 Pixel = Memory[IndexRegister + Row];
+
+					for(int32 Col = 0; Col < 8; Col++)
+					{
+						if((Pixel & (0x80 >> Col)) != 0)
+						{
+							const int32 PixelX = Registers[X] + Col;
+							const int32 PixelY = Registers[Y] + Row;
+
+							const int32 PixelValue = SetPixel(PixelX, PixelY);
+
+							if(PixelValue == 0)
+							{
+								Registers[0xF] = 1;
+							}
+						}
+					}
 				}
 			}
-		}
-	}
-}
-
-void UC8Device::SkipIfKeyPressed(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Keys.FindOrAdd(static_cast<EChip8Key>(Device->Registers[X])) != 0)
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::SkipIfKeyNotPressed(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	if(Device->Keys.FindOrAdd(static_cast<EChip8Key>(Device->Registers[X])) == 0)
-	{
-		Device->ProgramCounter += 2;
-	}
-}
-
-void UC8Device::GetDelayTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Registers[X] = Device->DelayTimer;
-}
-
-void UC8Device::WaitForKeyPress(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	bool bHasKey = false;
-
-	for(auto& Key : Device->Keys)
-	{
-		if(Key.Value != 0)
-		{
-			bHasKey = true;
-			Device->Registers[X] = static_cast<uint8>(Key.Key);
 			break;
-		}
-	}
+		case 0xE000:
+			switch (Opcode & 0xFF) {
+				case 0x9E:
+						// Skip next instruction if key with the value of Vx is pressed
+						if(Keys.FindOrAdd(static_cast<EChip8Key>(Registers[X])) != 0)
+						{
+							ProgramCounter += 2;
+						}
+					break;
+				case 0xA1:
+						// Skip next instruction if key with the value of Vx is not pressed
+						if(Keys.FindOrAdd(static_cast<EChip8Key>(Registers[X])) == 0)
+						{
+							ProgramCounter += 2;
+						}	
+					break;
+				default: 
+					UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xE000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					break;
+			}
+
+			break;
+		case 0xF000:
+			switch (Opcode & 0xFF) {
+				case 0x07:
+						// Set Vx to the value of the delay timer
+						Registers[X] = DelayTimer;	
+					break;
+				case 0x0A:
+					{
+						// Wait for a key press, store the value of the key in Vx
+						bool bHasKey = false;
+
+						for(auto& Key : Keys)
+						{
+							if(Key.Value != 0)
+							{
+								bHasKey = true;
+								Registers[X] = static_cast<uint8>(Key.Key);
+								break;
+							}
+						}
 				
-	if(!bHasKey)
-	{
-		Device->ProgramCounter -= 2;
+						if(!bHasKey)
+						{
+							ProgramCounter -= 2;
+						}
+					}
+					break;
+				case 0x15:
+						// Set the delay timer to Vx
+						DelayTimer = Registers[X];	
+					break;
+				case 0x18:
+						// Set the sound timer to Vx
+						SoundTimer = Registers[X];
+					break;
+				case 0x1E:
+						// Add Vx to the index register
+						IndexRegister += Registers[X];	
+					break;
+				case 0x29:
+						// Set I to the location of the sprite for the character in Vx
+						IndexRegister = FONTSET_OFFSET + (Registers[X] * 5);	
+					break;
+				case 0x33:
+						// Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
+						Memory[IndexRegister] = Registers[X] / 100;
+						Memory[IndexRegister + 1] = (Registers[X] / 10) % 10;
+						Memory[IndexRegister + 2] = Registers[X] % 10;	
+					break;
+				case 0x55:
+						// Store V0 to Vx in memory starting at address I
+						for(int32 i = 0; i <= X; i++)
+						{
+							Memory[IndexRegister + i] = Registers[i];
+						}
+					break;
+				case 0x65:
+						// Read V0 to Vx from memory starting at address I
+						for(int32 i = 0; i <= X; i++)
+						{
+							Registers[i] = Memory[IndexRegister + i];
+						}
+					break;
+				default: 
+					UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown 0xF000 Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+					break;
+			}
+
+			break;
+		default:
+			UE_LOG(LogTemp, Warning, TEXT("%s(): Unknown Opcode 0x%X"), *FString(__FUNCTION__), Opcode);
+			break;
 	}
-}
-
-void UC8Device::SetDelayTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->DelayTimer = Device->Registers[X];
-}
-
-void UC8Device::SetSoundTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->SoundTimer = Device->Registers[X];
-}
-
-void UC8Device::AddToIndexRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->IndexRegister += Device->Registers[X];
-}
-
-void UC8Device::SetIndexRegisterToFont(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->IndexRegister = FONTSET_OFFSET + (Device->Registers[X] * 5);
-}
-
-void UC8Device::StoreBCD(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	Device->Memory[Device->IndexRegister] = Device->Registers[X] / 100;
-	Device->Memory[Device->IndexRegister + 1] = (Device->Registers[X] / 10) % 10;
-	Device->Memory[Device->IndexRegister + 2] = Device->Registers[X] % 10;
-}
-
-void UC8Device::StoreRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	for(int32 i = 0; i <= X; i++)
-	{
-		Device->Memory[Device->IndexRegister + i] = Device->Registers[i];
-	}
-}
-
-void UC8Device::LoadRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
-	for(int32 i = 0; i <= X; i++)
-	{
-		Device->Registers[i] = Device->Memory[Device->IndexRegister + i];
-	}
-}
-
-void UC8Device::Nop(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK)
-{
 }

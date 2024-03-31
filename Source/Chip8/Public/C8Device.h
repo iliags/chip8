@@ -34,48 +34,6 @@ enum class EChip8Key : uint8
 	MAX UMETA(Hidden)
 };
 
-UENUM()
-enum class EChip8Opcode : uint16
-{
-	//None = 0x0000,
-	ClearScreen = 0x00E0,
-	Return = 0x00EE,
-	Jump = 0x1000,
-	Call = 0x2000,
-	SkipIfEqual = 0x3000,
-	SkipIfNotEqual = 0x4000,
-	SkipIfRegistersEqual = 0x5000,
-	SetRegister = 0x6000,
-	AddToRegister = 0x7000,
-	SetRegisterToRegister = 0x8000,
-	OrRegisters = 0x8001,
-	AndRegisters = 0x8002,
-	XORRegisters = 0x8003,
-	AddRegisters = 0x8004,
-	SubtractRegisters = 0x8005,
-	ShiftRight = 0x8006,
-	SubtractRegistersReverse = 0x8007,
-	ShiftLeft = 0x800E,
-	SkipIfRegistersNotEqual = 0x9000,
-	SetIndexRegister = 0xA000,
-	JumpPlusV0 = 0xB000,
-	Random = 0xC000,
-	DrawSprite = 0xD000,
-	SkipIfKeyPressed = 0xE09E,
-	SkipIfKeyNotPressed = 0xE0A1,
-	GetDelayTimer = 0xF007,
-	WaitForKeyPress = 0xF00A,
-	SetDelayTimer = 0xF015,
-	SetSoundTimer = 0xF018,
-	AddToIndexRegister = 0xF01E,
-	SetIndexRegisterToFont = 0xF029,
-	StoreBCD = 0xF033,
-	StoreRegisters = 0xF055,
-	LoadRegisters = 0xF065,
-	
-	MAX UMETA(Hidden)
-};
-
 /**
  * Chip 8 Device
  */
@@ -204,41 +162,10 @@ private:
 	 */
 	void UpdateTimers();
 
-	TMap<EChip8Opcode, void(*)(UC8Device*, uint16, uint8, uint8, uint8)> OpcodeMap;
-
-	static void ClearScreenNative(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void Return(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void Jump(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void Call(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfNotEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfRegistersEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void AddToRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetRegisterToRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void OrRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void AndRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void XORRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void AddRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SubtractRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void ShiftRight(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SubtractRegistersReverse(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void ShiftLeft(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfRegistersNotEqual(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetIndexRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void JumpPlusV0(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void Random(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void DrawSprite(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfKeyPressed(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SkipIfKeyNotPressed(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void GetDelayTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void WaitForKeyPress(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetDelayTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetSoundTimer(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void AddToIndexRegister(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void SetIndexRegisterToFont(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void StoreBCD(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void StoreRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void LoadRegisters(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
-	static void Nop(UC8Device* Device, uint16 Opcode, uint8 X, uint8 Y, uint8 KK);
+	/**
+	 * Execute an opcode
+	 * @param Opcode The opcode to execute
+	 */
+	void ExecuteOpcode(uint16 Opcode);
+	
 };
