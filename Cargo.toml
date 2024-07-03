@@ -2,6 +2,7 @@
 name = "chip8"
 version = "0.1.0"
 edition = "2021"
+exclude = ["dist", "build", "assets", "credits"]
 
 [dependencies]
 bevy = { version = "0.13", default-features = false, features = [
