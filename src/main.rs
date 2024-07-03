@@ -3,11 +3,12 @@
 
 
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
+use bevy_egui::EguiPlugin;
 use winit::window::Icon;
 use std::io::Cursor;
+use chip8::ui::UIPlugin;
 
 // TODO: Once the project is more complete, look into https://bevy-cheatbook.github.io/setup/perf.html
 
@@ -26,21 +27,16 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(EguiPlugin)
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
-        .add_systems(Update, ui_example_system)
+        .add_plugins((EguiPlugin, UIPlugin))
 
         // Remove before release
         .add_systems(Update, bevy::window::close_on_esc)
-        .add_systems(Startup, set_window_icon)
-        .run();
-}
 
-fn ui_example_system(mut contexts: EguiContexts) {
-    egui::Window::new("Hello").show(contexts.ctx_mut(), |ui| {
-        ui.label("world");
-    });
+        .add_systems(Startup, set_window_icon)
+        
+        .run();
 }
 
 // Sets the icon on windows and X11
