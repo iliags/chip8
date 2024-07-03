@@ -30,6 +30,8 @@ log = { version = "0.4", features = [
     "release_max_level_warn",
 ] }
 
+[features]
+dev = ["bevy/dynamic_linking"]
 
 [profile.dev.package."*"]
 opt-level = 3
