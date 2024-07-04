@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
-use crate::DeviceContext;
+use crate::{DeviceContext, KeysPressed};
 
 // Implementation notes:
 // - Using an array for the stack with a stack pointer is faster, but using a Vec is more flexible.
@@ -22,6 +22,7 @@ pub struct C8Device {
     delay_timer: u8,
     sound_timer: u8,
     is_running: bool,
+    last_key_pressed: Option<u8>,
 }
 
 // Dead code is allowed here because:
@@ -71,6 +72,7 @@ impl Plugin for C8DevicePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, initialize_device);
         app.add_systems(Update, run_device);
+        app.add_systems(Update, check_keys_pressed);
     }
 }
 
@@ -82,6 +84,17 @@ fn initialize_device(mut commands: Commands) {
 
 fn run_device(mut device_context: ResMut<DeviceContext>) {
     device_context.device.tick(50);
+}
+
+fn check_keys_pressed(keys_pressed: Res<KeysPressed>, mut device_context: ResMut<DeviceContext>) {
+    device_context.device.last_key_pressed = None;
+    for (i, key) in keys_pressed.keys.iter().enumerate() {
+        if *key {
+            println!("Key pressed: {:#X}", i);
+
+            device_context.device.last_key_pressed = Some(i as u8);
+        }
+    }
 }
 
 impl Default for C8Device {
@@ -103,6 +116,7 @@ impl Default for C8Device {
             delay_timer: 0,
             sound_timer: 0,
             is_running: false,
+            last_key_pressed: None,
         }
     }
 }
@@ -174,7 +188,6 @@ impl C8Device {
         let nnn = opcode & 0x0FFF;
 
         // Decode the opcode
-        // TODO: Implement all opcodes
         match opcode & 0xF000 {
             0x0000 => {
                 match opcode {
@@ -359,18 +372,16 @@ impl C8Device {
                         // Set Vx to the value of the delay timer
                         self.registers[x] = self.delay_timer;
                     }
-                    0x0A => {
-                        // TODO
+                    0x0A => match self.last_key_pressed {
                         // Wait for a key press, store the value of the key in Vx
-                        //self.is_running = false;
-
-                        // TODO: Wait for key press
-                        println!("Waiting for key press (not implemented yet)");
-
-                        //self.registers[x] = KEY_PRESSED;
-
-                        //self.is_running = true;
-                    }
+                        Some(key) => {
+                            self.registers[x] = key;
+                        }
+                        None => {
+                            println!("Waiting for key press...");
+                            self.program_counter -= 2;
+                        }
+                    },
                     0x15 => {
                         // Set the delay timer to Vx
                         self.delay_timer = self.registers[x];
