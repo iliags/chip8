@@ -79,7 +79,7 @@ impl Default for App {
             // 64x32 display
             display: vec![0; 64 * 32],
             index_register: 0,
-            program_counter: 0,
+            program_counter: 0x200,
             stack: vec![],
             delay_timer: 0,
             sound_timer: 0,
@@ -91,7 +91,7 @@ impl Default for App {
             display_handle: None,
             step_counter: 0.0,
             rom_file: None,
-            cpu_speed: 500,
+            cpu_speed: 2,
             is_running: false,
         }
     }
@@ -158,7 +158,7 @@ impl App {
         }
     }
 
-    fn step(&mut self, delta_time: f32) {
+    fn step(&mut self, _: f32) {
         if self.is_running {
             // Update timers
             if self.delay_timer > 0 {
@@ -183,6 +183,15 @@ impl App {
 
                 let pc = self.program_counter as usize;
                 let opcode = (self.memory[pc] as u16) << SHIFT | self.memory[pc + 1] as u16;
+
+                println!(
+                    "Executing opcode: {:#X} from {:#X}, {:#X}",
+                    opcode,
+                    (self.memory[pc] as u16) << SHIFT,
+                    self.memory[pc + 1] as u16
+                );
+
+                self.program_counter += 2;
 
                 self.execute_instruction(opcode);
             }
@@ -344,7 +353,7 @@ impl App {
 
                     for xline in 0..8 {
                         if (pixel & (0x80 >> xline)) != 0 {
-                            if self.display[(x + xline + ((y + yline as i32) * 64)) as usize] == 1 {
+                            if self.display[(x + xline + ((y + yline as i32) * 64)) as usize] == 0 {
                                 self.registers[Register::VF as usize] = 1;
                             }
 
