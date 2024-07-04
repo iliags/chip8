@@ -86,7 +86,7 @@ impl Default for App {
             registers: vec![0; 16],
             display_image: egui::ColorImage::new(
                 [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
-                Color32::BLACK,
+                Color32::WHITE,
             ),
             display_handle: None,
             step_counter: 0.0,
@@ -121,7 +121,6 @@ impl App {
     // Using i32 for x and y to allow for wrapping around the screen
     fn set_pixel(&mut self, x: i32, y: i32) {
         // If the pixels are out of bounds, wrap them around
-        // Wrap around the screen
         let x = x % SCREEN_WIDTH;
         let y = y % SCREEN_HEIGHT;
 
@@ -133,30 +132,29 @@ impl App {
     }
 
     fn clear_screen(&mut self) {
-        self.display = vec![0; 64 * 32];
+        self.display = vec![0; (SCREEN_WIDTH * SCREEN_HEIGHT) as usize];
     }
 
     fn test_display(&mut self) {
         self.set_pixel(0, 0);
         self.set_pixel(10, 10);
-        self.set_pixel(20, 15);
+        self.set_pixel(20, 20);
+
+        self.update_display_image();
     }
 
     fn update_display_image(&mut self) {
         // Clear image
-        self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
+        //self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
 
-        for y in 0..SCREEN_HEIGHT {
-            for x in 0..SCREEN_WIDTH {
-                let index = (x + y * 64) as usize;
-                let color = if self.display[index] == 1 {
-                    Color32::WHITE
-                } else {
-                    Color32::BLACK
-                };
+        for (i, &pixel) in self.display.iter().enumerate() {
+            let color = if pixel == 1 {
+                Color32::WHITE
+            } else {
+                Color32::BLACK
+            };
 
-                self.display_image.pixels[index] = color;
-            }
+            self.display_image.pixels[i] = color;
         }
     }
 
@@ -181,8 +179,11 @@ impl App {
 
             // Execute instructions
             for _ in 0..self.cpu_speed {
-                let opcode = (self.memory[self.program_counter as usize] as u16) << 8
-                    | (self.memory[(self.program_counter + 1) as usize] as u16);
+                const SHIFT: u8 = 8;
+
+                let pc = self.program_counter as usize;
+                let opcode = (self.memory[pc] as u16) << SHIFT | self.memory[pc + 1] as u16;
+
                 self.execute_instruction(opcode);
             }
         }
@@ -488,6 +489,9 @@ impl eframe::App for App {
                         //println!("Memory {:?}", self.memory);
                     }
                 }
+                if ui.button("Test Display").clicked() {
+                    self.test_display();
+                }
                 ui.add_space(16.0);
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
@@ -498,18 +502,15 @@ impl eframe::App for App {
             egui::Window::new("Display")
                 .resizable(true)
                 .show(ctx, |ui| {
-                    // Create the display texture handle if it doesn't exist
-                    if self.display_handle.is_none() {
-                        self.display_handle = Some(ctx.load_texture(
-                            "DisplayTexture",
-                            egui::ImageData::Color(Arc::new(self.display_image.clone())),
-                            TextureOptions {
-                                magnification: egui::TextureFilter::Nearest,
-                                minification: egui::TextureFilter::Nearest,
-                                wrap_mode: egui::TextureWrapMode::ClampToEdge,
-                            },
-                        ));
-                    }
+                    self.display_handle = Some(ctx.load_texture(
+                        "DisplayTexture",
+                        egui::ImageData::Color(Arc::new(self.display_image.clone())),
+                        TextureOptions {
+                            magnification: egui::TextureFilter::Nearest,
+                            minification: egui::TextureFilter::Nearest,
+                            wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                        },
+                    ));
 
                     let image = egui::Image::new(self.display_handle.as_ref().unwrap())
                         .fit_to_exact_size(Vec2::new(512.0, 256.0));
