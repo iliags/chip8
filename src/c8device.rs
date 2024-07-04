@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
-
 // Implementation notes:
 // - Using an array for the stack with a stack pointer is faster, but using a Vec is more flexible.
 
@@ -93,10 +92,22 @@ impl Default for C8Device {
     }
 }
 
-impl C8Device
-{
+impl C8Device {
+    pub fn tick(&mut self, cpu_speed: i32) {
+        self.update_timers();
+        for _ in 0..cpu_speed {
+            let pc = self.program_counter as usize;
+            let opcode = ((self.memory[pc] << 8) | self.memory[pc + 1]) as u16;
+
+            self.program_counter += 2;
+
+            self.execute_opcode(opcode);
+        }
+    }
+
     // XORs the pixel at the given coordinates
-    pub fn set_pixel(&mut self, x: i32, y: i32) { //-> u8 {
+    pub fn set_pixel(&mut self, x: i32, y: i32) {
+        //-> u8 {
         // Wrap around the screen
         let x = x % SCREEN_WIDTH;
         let y = y % SCREEN_HEIGHT;
@@ -109,6 +120,12 @@ impl C8Device
 
         // Return the pixel value
         //self.memory[index]
+    }
+
+    pub fn test_display(&mut self) {
+        self.set_pixel(0, 0);
+        self.set_pixel(10, 10);
+        self.set_pixel(20, 15);
     }
 
     pub fn update_timers(&mut self) {
@@ -147,7 +164,10 @@ impl C8Device
                     0x00EE => {
                         // Return from a subroutine
                         // TODO: Make this more graceful
-                        self.program_counter = self.stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
+                        self.program_counter = self
+                            .stack
+                            .pop()
+                            .unwrap_or_else(|| panic!("Stack underflow"));
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -210,13 +230,15 @@ impl C8Device
                     // TODO: 0x4, 0x5, 0x6, 0x7, and 0xE have quirks associated with them
                     0x4 => {
                         // Set Vx = Vx + Vy, set VF = carry
-                        let (result, overflow) = self.registers[x].overflowing_add(self.registers[y]);
+                        let (result, overflow) =
+                            self.registers[x].overflowing_add(self.registers[y]);
                         self.registers[x] = result;
                         self.registers[Register::VF as usize] = overflow as u8;
                     }
                     0x5 => {
                         // Set Vx = Vx - Vy, set VF = NOT borrow
-                        let (result, overflow) = self.registers[x].overflowing_sub(self.registers[y]);
+                        let (result, overflow) =
+                            self.registers[x].overflowing_sub(self.registers[y]);
                         self.registers[x] = result;
                         self.registers[Register::VF as usize] = !overflow as u8;
                     }
@@ -227,7 +249,8 @@ impl C8Device
                     }
                     0x7 => {
                         // Set Vx = Vy - Vx, set VF = NOT borrow
-                        let (result, overflow) = self.registers[y].overflowing_sub(self.registers[x]);
+                        let (result, overflow) =
+                            self.registers[y].overflowing_sub(self.registers[x]);
                         self.registers[x] = result;
                         self.registers[Register::VF as usize] = !overflow as u8;
                     }
@@ -271,7 +294,7 @@ impl C8Device
 
                 for yline in 0..sprite_height {
                     let pixel = self.memory[(self.index_register + yline as u16) as usize];
-                    
+
                     for xline in 0..8 {
                         if (pixel & (0x80 >> xline)) != 0 {
                             if self.display[(x + xline + ((y + yline as i32) * 64)) as usize] == 1 {
@@ -374,6 +397,5 @@ impl C8Device
                 println!("Unknown opcode: {:#X}", opcode);
             }
         }
-            
     }
 }
