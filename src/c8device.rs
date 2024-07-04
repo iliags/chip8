@@ -96,8 +96,10 @@ impl C8Device {
     pub fn tick(&mut self, cpu_speed: i32) {
         self.update_timers();
         for _ in 0..cpu_speed {
+            const SHIFT: u8 = 8;
+
             let pc = self.program_counter as usize;
-            let opcode = ((self.memory[pc] << 8) | self.memory[pc + 1]) as u16;
+            let opcode = ((self.memory[pc] << SHIFT) | self.memory[pc + 1]) as u16;
 
             self.program_counter += 2;
 
