@@ -70,16 +70,14 @@ static FONT: &'static [u8] = &[
 
 impl Plugin for C8DevicePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, initialize_device);
+        app.add_systems(Startup, test_display);
         app.add_systems(Update, run_device);
         app.add_systems(Update, check_keys_pressed);
     }
 }
 
-fn initialize_device(mut commands: Commands) {
-    commands.insert_resource(DeviceContext {
-        device: C8Device::default(),
-    });
+fn test_display(mut device_context: ResMut<DeviceContext>) {
+    device_context.device.test_display();
 }
 
 fn run_device(mut device_context: ResMut<DeviceContext>) {
@@ -140,6 +138,10 @@ impl C8Device {
         }
     }
 
+    pub fn get_display(&self) -> &[u8] {
+        &self.display
+    }
+
     // XORs the pixel at the given coordinates
     pub fn set_pixel(&mut self, x: i32, y: i32) {
         //-> u8 {
@@ -158,9 +160,12 @@ impl C8Device {
     }
 
     pub fn test_display(&mut self) {
-        self.set_pixel(0, 0);
-        self.set_pixel(10, 10);
-        self.set_pixel(20, 15);
+        //self.set_pixel(0, 0);
+        //self.set_pixel(10, 10);
+        //self.set_pixel(20, 15);
+        for i in 0..SCREEN_SIZE {
+            self.display[i] = i as u8 % 2;
+        }
     }
 
     pub fn update_timers(&mut self) {

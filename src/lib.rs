@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 pub mod c8device;
+pub mod display;
 pub mod input;
 pub mod ui;
 
@@ -19,7 +20,7 @@ impl Default for KeysPressed {
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct DeviceContext {
     device: c8device::C8Device,
 }
