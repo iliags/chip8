@@ -12,3 +12,14 @@ pub mod ui;
 pub struct KeysPressed {
     keys: [bool; 16],
 }
+
+impl Default for KeysPressed {
+    fn default() -> Self {
+        Self { keys: [false; 16] }
+    }
+}
+
+#[derive(Resource)]
+pub struct DeviceContext {
+    device: c8device::C8Device,
+}
