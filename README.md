@@ -2,10 +2,19 @@
 
 A Chip-8 emulator for practice.
 
-## History
+## Building
 
-I started writing this using Rust with egui to get familiar with Rust and its ecosystem. During development, I realized that some of the things I wanted to do (aside from pure emulation) required recreating work done in existing game engines. I switched to Unreal Engine as it provides most of the additional frameworks necessary for these features.
+### PC
 
-## Future
+```cargo build --release```
+```cargo run --release```
 
-I'm working on this in my spare time, so I don't have a set roadmap of features to add.
+### WASM
+
+- Install trunk using ```cargo install trunk```
+  - This may take a while
+- Build using ```trunk serve --release```
+
+### Build Warnings
+
+If ```wasm-bindgen-cli``` was installed separately, but not updated, it may print a tool mismatch warning.
