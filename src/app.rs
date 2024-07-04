@@ -16,7 +16,6 @@ pub struct App {
 
     display_image: egui::ColorImage,
     display_handle: Option<egui::TextureHandle>,
-    step_counter: f32,
     cpu_speed: u32,
 
     rom_file: Option<Vec<u8>>,
@@ -68,7 +67,6 @@ static FONT: &'static [u8] = &[
 
 const SCREEN_WIDTH: i32 = 64;
 const SCREEN_HEIGHT: i32 = 32;
-const STEP_INTERVAL: f32 = 0.0167; // 60 FPS
 
 impl Default for App {
     fn default() -> Self {
@@ -86,12 +84,11 @@ impl Default for App {
             registers: vec![0; 16],
             display_image: egui::ColorImage::new(
                 [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
-                Color32::WHITE,
+                Color32::BLACK,
             ),
             display_handle: None,
-            step_counter: 0.0,
             rom_file: None,
-            cpu_speed: 2,
+            cpu_speed: 50,
             is_running: false,
         }
     }
@@ -112,10 +109,29 @@ impl App {
 
     // Loads ROM and font data into memory
     fn load_rom(&mut self, rom: Vec<u8>) {
+        self.reset_device();
         self.load_font();
         for (i, &byte) in rom.iter().enumerate() {
             self.memory[i + 512] = byte;
         }
+    }
+
+    fn reset_device(&mut self) {
+        self.memory = vec![0; 4096];
+        self.display = vec![0; 64 * 32];
+        self.index_register = 0;
+        self.program_counter = 0x200;
+        self.stack = vec![];
+        self.delay_timer = 0;
+        self.sound_timer = 0;
+        self.registers = vec![0; 16];
+        self.display_image = egui::ColorImage::new(
+            [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
+            Color32::BLACK,
+        );
+        self.display_handle = None;
+        self.rom_file = None;
+        self.is_running = false;
     }
 
     // Using i32 for x and y to allow for wrapping around the screen
@@ -148,8 +164,6 @@ impl App {
 
     fn update_display_image(&mut self) {
         // Clear image
-        //self.display_image.pixels = vec![Color32::BLACK; 64 * 32];
-
         for (i, &pixel) in self.display.iter().enumerate() {
             let color = if pixel == 1 {
                 Color32::WHITE
