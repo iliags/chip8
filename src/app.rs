@@ -119,7 +119,7 @@ impl App {
     }
 
     // Using i32 for x and y to allow for wrapping around the screen
-    fn set_pixel(&mut self, x: i32, y: i32) {
+    fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
         // If the pixels are out of bounds, wrap them around
         let x = x % SCREEN_WIDTH;
         let y = y % SCREEN_HEIGHT;
@@ -129,6 +129,9 @@ impl App {
 
         // Pixels are XORed on the display
         self.display[index] ^= 1;
+
+        // Return the pixel value
+        self.display[index]
     }
 
     fn clear_screen(&mut self) {
@@ -184,12 +187,12 @@ impl App {
                 let pc = self.program_counter as usize;
                 let opcode = (self.memory[pc] as u16) << SHIFT | self.memory[pc + 1] as u16;
 
-                println!(
+                /* println!(
                     "Executing opcode: {:#X} from {:#X}, {:#X}",
                     opcode,
                     (self.memory[pc] as u16) << SHIFT,
                     self.memory[pc + 1] as u16
-                );
+                ); */
 
                 self.program_counter += 2;
 
@@ -341,26 +344,20 @@ impl App {
             }
             0xD000 => {
                 // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
-                self.registers[Register::VF as usize] = 0;
-
                 let x = self.registers[x] as i32;
                 let y = self.registers[y] as i32;
+                let height = opcode & 0x000F;
 
-                let sprite_height = n;
+                self.registers[0xF] = 0;
 
-                for yline in 0..sprite_height {
-                    let pixel = self.memory[(self.index_register + yline as u16) as usize];
+                for row in 0..height {
+                    let pixel = self.memory[(self.index_register + row) as usize];
 
-                    for xline in 0..8 {
-                        if (pixel & (0x80 >> xline)) != 0 {
-                            if self.display[(x + xline + ((y + yline as i32) * 64)) as usize] == 0 {
-                                self.registers[Register::VF as usize] = 1;
+                    for col in 0..8 {
+                        if (pixel & (0x80 >> col)) != 0 {
+                            if self.set_pixel(x + col, y + row as i32) == 0 {
+                                self.registers[0xF] = 1;
                             }
-
-                            /*
-                            if self.set_pixel(x + xline, y + yline as i32) == 0 {
-                                self.registers[Register::VF as usize] = 1;
-                            }*/
                         }
                     }
                 }
