@@ -30,6 +30,8 @@ log = { version = "0.4", features = [
     "max_level_debug",
     "release_max_level_warn",
 ] }
+strum = "0.26"
+strum_macros = "0.26"
 
 [features]
 dev = ["bevy/dynamic_linking"]

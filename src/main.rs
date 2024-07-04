@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy_egui::EguiPlugin;
-use chip8::ui::UIPlugin;
+use chip8::{input::InputPlugin, ui::UIPlugin};
 use std::io::Cursor;
 use winit::window::Icon;
 
@@ -28,7 +28,7 @@ fn main() {
         }))
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
-        .add_plugins((EguiPlugin, UIPlugin))
+        .add_plugins((EguiPlugin, UIPlugin, InputPlugin))
         // Remove before release
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, set_window_icon)
