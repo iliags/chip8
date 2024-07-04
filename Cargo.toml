@@ -1,54 +1,35 @@
 [package]
 name = "chip8"
 version = "0.1.0"
+authors = ["James Lennon"]
 edition = "2021"
-exclude = ["dist", "build", "assets", "credits"]
+
 
 [dependencies]
-bevy = { version = "0.13", default-features = false, features = [
-    "bevy_asset",
-    "bevy_gilrs",
-    "bevy_scene",
-    "bevy_winit",
-    "bevy_core_pipeline",
-    "bevy_render",
-    "bevy_sprite",
-    "multi-threaded",
-    "png",
-    "x11",
-    "bevy_gizmos",
-    "webgl2",
-    "bevy_debug_stepping",
-    "dynamic_linking",
+egui = "0.28"
+eframe = { version = "0.28", default-features = false, features = [
+    "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
 ] }
-bevy_egui = "0.27"
+log = "0.4"
+rfd = "0.14"
+bevy_tasks = "0.13"
 rand = { version = "0.8" }
-webbrowser = { version = "1.0", features = ["hardened"] }
-# 0.29 required due to bevy_egui
-winit = { version = "0.29", default-features = false }
-image = { version = "0.25", default-features = false }
-log = { version = "0.4", features = [
-    "max_level_debug",
-    "release_max_level_warn",
-] }
-strum = "0.26"
-strum_macros = "0.26"
 
-[profile.dev.package."*"]
-opt-level = 3
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11.2"
 
-[profile.dev]
-opt-level = 1
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4"
+getrandom = { version = "0.2", features = ["js"] }
+
 
 [profile.release]
-opt-level = "s"
-lto = true
-codegen-units = 1
-strip = true
+opt-level = 2 # fast and small wasm
 
-[profile.dist]
-inherits = "release"
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
 opt-level = 3
-lto = true
-codegen-units = 1
-strip = true
