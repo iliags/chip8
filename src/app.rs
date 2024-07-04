@@ -181,17 +181,17 @@ impl App {
             if self.delay_timer > 0 {
                 self.delay_timer = self.delay_timer.saturating_sub(1);
 
-                if self.delay_timer == 0 {
+                /*  if self.delay_timer == 0 {
                     println!("Delay timer at 0");
-                }
+                } */
             }
 
             if self.sound_timer > 0 {
                 self.sound_timer = self.sound_timer.saturating_sub(1);
 
-                if self.sound_timer == 0 {
+                /* if self.sound_timer == 0 {
                     println!("Sound timer at 0");
-                }
+                } */
             }
 
             // Execute instructions
@@ -222,7 +222,7 @@ impl App {
         // Extract the opcode parts
         let x = ((opcode & 0x0F00) >> 8) as usize;
         let y = ((opcode & 0x00F0) >> 4) as usize;
-        let n = (opcode & 0x000F) as u8;
+        //let n = (opcode & 0x000F) as u8;
         let nn = (opcode & 0x00FF) as u8;
         let nnn = opcode & 0x0FFF;
 
@@ -502,15 +502,16 @@ impl eframe::App for App {
                     });
 
                     if self.rom_file.is_some() {
-                        println!("ROM file loaded");
                         self.load_rom(self.rom_file.as_ref().unwrap().clone());
                         self.is_running = true;
 
-                        //println!("Memory {:?}", self.memory);
+                        println!("ROM loaded");
                     }
                 }
-                if ui.button("Test Display").clicked() {
-                    self.test_display();
+                if cfg!(debug_assertions) {
+                    if ui.button("Test Display").clicked() {
+                        self.test_display();
+                    }
                 }
                 ui.add_space(16.0);
 
