@@ -1,14 +1,13 @@
 // Disable console on windows for release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy_egui::EguiPlugin;
-use winit::window::Icon;
-use std::io::Cursor;
 use chip8::ui::UIPlugin;
+use std::io::Cursor;
+use winit::window::Icon;
 
 // TODO: Once the project is more complete, look into https://bevy-cheatbook.github.io/setup/perf.html
 
@@ -30,12 +29,9 @@ fn main() {
         // Systems that create Egui widgets should be run during the `CoreSet::Update` set,
         // or after the `EguiSet::BeginFrame` system (which belongs to the `CoreSet::PreUpdate` set).
         .add_plugins((EguiPlugin, UIPlugin))
-
         // Remove before release
         .add_systems(Update, bevy::window::close_on_esc)
-
         .add_systems(Startup, set_window_icon)
-        
         .run();
 }
 
@@ -48,9 +44,7 @@ fn set_window_icon(
     let Some(primary) = windows.get_window(primary_entity) else {
         return;
     };
-    let icon_buf = Cursor::new(include_bytes!(
-        "../build/icon_256x256.png"
-    ));
+    let icon_buf = Cursor::new(include_bytes!("../build/icon_256x256.png"));
     if let Ok(image) = image::load(icon_buf, image::ImageFormat::Png) {
         let image = image.into_rgba8();
         let (width, height) = image.dimensions();

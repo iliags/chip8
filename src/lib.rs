@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-pub mod ui;
 pub mod c8device;
+pub mod ui;
 
 //use crate::ui::UIPlugin;
