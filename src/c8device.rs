@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
+use crate::DeviceContext;
+
 // Implementation notes:
 // - Using an array for the stack with a stack pointer is faster, but using a Vec is more flexible.
 
@@ -19,6 +21,7 @@ pub struct C8Device {
     program_counter: u16,
     delay_timer: u8,
     sound_timer: u8,
+    is_running: bool,
 }
 
 // Dead code is allowed here because:
@@ -66,8 +69,19 @@ static FONT: &'static [u8] = &[
 
 impl Plugin for C8DevicePlugin {
     fn build(&self, app: &mut App) {
-        //app.add_systems(Update, ui_example_system);
+        app.add_systems(Startup, initialize_device);
+        app.add_systems(Update, run_device);
     }
+}
+
+fn initialize_device(mut commands: Commands) {
+    commands.insert_resource(DeviceContext {
+        device: C8Device::default(),
+    });
+}
+
+fn run_device(mut device_context: ResMut<DeviceContext>) {
+    device_context.device.tick(50);
 }
 
 impl Default for C8Device {
@@ -88,12 +102,17 @@ impl Default for C8Device {
             program_counter: 0,
             delay_timer: 0,
             sound_timer: 0,
+            is_running: false,
         }
     }
 }
 
 impl C8Device {
     pub fn tick(&mut self, cpu_speed: i32) {
+        if !self.is_running {
+            return;
+        }
+
         self.update_timers();
         for _ in 0..cpu_speed {
             const SHIFT: u8 = 8;

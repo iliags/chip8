@@ -33,8 +33,13 @@ pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Startup, initialize_input);
         app.add_systems(Update, keyboard_events);
     }
+}
+
+fn initialize_input(mut commands: Commands) {
+    commands.insert_resource(KeysPressed::default());
 }
 
 fn keyboard_events(
