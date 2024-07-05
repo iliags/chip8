@@ -92,7 +92,6 @@ impl eframe::App for App {
                     if self.rom_file.is_some() {
                         self.c8_device
                             .load_rom(self.rom_file.as_ref().unwrap().clone());
-                        //self.is_running = true;
 
                         println!("ROM loaded");
                     }
