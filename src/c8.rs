@@ -138,18 +138,12 @@ impl C8 {
             // Update timers
             if self.delay_timer > 0 {
                 self.delay_timer = self.delay_timer.saturating_sub(1);
-
-                /*  if self.delay_timer == 0 {
-                    println!("Delay timer at 0");
-                } */
             }
 
             if self.sound_timer > 0 {
                 self.sound_timer = self.sound_timer.saturating_sub(1);
 
-                /* if self.sound_timer == 0 {
-                    println!("Sound timer at 0");
-                } */
+                // TODO: Play sound
             }
 
             // Execute instructions
@@ -159,6 +153,7 @@ impl C8 {
                 let pc = self.program_counter as usize;
                 let opcode = (self.memory[pc] as u16) << SHIFT | self.memory[pc + 1] as u16;
 
+                // TODO: Move to a UI window
                 /* println!(
                     "Executing opcode: {:#X} from {:#X}, {:#X}",
                     opcode,
