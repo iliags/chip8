@@ -14,7 +14,7 @@ eframe = { version = "0.28", default-features = false, features = [
 ] }
 log = "0.4"
 rfd = "0.14"
-bevy_tasks = "0.13"
+bevy_tasks = "0.14"
 rand = { version = "0.8" }
 
 # native:
