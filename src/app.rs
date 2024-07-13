@@ -1,6 +1,6 @@
 use crate::c8::*;
 use bevy_tasks::futures_lite::future;
-use egui::{Color32, TextureOptions, Vec2};
+use egui::{Color32, Key, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
 
@@ -13,6 +13,25 @@ pub struct App {
 
     c8_device: C8,
 }
+
+static KEYBOARD: &[Key] = &[
+    Key::Num1,
+    Key::Num2,
+    Key::Num3,
+    Key::Num4,
+    Key::Q,
+    Key::W,
+    Key::E,
+    Key::R,
+    Key::A,
+    Key::S,
+    Key::D,
+    Key::F,
+    Key::Z,
+    Key::X,
+    Key::C,
+    Key::V,
+];
 
 impl Default for App {
     fn default() -> Self {
@@ -57,6 +76,11 @@ impl eframe::App for App {
             self.c8_device.step(self.cpu_speed);
             self.update_display_image();
 
+            // Process input
+            for key in KEYBOARD {
+                ctx.input(|i| self.c8_device.set_key(*key, i.key_down(*key)));
+            }
+
             // Draw the UI
             egui::menu::bar(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
@@ -96,6 +120,16 @@ impl eframe::App for App {
                         println!("ROM loaded");
                     }
                 }
+
+                if ui.button("Reload ROM").clicked() {
+                    if self.rom_file.is_some() {
+                        self.c8_device
+                            .load_rom(self.rom_file.as_ref().unwrap().clone());
+
+                        println!("ROM reloaded");
+                    }
+                }
+
                 ui.add_space(16.0);
 
                 egui::widgets::global_dark_light_mode_buttons(ui);

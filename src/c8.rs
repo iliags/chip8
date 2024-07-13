@@ -1,3 +1,4 @@
+use egui::Key;
 use rand::prelude::*;
 
 pub struct C8 {
@@ -10,6 +11,7 @@ pub struct C8 {
     pub sound_timer: u8,
     pub registers: Vec<u8>,
     pub is_running: bool,
+    keyboard: [u8; 16],
 }
 
 // Dead code is allowed here because:
@@ -74,6 +76,7 @@ impl Default for C8 {
             sound_timer: 0,
             registers: vec![0; 16],
             is_running: false,
+            keyboard: [0; 16],
         }
     }
 }
@@ -106,6 +109,7 @@ impl C8 {
         self.sound_timer = 0;
         self.registers = vec![0; 16];
         self.is_running = false;
+        self.keyboard = [0; 16];
     }
 
     // Using i32 for x and y to allow for wrapping around the screen
@@ -122,6 +126,30 @@ impl C8 {
 
         // Return the pixel value
         self.display[index]
+    }
+
+    pub fn set_key(&mut self, key: Key, pressed: bool) {
+        let key_index = match key {
+            Key::Num1 => 0x1,
+            Key::Num2 => 0x2,
+            Key::Num3 => 0x3,
+            Key::Num4 => 0xC,
+            Key::Q => 0x4,
+            Key::W => 0x5,
+            Key::E => 0x6,
+            Key::R => 0xD,
+            Key::A => 0x7,
+            Key::S => 0x8,
+            Key::D => 0x9,
+            Key::F => 0xE,
+            Key::Z => 0xA,
+            Key::X => 0x0,
+            Key::C => 0xB,
+            Key::V => 0xF,
+            _ => return,
+        };
+
+        self.keyboard[key_index as usize] = pressed as u8;
     }
 
     fn clear_screen(&mut self) {
@@ -323,12 +351,11 @@ impl C8 {
             }
             0xE000 => {
                 match opcode & 0xFF {
-                    // TODO: This is a placeholder for the actual key press detection
                     0x9E => {
                         // Skip next instruction if key with the value of Vx is pressed
                         let key = self.registers[x] as usize;
 
-                        if key != 0 {
+                        if self.keyboard[key] != 0 {
                             self.program_counter += 2;
                         }
                     }
@@ -336,7 +363,7 @@ impl C8 {
                         // Skip next instruction if key with the value of Vx is not pressed
                         let key = self.registers[x] as usize;
 
-                        if key == 0 {
+                        if self.keyboard[key] == 0 {
                             self.program_counter += 2;
                         }
                     }
@@ -352,10 +379,21 @@ impl C8 {
                         self.registers[x] = self.delay_timer;
                     }
                     0x0A => {
-                        // TODO: Wait for a key press, store the value of the key in Vx
-                        println!("Waiting for key press (not implemented yet)");
+                        // TODO: This doesn't feel right
 
-                        //self.program_counter -= 2;
+                        let mut key_pressed = false;
+
+                        for i in 0..16 {
+                            if self.keyboard[i] != 0 {
+                                key_pressed = true;
+                                self.registers[x] = i as u8;
+                                break;
+                            }
+                        }
+
+                        if !key_pressed {
+                            self.program_counter -= 2;
+                        }
                     }
                     0x15 => {
                         // Set the delay timer to Vx
