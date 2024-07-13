@@ -57,6 +57,7 @@ static FONT: &'static [u8] = &[
 
 pub const SCREEN_WIDTH: i32 = 64;
 pub const SCREEN_HEIGHT: i32 = 32;
+pub const SCREEN_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 
 impl Default for C8 {
     fn default() -> Self {
@@ -65,7 +66,7 @@ impl Default for C8 {
             memory: vec![0; 4096],
 
             // 64x32 display
-            display: vec![0; 64 * 32],
+            display: vec![0; SCREEN_SIZE],
             index_register: 0,
             program_counter: 0x200,
             stack: vec![],
@@ -97,7 +98,7 @@ impl C8 {
 
     fn reset_device(&mut self) {
         self.memory = vec![0; 4096];
-        self.display = vec![0; 64 * 32];
+        self.display = vec![0; SCREEN_SIZE];
         self.index_register = 0;
         self.program_counter = 0x200;
         self.stack = vec![];
@@ -328,11 +329,12 @@ impl C8 {
             }
             0xE000 => {
                 match opcode & 0xFF {
+                    // TODO: This is a placeholder for the actual key press detection
                     0x9E => {
                         // Skip next instruction if key with the value of Vx is pressed
                         let key = self.registers[x] as usize;
 
-                        if key == 0 {
+                        if key != 0 {
                             self.program_counter += 2;
                         }
                     }
@@ -340,7 +342,7 @@ impl C8 {
                         // Skip next instruction if key with the value of Vx is not pressed
                         let key = self.registers[x] as usize;
 
-                        if key != 0 {
+                        if key == 0 {
                             self.program_counter += 2;
                         }
                     }
