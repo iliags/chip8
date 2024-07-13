@@ -2,6 +2,13 @@
 
 A Chip-8 emulator for practice.
 
+## Input Mapping
+
+1234
+QWER
+ASDF
+ZXCV
+
 ## Building
 
 ### PC
