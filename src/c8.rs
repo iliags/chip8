@@ -128,12 +128,6 @@ impl C8 {
         self.display = vec![0; (SCREEN_WIDTH * SCREEN_HEIGHT) as usize];
     }
 
-    fn test_display(&mut self) {
-        self.set_pixel(0, 0);
-        self.set_pixel(10, 10);
-        self.set_pixel(20, 20);
-    }
-
     pub fn step(&mut self, cpu_speed: u32) {
         if self.is_running {
             // Update timers
