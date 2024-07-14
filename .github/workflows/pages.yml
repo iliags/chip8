@@ -4,12 +4,13 @@ name: Github Pages
 on:
   push:
     branches:
-      - main
+      - published
+      #- main
 # to only run when you do a new github release, comment out above part and uncomment the below trigger.
-#on:
-#  release:
-#    types:
-#      - published
+# on:
+#   release:
+#     types:
+#       - published
 
 permissions:
   contents: write # for committing to gh-pages branch.
