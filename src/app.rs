@@ -1,8 +1,13 @@
 use crate::c8::*;
-use bevy_tasks::futures_lite::future;
 use egui::{color_picker::color_picker_color32, Color32, Key, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
 use std::{default, sync::Arc};
+
+#[cfg(target_arch = "wasm32")]
+use std::{cell::RefCell, rc::Rc};
+
+#[cfg(not(target_arch = "wasm32"))]
+use bevy_tasks::futures_lite::future;
 
 const DEFAULT_CPU_SPEED: u32 = 50;
 
@@ -25,6 +30,9 @@ pub struct App {
 
     /// The pixel colors
     pixel_colors: PixelColors,
+
+    #[cfg(target_arch = "wasm32")]
+    file_data: Rc<RefCell<Option<Vec<u8>>>>,
 }
 
 /// The colors used to display the pixels
@@ -84,6 +92,9 @@ impl Default for App {
             cpu_speed: DEFAULT_CPU_SPEED,
             c8_device: C8::default(),
             pixel_colors: PixelColors::default(),
+
+            #[cfg(target_arch = "wasm32")]
+            file_data: Rc::new(RefCell::new(None)),
         }
     }
 }
@@ -130,30 +141,70 @@ impl eframe::App for App {
                 }
 
                 if ui.button("Open ROM").clicked() {
-                    self.rom_file = future::block_on(async {
-                        let file = AsyncFileDialog::new()
-                            .add_filter("Chip8", &["ch8"])
-                            .set_directory("/")
-                            .pick_file()
-                            .await;
+                    let task = AsyncFileDialog::new()
+                        .add_filter("Chip8", &["ch8"])
+                        .set_directory("/")
+                        .pick_file();
 
-                        ui.close_menu();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        self.rom_file = future::block_on(async {
+                            let file = task.await;
 
-                        if let Some(file) = file {
-                            let file = file.read().await;
-                            Some(file)
+                            ui.close_menu();
+
+                            if let Some(file) = file {
+                                let file = file.read().await;
+                                Some(file)
+                            } else {
+                                None
+                            }
+                        });
+
+                        if self.rom_file.is_some() {
+                            self.c8_device
+                                .load_rom(self.rom_file.as_ref().unwrap().clone());
+
+                            println!("ROM loaded");
                         } else {
-                            None
+                            println!("No ROM selected");
                         }
-                    });
+                    }
 
-                    if self.rom_file.is_some() {
-                        self.c8_device
-                            .load_rom(self.rom_file.as_ref().unwrap().clone());
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        // Clone the file data for the async block
+                        let data_clone = Rc::clone(&self.file_data.clone());
 
-                        println!("ROM loaded");
-                    } else {
-                        println!("No ROM selected");
+                        wasm_bindgen_futures::spawn_local(async move {
+                            let file = task.await;
+
+                            let file_data = match file {
+                                Some(file) => {
+                                    let file = file.read().await;
+                                    Some(file)
+                                }
+                                None => None,
+                            };
+
+                            // Update the shared state
+                            *data_clone.borrow_mut() = file_data;
+                        });
+                    }
+
+                    ui.close_menu();
+                }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    match self.file_data.take() {
+                        Some(file_data) => {
+                            self.rom_file = Some(file_data);
+                            self.c8_device
+                                .load_rom(self.rom_file.as_ref().unwrap().clone());
+                            self.file_data = Rc::new(RefCell::new(None));
+                        }
+                        None => {}
                     }
                 }
 
