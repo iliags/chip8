@@ -1,6 +1,7 @@
 use egui::Key;
 use rand::prelude::*;
 
+/// Chip-8 Device
 #[derive(Debug)]
 pub struct C8 {
     pub memory: Vec<u8>,
@@ -39,7 +40,7 @@ enum Register {
     VF,
 }
 
-// Font data
+/// Font data
 static FONT: &'static [u8] = &[
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -84,14 +85,14 @@ impl Default for C8 {
 }
 
 impl C8 {
-    // Load font in the first 512 bytes of memory
+    /// Load font in the first 512 bytes of memory
     fn load_font(&mut self) {
         for (i, &byte) in FONT.iter().enumerate() {
             self.memory[i] = byte;
         }
     }
 
-    // Loads ROM and font data into memory
+    /// Loads ROM and font data into memory
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();
         self.load_font();
@@ -101,6 +102,7 @@ impl C8 {
         self.is_running = true;
     }
 
+    /// Resets the device
     fn reset_device(&mut self) {
         self.memory = vec![0; 4096];
         self.display = vec![0; SCREEN_SIZE];
@@ -114,7 +116,7 @@ impl C8 {
         self.keyboard = [0; 16];
     }
 
-    // Using i32 for x and y to allow for wrapping around the screen
+    /// Using i32 for x and y to allow for wrapping around the screen
     fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
         // If the pixels are out of bounds, wrap them around
         let x = x % SCREEN_WIDTH;
@@ -130,6 +132,7 @@ impl C8 {
         self.display[index]
     }
 
+    /// Set the state of a key
     pub fn set_key(&mut self, key: &Key, pressed: bool) {
         let key_index = match self.get_key_index(key) {
             Some(index) => index,
@@ -142,6 +145,7 @@ impl C8 {
         self.keyboard[key_index as usize] = pressed as u8;
     }
 
+    /// Get the state of a key
     pub fn get_key(&self, key: &Key) -> bool {
         let key_index = match self.get_key_index(key) {
             Some(index) => index,

@@ -6,6 +6,7 @@ use std::{default, sync::Arc};
 
 const DEFAULT_CPU_SPEED: u32 = 50;
 
+/// The application state
 pub struct App {
     display_image: egui::ColorImage,
     display_handle: Option<egui::TextureHandle>,
