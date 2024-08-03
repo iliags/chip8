@@ -8,14 +8,26 @@ const DEFAULT_CPU_SPEED: u32 = 50;
 
 /// The application state
 pub struct App {
+    /// The image used to display the video memory
     display_image: egui::ColorImage,
+
+    /// The handle to the display texture
     display_handle: Option<egui::TextureHandle>,
+
+    /// The CPU speed
     cpu_speed: u32,
+
+    /// The ROM file
     rom_file: Option<Vec<u8>>,
+
+    /// The Chip8 device
     c8_device: C8,
+
+    /// The pixel colors
     pixel_colors: PixelColors,
 }
 
+/// The colors used to display the pixels
 #[derive(Debug)]
 struct PixelColors {
     on: Color32,
@@ -31,7 +43,6 @@ impl default::Default for PixelColors {
     }
 }
 
-#[allow(dead_code)]
 impl PixelColors {
     fn get_color(&self, pixel: u8) -> Color32 {
         if pixel == 1 {
@@ -39,14 +50,6 @@ impl PixelColors {
         } else {
             self.off
         }
-    }
-
-    fn set_on_color(&mut self, color: Color32) {
-        self.on = color;
-    }
-
-    fn set_off_color(&mut self, color: Color32) {
-        self.off = color;
     }
 }
 
@@ -114,18 +117,17 @@ impl eframe::App for App {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
-                let is_web = cfg!(target_arch = "wasm32");
-
-                if !is_web {
+                // No File->Quit on web pages
+                #[cfg(not(target_arch = "wasm32"))]
+                {
                     ui.menu_button("File", |ui| {
-                        // No File->Quit on web pages
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     });
-                }
 
-                ui.separator();
+                    ui.separator();
+                }
 
                 if ui.button("Open ROM").clicked() {
                     self.rom_file = future::block_on(async {
