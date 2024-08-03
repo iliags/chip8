@@ -2,7 +2,9 @@ use crate::c8::*;
 use bevy_tasks::futures_lite::future;
 use egui::{Color32, Key, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
-use std::sync::Arc;
+use std::{default, sync::Arc};
+
+const DEFAULT_CPU_SPEED: u32 = 50;
 
 pub struct App {
     display_image: egui::ColorImage,
@@ -12,6 +14,42 @@ pub struct App {
     rom_file: Option<Vec<u8>>,
 
     c8_device: C8,
+
+    pixel_colors: PixelColors,
+}
+
+#[derive(Debug)]
+struct PixelColors {
+    on: Color32,
+    off: Color32,
+}
+
+impl default::Default for PixelColors {
+    fn default() -> Self {
+        Self {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl PixelColors {
+    fn get_color(&self, pixel: u8) -> Color32 {
+        if pixel == 1 {
+            self.on
+        } else {
+            self.off
+        }
+    }
+
+    fn set_on_color(&mut self, color: Color32) {
+        self.on = color;
+    }
+
+    fn set_off_color(&mut self, color: Color32) {
+        self.off = color;
+    }
 }
 
 static KEYBOARD: &[Key] = &[
@@ -42,8 +80,9 @@ impl Default for App {
             ),
             display_handle: None,
             rom_file: None,
-            cpu_speed: 50,
+            cpu_speed: DEFAULT_CPU_SPEED,
             c8_device: C8::default(),
+            pixel_colors: PixelColors::default(),
         }
     }
 }
@@ -54,16 +93,10 @@ impl App {
         Default::default()
     }
 
+    /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
-        // Clear image
         for (i, &pixel) in self.c8_device.display.iter().enumerate() {
-            let color = if pixel == 1 {
-                Color32::WHITE
-            } else {
-                Color32::BLACK
-            };
-
-            self.display_image.pixels[i] = color;
+            self.display_image.pixels[i] = self.pixel_colors.get_color(pixel);
         }
     }
 }
@@ -78,7 +111,7 @@ impl eframe::App for App {
 
             // Process input
             for key in KEYBOARD {
-                ctx.input(|i| self.c8_device.set_key(*key, i.key_down(*key)));
+                ctx.input(|i| self.c8_device.set_key(key, i.key_down(*key)));
             }
 
             // Draw the UI
@@ -93,6 +126,9 @@ impl eframe::App for App {
                         }
                     });
                 }
+
+                ui.separator();
+
                 if ui.button("Open ROM").clicked() {
                     // TODO: Open a ROM file
 
@@ -121,6 +157,9 @@ impl eframe::App for App {
                     }
                 }
 
+                ui.separator();
+
+                // TODO: Disable if no rom is loaded
                 if ui.button("Reload ROM").clicked() {
                     if self.rom_file.is_some() {
                         self.c8_device
@@ -130,7 +169,7 @@ impl eframe::App for App {
                     }
                 }
 
-                ui.add_space(16.0);
+                ui.separator();
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
@@ -156,6 +195,42 @@ impl eframe::App for App {
                     ui.add(image);
                 });
 
+            egui::Window::new("Controls").show(ctx, |ui| {
+                ui.label("CPU Speed");
+                ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
+
+                if ui.button("Default Speed").clicked() {
+                    self.cpu_speed = DEFAULT_CPU_SPEED;
+                }
+
+                ui.separator();
+
+                ui.label("Colors");
+
+                // TODO: Add color picker
+
+                ui.separator();
+
+                ui.label("Keyboard");
+
+                egui::Grid::new("keyboard_grid")
+                    //.spacing(Vec2::new(20.0, 3.0))
+                    .show(ui, |ui| {
+                        // TODO: Change into a grid with button highlighting
+                        for i in 0..KEYBOARD.len() {
+                            let key = KEYBOARD[i];
+                            let key_down = self.c8_device.get_key(&key);
+                            // Slight hack because spacing doesn't work as expected
+                            let key_down = if key_down { "Down" } else { "Up      " };
+                            ui.label(format!("{:?}: {}", key, key_down));
+
+                            if i % 4 == 3 {
+                                ui.end_row();
+                            }
+                        }
+                    });
+            });
+
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);
@@ -163,7 +238,6 @@ impl eframe::App for App {
             });
         });
 
-        // TODO: Only request a repaint if a ROM is loaded.
         // Refresh the UI
         ctx.request_repaint();
     }
