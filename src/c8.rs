@@ -4,15 +4,34 @@ use rand::prelude::*;
 /// Chip-8 Device
 #[derive(Debug)]
 pub struct C8 {
+    /// The RAM (4kb)
     pub memory: Vec<u8>,
+
+    /// The display of the device (64x32)
     pub display: Vec<u8>,
+
+    /// Index register
     pub index_register: u16,
+
+    /// Program counter
     pub program_counter: u16,
+
+    /// Stack memory
     pub stack: Vec<u16>,
+
+    /// Delay timer
     pub delay_timer: u8,
+
+    /// Sound timer
     pub sound_timer: u8,
+
+    /// General purpose registers
     pub registers: Vec<u8>,
+
+    /// Whether the device is running
     pub is_running: bool,
+
+    /// Keyboard state
     keyboard: [u8; 16],
 }
 
@@ -60,8 +79,13 @@ static FONT: &'static [u8] = &[
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
+/// Screen width constant
 pub const SCREEN_WIDTH: i32 = 64;
+
+/// Screen height constant
 pub const SCREEN_HEIGHT: i32 = 32;
+
+/// Screen size constant
 pub const SCREEN_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 
 impl Default for C8 {
@@ -186,6 +210,7 @@ impl C8 {
         self.display = vec![0; SCREEN_SIZE];
     }
 
+    /// Step the device
     pub fn step(&mut self, cpu_speed: u32) {
         if self.is_running {
             // Update timers
