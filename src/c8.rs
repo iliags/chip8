@@ -1,6 +1,7 @@
 use egui::Key;
 use rand::prelude::*;
 
+#[derive(Debug)]
 pub struct C8 {
     pub memory: Vec<u8>,
     pub display: Vec<u8>,
@@ -18,6 +19,7 @@ pub struct C8 {
 // A) Removing unused registers would mandate manual register mapping
 // B) Unused registers may be used in the future (i.e. for debugging or testing)
 #[allow(dead_code)]
+#[derive(Debug)]
 enum Register {
     V0,
     V1,
