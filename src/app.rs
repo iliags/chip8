@@ -1,6 +1,6 @@
 use crate::c8::*;
 use bevy_tasks::futures_lite::future;
-use egui::{Color32, Key, TextureOptions, Vec2};
+use egui::{color_picker::color_picker_color32, Color32, Key, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
 use std::{default, sync::Arc};
 
@@ -10,11 +10,8 @@ pub struct App {
     display_image: egui::ColorImage,
     display_handle: Option<egui::TextureHandle>,
     cpu_speed: u32,
-
     rom_file: Option<Vec<u8>>,
-
     c8_device: C8,
-
     pixel_colors: PixelColors,
 }
 
@@ -130,8 +127,6 @@ impl eframe::App for App {
                 ui.separator();
 
                 if ui.button("Open ROM").clicked() {
-                    // TODO: Open a ROM file
-
                     self.rom_file = future::block_on(async {
                         let file = AsyncFileDialog::new()
                             .add_filter("Chip8", &["ch8"])
@@ -154,19 +149,20 @@ impl eframe::App for App {
                             .load_rom(self.rom_file.as_ref().unwrap().clone());
 
                         println!("ROM loaded");
+                    } else {
+                        println!("No ROM selected");
                     }
                 }
 
                 ui.separator();
 
-                // TODO: Disable if no rom is loaded
-                if ui.button("Reload ROM").clicked() {
-                    if self.rom_file.is_some() {
-                        self.c8_device
-                            .load_rom(self.rom_file.as_ref().unwrap().clone());
-
-                        println!("ROM reloaded");
-                    }
+                if ui
+                    .add_enabled(self.rom_file.is_some(), egui::Button::new("Reload ROM"))
+                    .clicked()
+                {
+                    self.c8_device
+                        .load_rom(self.rom_file.as_ref().unwrap().clone());
+                    println!("ROM reloaded");
                 }
 
                 ui.separator();
@@ -195,41 +191,61 @@ impl eframe::App for App {
                     ui.add(image);
                 });
 
-            egui::Window::new("Controls").show(ctx, |ui| {
-                ui.label("CPU Speed");
-                ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
+            egui::Window::new("Controls")
+                .resizable(false)
+                .show(ctx, |ui| {
+                    //ui.label("CPU Speed");
+                    egui::CollapsingHeader::new("CPU Speed").show(ui, |ui| {
+                        ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
 
-                if ui.button("Default Speed").clicked() {
-                    self.cpu_speed = DEFAULT_CPU_SPEED;
-                }
-
-                ui.separator();
-
-                ui.label("Colors");
-
-                // TODO: Add color picker
-
-                ui.separator();
-
-                ui.label("Keyboard");
-
-                egui::Grid::new("keyboard_grid")
-                    //.spacing(Vec2::new(20.0, 3.0))
-                    .show(ui, |ui| {
-                        // TODO: Change into a grid with button highlighting
-                        for i in 0..KEYBOARD.len() {
-                            let key = KEYBOARD[i];
-                            let key_down = self.c8_device.get_key(&key);
-                            // Slight hack because spacing doesn't work as expected
-                            let key_down = if key_down { "Down" } else { "Up      " };
-                            ui.label(format!("{:?}: {}", key, key_down));
-
-                            if i % 4 == 3 {
-                                ui.end_row();
-                            }
+                        if ui.button("Default Speed").clicked() {
+                            self.cpu_speed = DEFAULT_CPU_SPEED;
                         }
                     });
-            });
+
+                    ui.separator();
+
+                    egui::CollapsingHeader::new("Pixel Colors").show(ui, |ui| {
+                        // TODO: Make this look nicer
+                        ui.label("Pixel on");
+
+                        color_picker_color32(
+                            ui,
+                            &mut self.pixel_colors.on,
+                            egui::color_picker::Alpha::Opaque,
+                        );
+
+                        ui.separator();
+
+                        ui.label("Pixel off");
+                        color_picker_color32(
+                            ui,
+                            &mut self.pixel_colors.off,
+                            egui::color_picker::Alpha::Opaque,
+                        );
+                    });
+
+                    ui.separator();
+
+                    egui::CollapsingHeader::new("Keyboard").show(ui, |ui| {
+                        egui::Grid::new("keyboard_grid")
+                            //.spacing(Vec2::new(20.0, 3.0))
+                            .show(ui, |ui| {
+                                // TODO: Change into a grid with button highlighting
+                                for i in 0..KEYBOARD.len() {
+                                    let key = KEYBOARD[i];
+                                    let key_down = self.c8_device.get_key(&key);
+                                    // Slight hack because spacing doesn't work as expected
+                                    let key_down = if key_down { "Down" } else { "Up      " };
+                                    ui.label(format!("{:?}: {}", key, key_down));
+
+                                    if i % 4 == 3 {
+                                        ui.end_row();
+                                    }
+                                }
+                            });
+                    });
+                });
 
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
