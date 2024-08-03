@@ -206,6 +206,7 @@ impl C8 {
         Some(key_index)
     }
 
+    /// Clear the screen, resets all pixels to 0.
     fn clear_screen(&mut self) {
         self.display = vec![0; SCREEN_SIZE];
     }
@@ -250,7 +251,6 @@ impl C8 {
         // Extract the opcode parts
         let x = ((opcode & 0x0F00) >> 8) as usize;
         let y = ((opcode & 0x00F0) >> 4) as usize;
-        //let n = (opcode & 0x000F) as u8;
         let nn = (opcode & 0x00FF) as u8;
         let nnn = opcode & 0x0FFF;
 
