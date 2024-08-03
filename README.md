@@ -2,11 +2,16 @@
 
 A Chip-8 emulator for practice.
 
+[Live version here](https://iliags.github.io/chip8/)
+
 ## Input Mapping
 
 1234
+
 QWER
+
 ASDF
+
 ZXCV
 
 ## Building
