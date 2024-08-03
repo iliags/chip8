@@ -128,7 +128,31 @@ impl C8 {
         self.display[index]
     }
 
-    pub fn set_key(&mut self, key: Key, pressed: bool) {
+    pub fn set_key(&mut self, key: &Key, pressed: bool) {
+        let key_index = match self.get_key_index(key) {
+            Some(index) => index,
+            None => {
+                println!("Unknown key: {:?}", key);
+                return;
+            }
+        };
+
+        self.keyboard[key_index as usize] = pressed as u8;
+    }
+
+    pub fn get_key(&self, key: &Key) -> bool {
+        let key_index = match self.get_key_index(key) {
+            Some(index) => index,
+            None => {
+                println!("Unknown key: {:?}", key);
+                return false;
+            }
+        };
+
+        self.keyboard[key_index as usize] == 1
+    }
+
+    fn get_key_index(&self, key: &Key) -> Option<i32> {
         let key_index = match key {
             Key::Num1 => 0x1,
             Key::Num2 => 0x2,
@@ -146,10 +170,10 @@ impl C8 {
             Key::X => 0x0,
             Key::C => 0xB,
             Key::V => 0xF,
-            _ => return,
+            _ => return None,
         };
 
-        self.keyboard[key_index as usize] = pressed as u8;
+        Some(key_index)
     }
 
     fn clear_screen(&mut self) {
