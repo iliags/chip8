@@ -183,7 +183,7 @@ impl C8 {
     }
 
     fn clear_screen(&mut self) {
-        self.display = vec![0; (SCREEN_WIDTH * SCREEN_HEIGHT) as usize];
+        self.display = vec![0; SCREEN_SIZE];
     }
 
     pub fn step(&mut self, cpu_speed: u32) {
