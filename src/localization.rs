@@ -42,7 +42,6 @@ static_loader! {
     };
 }
 
-/// The static loader for localization
 #[cfg(not(debug_assertions))]
 static_loader! {
     pub static LOCALES = {
