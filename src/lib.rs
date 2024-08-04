@@ -8,3 +8,6 @@ pub mod c8;
 
 /// ROMs included with the emulator
 pub mod roms;
+
+/// Localization for the emulator
+pub mod localization;

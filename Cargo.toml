@@ -17,6 +17,11 @@ rfd = "0.14"
 bevy_tasks = "0.14"
 rand = { version = "0.8" }
 
+# Accessibility
+fluent = "0.16"
+fluent-templates = "0.9"
+unic-langid = "0.9"
+
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"

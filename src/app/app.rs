@@ -1,5 +1,10 @@
-use crate::{c8::*, roms::TEST_ROMS};
+use crate::{
+    c8::*,
+    localization::{LANG, LOCALES},
+    roms::TEST_ROMS,
+};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
+use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
 
@@ -97,7 +102,7 @@ impl eframe::App for App {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
-                ui.menu_button("Test ROMS", |ui| {
+                ui.menu_button(LOCALES.lookup(&LANG, "test_roms"), |ui| {
                     for rom in TEST_ROMS.iter() {
                         if ui.button(rom.get_name()).clicked() {
                             self.rom_file = Some(rom.get_data().to_vec());
@@ -112,7 +117,7 @@ impl eframe::App for App {
 
                 ui.separator();
 
-                if ui.button("Open ROM").clicked() {
+                if ui.button(LOCALES.lookup(&LANG, "open_rom")).clicked() {
                     let task = AsyncFileDialog::new()
                         .add_filter("Chip8", &["ch8"])
                         .set_directory("/")
@@ -183,7 +188,10 @@ impl eframe::App for App {
                 ui.separator();
 
                 if ui
-                    .add_enabled(self.rom_file.is_some(), egui::Button::new("Reload ROM"))
+                    .add_enabled(
+                        self.rom_file.is_some(),
+                        egui::Button::new(LOCALES.lookup(&LANG, "reload_rom")),
+                    )
                     .clicked()
                 {
                     self.c8_device
@@ -202,33 +210,39 @@ impl eframe::App for App {
         egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
             ui.add_space(5.0);
 
-            egui::CollapsingHeader::new("CPU Speed").show(ui, |ui| {
-                ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
+            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "cpu_speed")).show(ui, |ui| {
+                ui.add(
+                    egui::Slider::new(&mut self.cpu_speed, 1..=100)
+                        .text(LOCALES.lookup(&LANG, "speed")),
+                );
 
-                if ui.button("Default Speed").clicked() {
+                if ui.button(LOCALES.lookup(&LANG, "default_speed")).clicked() {
                     self.cpu_speed = DEFAULT_CPU_SPEED;
                 }
             });
 
             ui.separator();
 
-            egui::CollapsingHeader::new("Display").show(ui, |ui| {
-                ui.add(egui::Slider::new(&mut self.display_scale, 0.5..=2.0).text("Scale"));
+            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "display")).show(ui, |ui| {
+                ui.add(
+                    egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
+                        .text(LOCALES.lookup(&LANG, "scale")),
+                );
 
-                if ui.button("Default Scale").clicked() {
+                if ui.button(LOCALES.lookup(&LANG, "default_scale")).clicked() {
                     self.display_scale = DEFAULT_DISPLAY_SCALE;
                 }
             });
 
             ui.separator();
 
-            egui::CollapsingHeader::new("Pixel Colors").show(ui, |ui| {
+            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "pixel_colors")).show(ui, |ui| {
                 // TODO: Make this look nicer
-                if ui.button("Default Colors").clicked() {
+                if ui.button(LOCALES.lookup(&LANG, "default_colors")).clicked() {
                     self.pixel_colors = PixelColors::default();
                 }
 
-                ui.label("Pixel on");
+                ui.label(LOCALES.lookup(&LANG, "pixel_on"));
 
                 color_picker_color32(
                     ui,
@@ -238,7 +252,7 @@ impl eframe::App for App {
 
                 ui.separator();
 
-                ui.label("Pixel off");
+                ui.label(LOCALES.lookup(&LANG, "pixel_off"));
                 color_picker_color32(
                     ui,
                     &mut self.pixel_colors.get_off_color_mut(),
@@ -248,7 +262,7 @@ impl eframe::App for App {
 
             ui.separator();
 
-            egui::CollapsingHeader::new("Keyboard").show(ui, |ui| {
+            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "keyboard")).show(ui, |ui| {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for i in 0..KEYBOARD.len() {
                         let key = KEYBOARD[i];
@@ -277,16 +291,22 @@ impl eframe::App for App {
 
             ui.separator();
 
-            egui::CollapsingHeader::new("Quirks").show(ui, |ui| {
-                ui.checkbox(&mut self.c8_device.quirks.vf_zero, "VF Zero")
-                    .on_hover_text("VF is set to 0 during OR, AND, and XOR operations");
-                ui.checkbox(&mut self.c8_device.quirks.i_incremented, "I Incremented")
-                    .on_hover_text("I is incremented by 1 after storing a ranged memory value");
+            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "quirks")).show(ui, |ui| {
+                ui.checkbox(
+                    &mut self.c8_device.quirks.vf_zero,
+                    LOCALES.lookup(&LANG, "quirk_vf0"),
+                )
+                .on_hover_text(LOCALES.lookup(&LANG, "quirk_vf0_hover"));
+                ui.checkbox(
+                    &mut self.c8_device.quirks.i_incremented,
+                    LOCALES.lookup(&LANG, "quirk_i"),
+                )
+                .on_hover_text(LOCALES.lookup(&LANG, "quirk_i_hover"));
                 ui.checkbox(
                     &mut self.c8_device.quirks.vx_shifted_directly,
-                    "Set VX == VY",
+                    LOCALES.lookup(&LANG, "quirk_set_vxvy"),
                 )
-                .on_hover_text("VX is set to VY directly during shift operations");
+                .on_hover_text(LOCALES.lookup(&LANG, "quirk_set_vxvy_hover"));
             });
 
             // "Powered by" text
@@ -298,7 +318,7 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
-            egui::Window::new("Display")
+            egui::Window::new(LOCALES.lookup(&LANG, "display"))
                 .resizable(true)
                 .show(ctx, |ui| {
                     // Note: This is hacky
@@ -338,9 +358,15 @@ impl eframe::App for App {
 fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
+
+        // TODO: Check how to fix this in fluent
+        let powered_by = LOCALES.lookup(&LANG, "powered_by") + " ";
+        ui.label(powered_by);
         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
+
+        // TODO: Check how to fix this in fluent
+        let and = " ".to_string() + &LOCALES.lookup(&LANG, "and") + " ";
+        ui.label(and);
         ui.hyperlink_to(
             "eframe",
             "https://github.com/emilk/egui/tree/master/crates/eframe",
