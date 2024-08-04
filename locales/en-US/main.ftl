@@ -28,5 +28,6 @@ quirk_i_hover = I is incremented by 1 after storing a ranged memory value
 quirk_set_vxvy = Set VX == VY
 quirk_set_vxvy_hover = VX is set to VY directly during shift operations
 
-powered_by = Powered by
-and = and
+source = Source
+powered_by = Powered by {" "}
+and = {" "} and {" "}

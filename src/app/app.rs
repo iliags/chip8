@@ -312,7 +312,10 @@ impl eframe::App for App {
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);
-                ui.hyperlink_to("Source", "https://github.com/iliags/chip8");
+                ui.hyperlink_to(
+                    LOCALES.lookup(&LANG, "source"),
+                    "https://github.com/iliags/chip8",
+                );
                 egui::warn_if_debug_build(ui);
             });
         });
@@ -359,14 +362,10 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
 
-        // TODO: Check how to fix this in fluent
-        let powered_by = LOCALES.lookup(&LANG, "powered_by") + " ";
-        ui.label(powered_by);
+        ui.label(LOCALES.lookup(&LANG, "powered_by"));
         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
 
-        // TODO: Check how to fix this in fluent
-        let and = " ".to_string() + &LOCALES.lookup(&LANG, "and") + " ";
-        ui.label(and);
+        ui.label(LOCALES.lookup(&LANG, "and"));
         ui.hyperlink_to(
             "eframe",
             "https://github.com/emilk/egui/tree/master/crates/eframe",
