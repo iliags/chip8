@@ -116,7 +116,7 @@ impl C8 {
         }
     }
 
-    /// Loads ROM and font data into memory
+    /// Resets the device, loads ROM and font data into memory, and starts the device
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();
         self.load_font();
