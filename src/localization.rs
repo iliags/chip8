@@ -2,10 +2,35 @@
 use fluent_templates::static_loader;
 use unic_langid::{langid, LanguageIdentifier};
 
-// TODO: Localization
-const US_ENGLISH: LanguageIdentifier = langid!("en-US");
-/// The language to use for localization
-pub const LANG: LanguageIdentifier = US_ENGLISH;
+/// The languages available for localization
+#[derive(Debug, PartialEq, Clone)]
+pub enum Languages {
+    English,
+}
+
+/// Array of available languages for iteration
+pub const LANGUAGE_LIST: [Languages; 1] = [Languages::English];
+
+impl Default for Languages {
+    fn default() -> Self {
+        Self::English
+    }
+}
+
+impl Languages {
+    pub fn value(&self) -> LanguageIdentifier {
+        match self {
+            Self::English => langid!("en-US"),
+        }
+    }
+
+    // Note: Make sure the text matches the native form (i.e. "Français" for French)
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::English => "English",
+        }
+    }
+}
 
 #[cfg(debug_assertions)]
 static_loader! {

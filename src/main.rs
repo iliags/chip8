@@ -5,8 +5,10 @@
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    use chip8::localization::{LANG, LOCALES};
-    use fluent_templates::Loader;
+    // TODO: Localization
+    //use chip8::localization::LOCALES;
+    //use fluent_templates::Loader;
+    //&LOCALES.lookup(&LANG, "app_name")
 
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -22,7 +24,7 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        &LOCALES.lookup(&LANG, "app_name"),
+        "Chip 8",
         native_options,
         Box::new(|cc| Ok(Box::new(chip8::app::app::App::new(cc)))),
     )

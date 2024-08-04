@@ -1,12 +1,13 @@
 use crate::{
     c8::*,
-    localization::{LANG, LOCALES},
+    localization::{Languages, LANGUAGE_LIST, LOCALES},
     roms::TEST_ROMS,
 };
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
+use unic_langid::LanguageIdentifier;
 
 use super::{
     keyboard::{get_key_name, KEYBOARD},
@@ -51,6 +52,8 @@ pub struct App {
     // TODO: Use this for both web and native
     #[cfg(target_arch = "wasm32")]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
+
+    current_language: Languages,
 }
 
 impl Default for App {
@@ -69,6 +72,7 @@ impl Default for App {
 
             #[cfg(target_arch = "wasm32")]
             file_data: Rc::new(RefCell::new(None)),
+            current_language: Languages::English,
         }
     }
 }
@@ -102,22 +106,28 @@ impl eframe::App for App {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
-                ui.menu_button(LOCALES.lookup(&LANG, "test_roms"), |ui| {
-                    for rom in TEST_ROMS.iter() {
-                        if ui.button(rom.get_name()).clicked() {
-                            self.rom_file = Some(rom.get_data().to_vec());
-                            self.c8_device
-                                .load_rom(self.rom_file.as_ref().unwrap().clone());
-                            println!("ROM loaded: {}", rom.get_name());
-                            ui.close_menu();
-                            break;
+                ui.menu_button(
+                    LOCALES.lookup(&self.current_language.value(), "test_roms"),
+                    |ui| {
+                        for rom in TEST_ROMS.iter() {
+                            if ui.button(rom.get_name()).clicked() {
+                                self.rom_file = Some(rom.get_data().to_vec());
+                                self.c8_device
+                                    .load_rom(self.rom_file.as_ref().unwrap().clone());
+                                println!("ROM loaded: {}", rom.get_name());
+                                ui.close_menu();
+                                break;
+                            }
                         }
-                    }
-                });
+                    },
+                );
 
                 ui.separator();
 
-                if ui.button(LOCALES.lookup(&LANG, "open_rom")).clicked() {
+                if ui
+                    .button(LOCALES.lookup(&self.current_language.value(), "open_rom"))
+                    .clicked()
+                {
                     let task = AsyncFileDialog::new()
                         .add_filter("Chip8", &["ch8"])
                         .set_directory("/")
@@ -190,7 +200,9 @@ impl eframe::App for App {
                 if ui
                     .add_enabled(
                         self.rom_file.is_some(),
-                        egui::Button::new(LOCALES.lookup(&LANG, "reload_rom")),
+                        egui::Button::new(
+                            LOCALES.lookup(&self.current_language.value(), "reload_rom"),
+                        ),
                     )
                     .clicked()
                 {
@@ -210,39 +222,55 @@ impl eframe::App for App {
         egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
             ui.add_space(5.0);
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "cpu_speed")).show(ui, |ui| {
+            egui::CollapsingHeader::new(
+                LOCALES.lookup(&self.current_language.value(), "cpu_speed"),
+            )
+            .show(ui, |ui| {
                 ui.add(
                     egui::Slider::new(&mut self.cpu_speed, 1..=100)
-                        .text(LOCALES.lookup(&LANG, "speed")),
+                        .text(LOCALES.lookup(&self.current_language.value(), "speed")),
                 );
 
-                if ui.button(LOCALES.lookup(&LANG, "default_speed")).clicked() {
+                if ui
+                    .button(LOCALES.lookup(&self.current_language.value(), "default_speed"))
+                    .clicked()
+                {
                     self.cpu_speed = DEFAULT_CPU_SPEED;
                 }
             });
 
             ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "display")).show(ui, |ui| {
-                ui.add(
-                    egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
-                        .text(LOCALES.lookup(&LANG, "scale")),
-                );
+            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "display"))
+                .show(ui, |ui| {
+                    ui.add(
+                        egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
+                            .text(LOCALES.lookup(&self.current_language.value(), "scale")),
+                    );
 
-                if ui.button(LOCALES.lookup(&LANG, "default_scale")).clicked() {
-                    self.display_scale = DEFAULT_DISPLAY_SCALE;
-                }
-            });
+                    if ui
+                        .button(LOCALES.lookup(&self.current_language.value(), "default_scale"))
+                        .clicked()
+                    {
+                        self.display_scale = DEFAULT_DISPLAY_SCALE;
+                    }
+                });
 
             ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "pixel_colors")).show(ui, |ui| {
+            egui::CollapsingHeader::new(
+                LOCALES.lookup(&self.current_language.value(), "pixel_colors"),
+            )
+            .show(ui, |ui| {
                 // TODO: Make this look nicer
-                if ui.button(LOCALES.lookup(&LANG, "default_colors")).clicked() {
+                if ui
+                    .button(LOCALES.lookup(&self.current_language.value(), "default_colors"))
+                    .clicked()
+                {
                     self.pixel_colors = PixelColors::default();
                 }
 
-                ui.label(LOCALES.lookup(&LANG, "pixel_on"));
+                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
 
                 color_picker_color32(
                     ui,
@@ -252,7 +280,7 @@ impl eframe::App for App {
 
                 ui.separator();
 
-                ui.label(LOCALES.lookup(&LANG, "pixel_off"));
+                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
                 color_picker_color32(
                     ui,
                     &mut self.pixel_colors.get_off_color_mut(),
@@ -262,58 +290,87 @@ impl eframe::App for App {
 
             ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "keyboard")).show(ui, |ui| {
-                egui::Grid::new("keyboard_grid").show(ui, |ui| {
-                    for i in 0..KEYBOARD.len() {
-                        let key = KEYBOARD[i];
-                        let key_down = self.c8_device.get_key(&key);
-                        let key_name = get_key_name(&key);
-                        let text = format!("{}", key_name);
+            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "keyboard"))
+                .show(ui, |ui| {
+                    egui::Grid::new("keyboard_grid").show(ui, |ui| {
+                        for i in 0..KEYBOARD.len() {
+                            let key = KEYBOARD[i];
+                            let key_down = self.c8_device.get_key(&key);
+                            let key_name = get_key_name(&key);
+                            let text = format!("{}", key_name);
 
-                        if key_down {
-                            let background_color = if ui.ctx().style().visuals.dark_mode {
-                                Color32::DARK_GRAY
+                            if key_down {
+                                let background_color = if ui.ctx().style().visuals.dark_mode {
+                                    Color32::DARK_GRAY
+                                } else {
+                                    Color32::LIGHT_GRAY
+                                };
+
+                                ui.label(
+                                    egui::RichText::new(text).background_color(background_color),
+                                );
                             } else {
-                                Color32::LIGHT_GRAY
-                            };
+                                ui.label(text);
+                            }
 
-                            ui.label(egui::RichText::new(text).background_color(background_color));
-                        } else {
-                            ui.label(text);
+                            if i % 4 == 3 {
+                                ui.end_row();
+                            }
                         }
-
-                        if i % 4 == 3 {
-                            ui.end_row();
-                        }
-                    }
+                    });
                 });
-            });
 
             ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&LANG, "quirks")).show(ui, |ui| {
-                ui.checkbox(
-                    &mut self.c8_device.quirks.vf_zero,
-                    LOCALES.lookup(&LANG, "quirk_vf0"),
-                )
-                .on_hover_text(LOCALES.lookup(&LANG, "quirk_vf0_hover"));
-                ui.checkbox(
-                    &mut self.c8_device.quirks.i_incremented,
-                    LOCALES.lookup(&LANG, "quirk_i"),
-                )
-                .on_hover_text(LOCALES.lookup(&LANG, "quirk_i_hover"));
-                ui.checkbox(
-                    &mut self.c8_device.quirks.vx_shifted_directly,
-                    LOCALES.lookup(&LANG, "quirk_set_vxvy"),
-                )
-                .on_hover_text(LOCALES.lookup(&LANG, "quirk_set_vxvy_hover"));
-            });
+            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "quirks"))
+                .show(ui, |ui| {
+                    ui.checkbox(
+                        &mut self.c8_device.quirks.vf_zero,
+                        LOCALES.lookup(&self.current_language.value(), "quirk_vf0"),
+                    )
+                    .on_hover_text(
+                        LOCALES.lookup(&self.current_language.value(), "quirk_vf0_hover"),
+                    );
+                    ui.checkbox(
+                        &mut self.c8_device.quirks.i_incremented,
+                        LOCALES.lookup(&self.current_language.value(), "quirk_i"),
+                    )
+                    .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_i_hover"));
+                    ui.checkbox(
+                        &mut self.c8_device.quirks.vx_shifted_directly,
+                        LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy"),
+                    )
+                    .on_hover_text(
+                        LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy_hover"),
+                    );
+                });
+
+            ui.separator();
+
+            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "emulator"))
+                .show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        egui::ComboBox::from_label(
+                            LOCALES.lookup(&self.current_language.value(), "language"),
+                        )
+                        .selected_text(self.current_language.as_str())
+                        .show_ui(ui, |ui| {
+                            for language in LANGUAGE_LIST {
+                                ui.selectable_value(
+                                    &mut self.current_language,
+                                    language.clone(),
+                                    language.as_str(),
+                                );
+                            }
+                        });
+                    });
+                });
 
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
+                powered_by_egui_and_eframe(ui, &self.current_language.value());
                 ui.hyperlink_to(
-                    LOCALES.lookup(&LANG, "source"),
+                    LOCALES.lookup(&self.current_language.value(), "source"),
                     "https://github.com/iliags/chip8",
                 );
                 egui::warn_if_debug_build(ui);
@@ -321,7 +378,7 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |_ui| {
-            egui::Window::new(LOCALES.lookup(&LANG, "display"))
+            egui::Window::new(LOCALES.lookup(&self.current_language.value(), "display"))
                 .resizable(true)
                 .show(ctx, |ui| {
                     // Note: This is hacky
@@ -358,14 +415,14 @@ impl eframe::App for App {
     }
 }
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
+fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
 
-        ui.label(LOCALES.lookup(&LANG, "powered_by"));
+        ui.label(LOCALES.lookup(&language, "powered_by"));
         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
 
-        ui.label(LOCALES.lookup(&LANG, "and"));
+        ui.label(LOCALES.lookup(&language, "and"));
         ui.hyperlink_to(
             "eframe",
             "https://github.com/emilk/egui/tree/master/crates/eframe",
