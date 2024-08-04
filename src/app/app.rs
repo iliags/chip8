@@ -72,6 +72,8 @@ impl Default for App {
 
             #[cfg(target_arch = "wasm32")]
             file_data: Rc::new(RefCell::new(None)),
+
+            // Current language
             current_language: Languages::English,
         }
     }
@@ -128,25 +130,9 @@ impl eframe::App for App {
                     .button(LOCALES.lookup(&self.current_language.value(), "open_rom"))
                     .clicked()
                 {
-                    let task = AsyncFileDialog::new()
-                        .add_filter("Chip8", &["ch8"])
-                        .set_directory("/")
-                        .pick_file();
-
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        self.rom_file = future::block_on(async {
-                            let file = task.await;
-
-                            ui.close_menu();
-
-                            if let Some(file) = file {
-                                let file = file.read().await;
-                                Some(file)
-                            } else {
-                                None
-                            }
-                        });
+                        self.rom_file = future::block_on(async move { load_file().await });
 
                         if self.rom_file.is_some() {
                             self.c8_device
@@ -164,22 +150,12 @@ impl eframe::App for App {
                         let data_clone = Rc::clone(&self.file_data.clone());
 
                         wasm_bindgen_futures::spawn_local(async move {
-                            let file = task.await;
-
-                            let file_data = match file {
-                                Some(file) => {
-                                    let file = file.read().await;
-                                    Some(file)
-                                }
-                                None => None,
-                            };
+                            let file_data = load_file().await;
 
                             // Update the shared state
                             *data_clone.borrow_mut() = file_data;
                         });
                     }
-
-                    ui.close_menu();
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -437,7 +413,8 @@ impl eframe::App for App {
                 });
         });
 
-        // Refresh the UI
+        // By default, egui will only repaint if input is detected. This isn't
+        // ideal for this application, so we request a repaint every frame.
         ctx.request_repaint();
     }
 }
@@ -456,4 +433,20 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) 
         );
         ui.label(".");
     });
+}
+
+async fn load_file() -> Option<Vec<u8>> {
+    let file = AsyncFileDialog::new()
+        .add_filter("Chip8", &["ch8"])
+        .set_directory("/")
+        .pick_file()
+        .await;
+
+    match file {
+        Some(file) => {
+            let file = file.read().await;
+            Some(file)
+        }
+        None => None,
+    }
 }
