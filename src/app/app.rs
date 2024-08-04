@@ -198,6 +198,8 @@ impl eframe::App for App {
         });
 
         egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
+            ui.add_space(5.0);
+
             egui::CollapsingHeader::new("CPU Speed").show(ui, |ui| {
                 ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
 
@@ -245,38 +247,41 @@ impl eframe::App for App {
             ui.separator();
 
             egui::CollapsingHeader::new("Keyboard").show(ui, |ui| {
-                egui::Grid::new("keyboard_grid")
-                    //.spacing(Vec2::new(20.0, 3.0))
-                    .show(ui, |ui| {
-                        for i in 0..KEYBOARD.len() {
-                            let key = KEYBOARD[i];
-                            let key_down = self.c8_device.get_key(&key);
-                            let key_name = get_key_name(&key);
-                            let text = format!("{}", key_name);
+                egui::Grid::new("keyboard_grid").show(ui, |ui| {
+                    for i in 0..KEYBOARD.len() {
+                        let key = KEYBOARD[i];
+                        let key_down = self.c8_device.get_key(&key);
+                        let key_name = get_key_name(&key);
+                        let text = format!("{}", key_name);
 
-                            if key_down {
-                                let background_color = if ui.ctx().style().visuals.dark_mode {
-                                    Color32::DARK_GRAY
-                                } else {
-                                    Color32::LIGHT_GRAY
-                                };
-
-                                ui.label(
-                                    egui::RichText::new(text).background_color(background_color),
-                                );
+                        if key_down {
+                            let background_color = if ui.ctx().style().visuals.dark_mode {
+                                Color32::DARK_GRAY
                             } else {
-                                ui.label(text);
-                            }
+                                Color32::LIGHT_GRAY
+                            };
 
-                            if i % 4 == 3 {
-                                ui.end_row();
-                            }
+                            ui.label(egui::RichText::new(text).background_color(background_color));
+                        } else {
+                            ui.label(text);
                         }
-                    });
+
+                        if i % 4 == 3 {
+                            ui.end_row();
+                        }
+                    }
+                });
+            });
+
+            // "Powered by" text
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                powered_by_egui_and_eframe(ui);
+                ui.hyperlink_to("Source", "https://github.com/iliags/chip8");
+                egui::warn_if_debug_build(ui);
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ctx, |_ui| {
             egui::Window::new("Display")
                 .resizable(true)
                 .show(ctx, |ui| {
@@ -307,12 +312,6 @@ impl eframe::App for App {
 
                     ui.add(image);
                 });
-
-            // "Powered by" text
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
-                egui::warn_if_debug_build(ui);
-            });
         });
 
         // Refresh the UI
