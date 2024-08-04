@@ -3,7 +3,10 @@ use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
 
-use super::{keyboard::KEYBOARD, pixel_color::PixelColors};
+use super::{
+    keyboard::{get_key_name, KEYBOARD},
+    pixel_color::PixelColors,
+};
 
 #[cfg(target_arch = "wasm32")]
 use std::{cell::RefCell, rc::Rc};
@@ -245,13 +248,25 @@ impl eframe::App for App {
                 egui::Grid::new("keyboard_grid")
                     //.spacing(Vec2::new(20.0, 3.0))
                     .show(ui, |ui| {
-                        // TODO: Change into a grid with button highlighting
                         for i in 0..KEYBOARD.len() {
                             let key = KEYBOARD[i];
                             let key_down = self.c8_device.get_key(&key);
-                            // Slight hack because spacing doesn't work as expected
-                            let key_down = if key_down { "Down" } else { "Up" };
-                            ui.label(format!("{:?}: {}", key, key_down));
+                            let key_name = get_key_name(&key);
+                            let text = format!("{}", key_name);
+
+                            if key_down {
+                                let background_color = if ui.ctx().style().visuals.dark_mode {
+                                    Color32::DARK_GRAY
+                                } else {
+                                    Color32::LIGHT_GRAY
+                                };
+
+                                ui.label(
+                                    egui::RichText::new(text).background_color(background_color),
+                                );
+                            } else {
+                                ui.label(text);
+                            }
 
                             if i % 4 == 3 {
                                 ui.end_row();

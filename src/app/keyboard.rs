@@ -44,3 +44,26 @@ pub const fn get_key_index(key: &Key) -> Option<i32> {
 
     Some(key_index)
 }
+
+/// Get the name of the key for the UI
+pub const fn get_key_name(key: &Key) -> &str {
+    match key {
+        Key::Num1 => "1",
+        Key::Num2 => "2",
+        Key::Num3 => "3",
+        Key::Num4 => "C",
+        Key::Q => "4",
+        Key::W => "5",
+        Key::E => "6",
+        Key::R => "D",
+        Key::A => "7",
+        Key::S => "8",
+        Key::D => "9",
+        Key::F => "E",
+        Key::Z => "A",
+        Key::X => "0",
+        Key::C => "B",
+        Key::V => "F",
+        _ => "None",
+    }
+}
