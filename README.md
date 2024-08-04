@@ -14,6 +14,10 @@ ASDF
 
 ZXCV
 
+## Included ROMs
+
+- [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
+
 ## Building
 
 ### PC
