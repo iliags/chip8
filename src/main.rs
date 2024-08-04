@@ -5,7 +5,7 @@
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    // TODO: Localization
+    // TODO: Save the language in a config file and load it here.
     //use chip8::localization::LOCALES;
     //use fluent_templates::Loader;
     //&LOCALES.lookup(&LANG, "app_name")
