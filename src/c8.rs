@@ -297,14 +297,23 @@ impl C8 {
                     0x1 => {
                         // Set Vx = Vx OR Vy
                         self.registers[x] |= self.registers[y];
+
+                        // Quirk: Some programs expect VF to be 0
+                        self.registers[Register::VF as usize] = 0;
                     }
                     0x2 => {
                         // Set Vx = Vx AND Vy
                         self.registers[x] &= self.registers[y];
+
+                        // Quirk: Some programs expect VF to be 0
+                        self.registers[Register::VF as usize] = 0;
                     }
                     0x3 => {
                         // Set Vx = Vx XOR Vy
                         self.registers[x] ^= self.registers[y];
+
+                        // Quirk: Some programs expect VF to be 0
+                        self.registers[Register::VF as usize] = 0;
                     }
                     // TODO: 0x4, 0x5, 0x6, 0x7, and 0xE have quirks associated with them
                     0x4 => {
