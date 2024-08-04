@@ -40,3 +40,12 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 ### Build Warnings
 
 If ```wasm-bindgen-cli``` was installed separately, but not updated, it may print a tool mismatch warning.
+
+## Wishlist
+
+Stuff that might be added later.
+
+- Disassembler
+- Debugger
+- System visualizer
+- Save states
