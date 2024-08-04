@@ -1,0 +1,56 @@
+/// Struct to hold ROM data
+pub struct ROM {
+    name: &'static str,
+    data: &'static [u8],
+}
+
+impl ROM {
+    /// Get the name of the ROM
+    pub fn get_name(&self) -> &'static str {
+        self.name
+    }
+
+    /// Get the data of the ROM
+    pub fn get_data(&self) -> &'static [u8] {
+        self.data
+    }
+}
+
+/// List of ROMs used for testing the emulator
+pub const TEST_ROMS: [ROM; 6] = [
+    ROM {
+        name: "1-chip8-logo.ch8",
+        data: include_bytes!("../assets/test_roms/1-chip8-logo.ch8"),
+    },
+    ROM {
+        name: "2-ibm-logo.ch8",
+        data: include_bytes!("../assets/test_roms/2-ibm-logo.ch8"),
+    },
+    ROM {
+        name: "3-corax+.ch8",
+        data: include_bytes!("../assets/test_roms/3-corax+.ch8"),
+    },
+    ROM {
+        name: "4-flags.ch8",
+        data: include_bytes!("../assets/test_roms/4-flags.ch8"),
+    },
+    ROM {
+        name: "5-quirks.ch8",
+        data: include_bytes!("../assets/test_roms/5-quirks.ch8"),
+    },
+    ROM {
+        name: "6-keypad.ch8",
+        data: include_bytes!("../assets/test_roms/6-keypad.ch8"),
+    },
+    // Requires sound support
+    //ROM {
+    //    name: "7-beep.ch8",
+    //    data: include_bytes!("../assets/test_roms/7-beep.ch8"),
+    //},
+
+    // Requires Super Chip-8 support
+    //ROM {
+    //    name: "8-scrolling.ch8",
+    //    data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
+    //},
+];

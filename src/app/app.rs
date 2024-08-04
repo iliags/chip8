@@ -1,4 +1,4 @@
-use crate::c8::*;
+use crate::{c8::*, roms::TEST_ROMS};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
@@ -86,6 +86,8 @@ impl eframe::App for App {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
+                // Note: Might use this later
+                /*
                 // No File->Quit on web pages
                 #[cfg(not(target_arch = "wasm32"))]
                 {
@@ -97,6 +99,22 @@ impl eframe::App for App {
 
                     ui.separator();
                 }
+                */
+
+                ui.menu_button("Test ROMS", |ui| {
+                    for rom in TEST_ROMS.iter() {
+                        if ui.button(rom.get_name()).clicked() {
+                            self.rom_file = Some(rom.get_data().to_vec());
+                            self.c8_device
+                                .load_rom(self.rom_file.as_ref().unwrap().clone());
+                            println!("ROM loaded: {}", rom.get_name());
+                            ui.close_menu();
+                            break;
+                        }
+                    }
+                });
+
+                ui.separator();
 
                 if ui.button("Open ROM").clicked() {
                     let task = AsyncFileDialog::new()
