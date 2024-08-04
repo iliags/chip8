@@ -49,3 +49,4 @@ Stuff that might be added later.
 - Debugger
 - System visualizer
 - Save states
+- Bind actions to keys instead of hardcoding input
