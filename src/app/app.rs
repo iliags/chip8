@@ -216,32 +216,62 @@ impl eframe::App for App {
                 egui::widgets::global_dark_light_mode_buttons(ui);
 
                 ui.separator();
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    ui.menu_button(
+                        LOCALES.lookup(&self.current_language.value(), "about"),
+                        |ui| {
+                            ui.label(env!("CARGO_PKG_VERSION"));
+
+                            ui.separator();
+
+                            ui.hyperlink_to(
+                                LOCALES.lookup(&self.current_language.value(), "source"),
+                                "https://github.com/iliags/chip8",
+                            );
+
+                            ui.separator();
+
+                            powered_by_egui_and_eframe(ui, &self.current_language.value());
+
+                            #[cfg(debug_assertions)]
+                            {
+                                ui.separator();
+
+                                egui::warn_if_debug_build(ui);
+                            }
+                        },
+                    );
+                });
             });
         });
 
         egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
             ui.add_space(5.0);
 
-            egui::CollapsingHeader::new(
-                LOCALES.lookup(&self.current_language.value(), "cpu_speed"),
-            )
-            .show(ui, |ui| {
-                ui.add(
-                    egui::Slider::new(&mut self.cpu_speed, 1..=100)
-                        .text(LOCALES.lookup(&self.current_language.value(), "speed")),
-                );
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "cpu_speed"),
+                )
+                .show(ui, |ui| {
+                    ui.add(
+                        egui::Slider::new(&mut self.cpu_speed, 1..=100)
+                            .text(LOCALES.lookup(&self.current_language.value(), "speed")),
+                    );
 
-                if ui
-                    .button(LOCALES.lookup(&self.current_language.value(), "default_speed"))
-                    .clicked()
-                {
-                    self.cpu_speed = DEFAULT_CPU_SPEED;
-                }
-            });
+                    if ui
+                        .button(LOCALES.lookup(&self.current_language.value(), "default_speed"))
+                        .clicked()
+                    {
+                        self.cpu_speed = DEFAULT_CPU_SPEED;
+                    }
+                });
 
-            ui.separator();
+                ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "display"))
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "display"),
+                )
                 .show(ui, |ui| {
                     ui.add(
                         egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
@@ -256,41 +286,43 @@ impl eframe::App for App {
                     }
                 });
 
-            ui.separator();
+                ui.separator();
 
-            egui::CollapsingHeader::new(
-                LOCALES.lookup(&self.current_language.value(), "pixel_colors"),
-            )
-            .show(ui, |ui| {
-                // TODO: Make this look nicer
-                if ui
-                    .button(LOCALES.lookup(&self.current_language.value(), "default_colors"))
-                    .clicked()
-                {
-                    self.pixel_colors = PixelColors::default();
-                }
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "pixel_colors"),
+                )
+                .show(ui, |ui| {
+                    // TODO: Make this look nicer
+                    if ui
+                        .button(LOCALES.lookup(&self.current_language.value(), "default_colors"))
+                        .clicked()
+                    {
+                        self.pixel_colors = PixelColors::default();
+                    }
 
-                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
+                    ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
 
-                color_picker_color32(
-                    ui,
-                    &mut self.pixel_colors.get_on_color_mut(),
-                    egui::color_picker::Alpha::Opaque,
-                );
+                    color_picker_color32(
+                        ui,
+                        &mut self.pixel_colors.get_on_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+
+                    ui.separator();
+
+                    ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
+                    color_picker_color32(
+                        ui,
+                        &mut self.pixel_colors.get_off_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+                });
 
                 ui.separator();
 
-                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
-                color_picker_color32(
-                    ui,
-                    &mut self.pixel_colors.get_off_color_mut(),
-                    egui::color_picker::Alpha::Opaque,
-                );
-            });
-
-            ui.separator();
-
-            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "keyboard"))
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "keyboard"),
+                )
                 .show(ui, |ui| {
                     egui::Grid::new("keyboard_grid").show(ui, |ui| {
                         for i in 0..KEYBOARD.len() {
@@ -320,9 +352,11 @@ impl eframe::App for App {
                     });
                 });
 
-            ui.separator();
+                ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "quirks"))
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "quirks"),
+                )
                 .show(ui, |ui| {
                     ui.checkbox(
                         &mut self.c8_device.quirks.vf_zero,
@@ -345,9 +379,11 @@ impl eframe::App for App {
                     );
                 });
 
-            ui.separator();
+                ui.separator();
 
-            egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "emulator"))
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "emulator"),
+                )
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         egui::ComboBox::from_label(
@@ -365,15 +401,6 @@ impl eframe::App for App {
                         });
                     });
                 });
-
-            // "Powered by" text
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui, &self.current_language.value());
-                ui.hyperlink_to(
-                    LOCALES.lookup(&self.current_language.value(), "source"),
-                    "https://github.com/iliags/chip8",
-                );
-                egui::warn_if_debug_build(ui);
             });
         });
 
