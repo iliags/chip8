@@ -4,7 +4,9 @@ A Chip-8 emulator for practice.
 
 [Live version here](https://iliags.github.io/chip8/)
 
-## Input Mapping
+## Emulator Info
+
+### Input Mapping
 
 1234
 
@@ -14,9 +16,13 @@ ASDF
 
 ZXCV
 
-## Included ROMs
+### Included ROMs
 
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
+
+### Localization
+
+The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs). Currently, only `en-US` is available but the capability to add more is there.
 
 ## Building
 
