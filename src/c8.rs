@@ -51,6 +51,11 @@ pub struct Quirks {
 
     /// Quirk: Some programs expect VX to be shifted directly without assigning VY
     pub vx_shifted_directly: bool,
+    // TODO
+    //display_waiting: bool,
+
+    // TODO
+    //clip_sprites: bool,
 }
 
 // Dead code is allowed here because:
