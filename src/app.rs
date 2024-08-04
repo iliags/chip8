@@ -261,6 +261,10 @@ impl eframe::App for App {
 
                     egui::CollapsingHeader::new("Pixel Colors").show(ui, |ui| {
                         // TODO: Make this look nicer
+                        if ui.button("Default Colors").clicked() {
+                            self.pixel_colors = PixelColors::default();
+                        }
+
                         ui.label("Pixel on");
 
                         color_picker_color32(
