@@ -50,3 +50,6 @@ Stuff that might be added later.
 - System visualizer
 - Save states
 - Bind actions to keys instead of hardcoding input
+- Chip-8 extensions
+  - Super-Chip
+  - XO-Chip
