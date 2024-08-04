@@ -60,3 +60,87 @@ impl PixelColors {
         self.off = color;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_color() {
+        let colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        assert_eq!(colors.get_color(0), &Color32::BLACK);
+        assert_eq!(colors.get_color(1), &Color32::WHITE);
+    }
+
+    #[test]
+    fn test_get_on_color_mut() {
+        let mut colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        *colors.get_on_color_mut() = Color32::RED;
+
+        assert_eq!(colors.get_on_color(), &Color32::RED);
+    }
+
+    #[test]
+    fn test_get_on_color() {
+        let colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        assert_eq!(colors.get_on_color(), &Color32::WHITE);
+    }
+
+    #[test]
+    fn test_set_on_color() {
+        let mut colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        colors.set_on_color(Color32::RED);
+
+        assert_eq!(colors.get_on_color(), &Color32::RED);
+    }
+
+    #[test]
+    fn test_get_off_color_mut() {
+        let mut colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        *colors.get_off_color_mut() = Color32::RED;
+
+        assert_eq!(colors.get_off_color(), &Color32::RED);
+    }
+
+    #[test]
+    fn test_get_off_color() {
+        let colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        assert_eq!(colors.get_off_color(), &Color32::BLACK);
+    }
+
+    #[test]
+    fn test_set_off_color() {
+        let mut colors = PixelColors {
+            on: Color32::WHITE,
+            off: Color32::BLACK,
+        };
+
+        colors.set_off_color(Color32::RED);
+
+        assert_eq!(colors.get_off_color(), &Color32::RED);
+    }
+}
