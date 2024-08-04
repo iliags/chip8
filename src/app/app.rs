@@ -275,6 +275,20 @@ impl eframe::App for App {
                 });
             });
 
+            ui.separator();
+
+            egui::CollapsingHeader::new("Quirks").show(ui, |ui| {
+                ui.checkbox(&mut self.c8_device.quirks.vf_zero, "VF Zero")
+                    .on_hover_text("VF is set to 0 during OR, AND, and XOR operations");
+                ui.checkbox(&mut self.c8_device.quirks.i_incremented, "I Incremented")
+                    .on_hover_text("I is incremented by 1 after storing a ranged memory value");
+                ui.checkbox(
+                    &mut self.c8_device.quirks.vx_shifted_directly,
+                    "Set VX == VY",
+                )
+                .on_hover_text("VX is set to VY directly during shift operations");
+            });
+
             // "Powered by" text
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);

@@ -35,6 +35,22 @@ pub struct C8 {
 
     /// Keyboard state
     keyboard: [u8; 16],
+
+    /// Quirks
+    pub quirks: Quirks,
+}
+
+/// Quirks for the Chip-8 device
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Quirks {
+    /// Quirk: Some programs expect VF to be 0
+    pub vf_zero: bool,
+
+    /// Quirk: Some programs expect I to be incremented
+    pub i_incremented: bool,
+
+    /// Quirk: Some programs expect VX to be shifted directly without assigning VY
+    pub vx_shifted_directly: bool,
 }
 
 // Dead code is allowed here because:
@@ -106,6 +122,11 @@ impl Default for C8 {
             registers: vec![0; 16],
             is_running: false,
             keyboard: [0; 16],
+            quirks: Quirks {
+                vf_zero: true,
+                i_incremented: true,
+                vx_shifted_directly: true,
+            },
         }
     }
 }
@@ -142,8 +163,11 @@ impl C8 {
         self.keyboard = [0; 16];
     }
 
-    /// Using i32 for x and y to allow for wrapping around the screen
+    /// Uses i32 for x and y to allow for wrapping around the screen
     fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
+        // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
+        // This may be implemented in the future with a toggle.
+
         // If the pixels are out of bounds, wrap them around
         let x = x % SCREEN_WIDTH;
         let y = y % SCREEN_HEIGHT;
@@ -299,23 +323,28 @@ impl C8 {
                         self.registers[x] |= self.registers[y];
 
                         // Quirk: Some programs expect VF to be 0
-                        self.registers[Register::VF as usize] = 0;
+                        if self.quirks.vf_zero {
+                            self.registers[Register::VF as usize] = 0;
+                        }
                     }
                     0x2 => {
                         // Set Vx = Vx AND Vy
                         self.registers[x] &= self.registers[y];
 
                         // Quirk: Some programs expect VF to be 0
-                        self.registers[Register::VF as usize] = 0;
+                        if self.quirks.vf_zero {
+                            self.registers[Register::VF as usize] = 0;
+                        }
                     }
                     0x3 => {
                         // Set Vx = Vx XOR Vy
                         self.registers[x] ^= self.registers[y];
 
                         // Quirk: Some programs expect VF to be 0
-                        self.registers[Register::VF as usize] = 0;
+                        if self.quirks.vf_zero {
+                            self.registers[Register::VF as usize] = 0;
+                        }
                     }
-                    // TODO: 0x4, 0x5, 0x6, 0x7, and 0xE have quirks associated with them
                     0x4 => {
                         // Set Vx = Vx + Vy, set VF = carry
                         let (result, overflow) =
@@ -331,6 +360,11 @@ impl C8 {
                         self.registers[Register::VF as usize] = !overflow as u8;
                     }
                     0x6 => {
+                        // Quirk: Some programs expect Vx to be shifted directly without assigning VY
+                        if self.quirks.vx_shifted_directly {
+                            self.registers[x] = self.registers[y];
+                        }
+
                         // Set Vx = Vx SHR 1
                         self.registers[Register::VF as usize] = self.registers[x] & 0x1;
                         self.registers[x] >>= 1;
@@ -343,7 +377,12 @@ impl C8 {
                         self.registers[Register::VF as usize] = !overflow as u8;
                     }
                     0xE => {
-                        // Set Vx = Vx SHL 1
+                        // Quirk: Some programs expect Vx to be shifted directly without assigning VY
+                        if self.quirks.vx_shifted_directly {
+                            self.registers[x] = self.registers[y];
+                        }
+
+                        // Set Vx = Vy SHL 1
                         self.registers[Register::VF as usize] = self.registers[x] >> 7;
                         self.registers[x] <<= 1;
                     }
@@ -372,6 +411,9 @@ impl C8 {
                 self.registers[x] = rng.gen::<u8>() & nn;
             }
             0xD000 => {
+                // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
+                // This may be implemented in the future with a toggle.
+
                 // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
                 let x = self.registers[x] as i32;
                 let y = self.registers[y] as i32;
@@ -421,7 +463,7 @@ impl C8 {
                         self.registers[x] = self.delay_timer;
                     }
                     0x0A => {
-                        // TODO: This doesn't feel right
+                        // Note: This doesn't feel right
 
                         let mut key_pressed = false;
 
@@ -467,12 +509,22 @@ impl C8 {
                             self.memory[(self.index_register + i as u16) as usize] =
                                 self.registers[i];
                         }
+
+                        // Quirk: Some programs expect I to be incremented
+                        if self.quirks.i_incremented {
+                            self.index_register += 1;
+                        }
                     }
                     0x65 => {
                         // Read V0 to Vx from memory starting at address I
                         for i in 0..x + 1 {
                             self.registers[i] =
                                 self.memory[(self.index_register + i as u16) as usize];
+                        }
+
+                        // Quirk: Some programs expect I to be incremented
+                        if self.quirks.i_incremented {
+                            self.index_register += 1;
                         }
                     }
                     _ => {
