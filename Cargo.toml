@@ -4,6 +4,7 @@ version = "0.1.5"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
+build = "build.rs"
 
 [dependencies]
 egui = "0.28"
@@ -21,6 +22,9 @@ rand = { version = "0.8" }
 fluent = "0.16"
 fluent-templates = "0.9"
 unic-langid = "0.9"
+
+[build-dependencies]
+embed-resource = { version = "2.4" }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
