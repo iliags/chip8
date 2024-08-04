@@ -1,7 +1,9 @@
 use crate::c8::*;
-use egui::{color_picker::color_picker_color32, Color32, Key, TextureOptions, Vec2};
+use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use rfd::AsyncFileDialog;
-use std::{default, sync::Arc};
+use std::sync::Arc;
+
+use super::{keyboard::KEYBOARD, pixel_color::PixelColors};
 
 #[cfg(target_arch = "wasm32")]
 use std::{cell::RefCell, rc::Rc};
@@ -31,54 +33,10 @@ pub struct App {
     /// The pixel colors
     pixel_colors: PixelColors,
 
+    // TODO: Use this for both web and native
     #[cfg(target_arch = "wasm32")]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 }
-
-/// The colors used to display the pixels
-#[derive(Debug)]
-struct PixelColors {
-    on: Color32,
-    off: Color32,
-}
-
-impl default::Default for PixelColors {
-    fn default() -> Self {
-        Self {
-            on: Color32::WHITE,
-            off: Color32::BLACK,
-        }
-    }
-}
-
-impl PixelColors {
-    fn get_color(&self, pixel: u8) -> Color32 {
-        if pixel == 1 {
-            self.on
-        } else {
-            self.off
-        }
-    }
-}
-
-static KEYBOARD: &[Key] = &[
-    Key::Num1,
-    Key::Num2,
-    Key::Num3,
-    Key::Num4,
-    Key::Q,
-    Key::W,
-    Key::E,
-    Key::R,
-    Key::A,
-    Key::S,
-    Key::D,
-    Key::F,
-    Key::Z,
-    Key::X,
-    Key::C,
-    Key::V,
-];
 
 impl Default for App {
     fn default() -> Self {
@@ -108,7 +66,7 @@ impl App {
     /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
         for (i, &pixel) in self.c8_device.display.iter().enumerate() {
-            self.display_image.pixels[i] = self.pixel_colors.get_color(pixel);
+            self.display_image.pixels[i] = self.pixel_colors.get_color(pixel).clone();
         }
     }
 }
@@ -269,7 +227,7 @@ impl eframe::App for App {
 
                         color_picker_color32(
                             ui,
-                            &mut self.pixel_colors.on,
+                            &mut self.pixel_colors.get_on_color_mut(),
                             egui::color_picker::Alpha::Opaque,
                         );
 
@@ -278,7 +236,7 @@ impl eframe::App for App {
                         ui.label("Pixel off");
                         color_picker_color32(
                             ui,
-                            &mut self.pixel_colors.off,
+                            &mut self.pixel_colors.get_off_color_mut(),
                             egui::color_picker::Alpha::Opaque,
                         );
                     });
