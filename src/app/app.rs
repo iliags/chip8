@@ -194,6 +194,8 @@ impl eframe::App for App {
                 ui.separator();
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
+
+                ui.separator();
             });
         });
 
