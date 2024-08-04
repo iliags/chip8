@@ -13,6 +13,10 @@ use bevy_tasks::futures_lite::future;
 
 const DEFAULT_CPU_SPEED: u32 = 50;
 
+const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
+
+const DEFAULT_DISPLAY_SCALE: f32 = 1.0;
+
 /// The application state
 pub struct App {
     /// The image used to display the video memory
@@ -33,6 +37,9 @@ pub struct App {
     /// The pixel colors
     pixel_colors: PixelColors,
 
+    /// The display scale
+    display_scale: f32,
+
     // TODO: Use this for both web and native
     #[cfg(target_arch = "wasm32")]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
@@ -50,6 +57,7 @@ impl Default for App {
             cpu_speed: DEFAULT_CPU_SPEED,
             c8_device: C8::default(),
             pixel_colors: PixelColors::default(),
+            display_scale: DEFAULT_DISPLAY_SCALE,
 
             #[cfg(target_arch = "wasm32")]
             file_data: Rc::new(RefCell::new(None)),
@@ -86,21 +94,6 @@ impl eframe::App for App {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
-                // Note: Might use this later
-                /*
-                // No File->Quit on web pages
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    });
-
-                    ui.separator();
-                }
-                */
-
                 ui.menu_button("Test ROMS", |ui| {
                     for rom in TEST_ROMS.iter() {
                         if ui.button(rom.get_name()).clicked() {
@@ -201,84 +194,103 @@ impl eframe::App for App {
             });
         });
 
+        egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
+            egui::CollapsingHeader::new("CPU Speed").show(ui, |ui| {
+                ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
+
+                if ui.button("Default Speed").clicked() {
+                    self.cpu_speed = DEFAULT_CPU_SPEED;
+                }
+            });
+
+            ui.separator();
+
+            egui::CollapsingHeader::new("Display").show(ui, |ui| {
+                ui.add(egui::Slider::new(&mut self.display_scale, 0.5..=2.0).text("Scale"));
+
+                if ui.button("Default Scale").clicked() {
+                    self.display_scale = DEFAULT_DISPLAY_SCALE;
+                }
+            });
+
+            ui.separator();
+
+            egui::CollapsingHeader::new("Pixel Colors").show(ui, |ui| {
+                // TODO: Make this look nicer
+                if ui.button("Default Colors").clicked() {
+                    self.pixel_colors = PixelColors::default();
+                }
+
+                ui.label("Pixel on");
+
+                color_picker_color32(
+                    ui,
+                    &mut self.pixel_colors.get_on_color_mut(),
+                    egui::color_picker::Alpha::Opaque,
+                );
+
+                ui.separator();
+
+                ui.label("Pixel off");
+                color_picker_color32(
+                    ui,
+                    &mut self.pixel_colors.get_off_color_mut(),
+                    egui::color_picker::Alpha::Opaque,
+                );
+            });
+
+            ui.separator();
+
+            egui::CollapsingHeader::new("Keyboard").show(ui, |ui| {
+                egui::Grid::new("keyboard_grid")
+                    //.spacing(Vec2::new(20.0, 3.0))
+                    .show(ui, |ui| {
+                        // TODO: Change into a grid with button highlighting
+                        for i in 0..KEYBOARD.len() {
+                            let key = KEYBOARD[i];
+                            let key_down = self.c8_device.get_key(&key);
+                            // Slight hack because spacing doesn't work as expected
+                            let key_down = if key_down { "Down" } else { "Up" };
+                            ui.label(format!("{:?}: {}", key, key_down));
+
+                            if i % 4 == 3 {
+                                ui.end_row();
+                            }
+                        }
+                    });
+            });
+        });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Window::new("Display")
                 .resizable(true)
                 .show(ctx, |ui| {
-                    self.display_handle = Some(ctx.load_texture(
-                        "DisplayTexture",
-                        egui::ImageData::Color(Arc::new(self.display_image.clone())),
-                        TextureOptions {
-                            magnification: egui::TextureFilter::Nearest,
-                            minification: egui::TextureFilter::Nearest,
-                            wrap_mode: egui::TextureWrapMode::ClampToEdge,
-                        },
-                    ));
+                    // Note: This is hacky
+                    let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
+
+                    let texture_options = TextureOptions {
+                        magnification: egui::TextureFilter::Nearest,
+                        minification: egui::TextureFilter::Nearest,
+                        wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                    };
+
+                    match &mut self.display_handle {
+                        Some(handle) => {
+                            handle.set(image_data, texture_options);
+                        }
+                        None => {
+                            self.display_handle = Some(ctx.load_texture(
+                                "DisplayTexture",
+                                image_data,
+                                texture_options,
+                            ));
+                        }
+                    }
 
                     let image = egui::Image::new(self.display_handle.as_ref().unwrap())
-                        .fit_to_exact_size(Vec2::new(512.0, 256.0));
+                        .fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale);
 
                     ui.add(image);
-                });
-
-            egui::Window::new("Controls")
-                .resizable(false)
-                .show(ctx, |ui| {
-                    //ui.label("CPU Speed");
-                    egui::CollapsingHeader::new("CPU Speed").show(ui, |ui| {
-                        ui.add(egui::Slider::new(&mut self.cpu_speed, 1..=100).text("Speed"));
-
-                        if ui.button("Default Speed").clicked() {
-                            self.cpu_speed = DEFAULT_CPU_SPEED;
-                        }
-                    });
-
-                    ui.separator();
-
-                    egui::CollapsingHeader::new("Pixel Colors").show(ui, |ui| {
-                        // TODO: Make this look nicer
-                        if ui.button("Default Colors").clicked() {
-                            self.pixel_colors = PixelColors::default();
-                        }
-
-                        ui.label("Pixel on");
-
-                        color_picker_color32(
-                            ui,
-                            &mut self.pixel_colors.get_on_color_mut(),
-                            egui::color_picker::Alpha::Opaque,
-                        );
-
-                        ui.separator();
-
-                        ui.label("Pixel off");
-                        color_picker_color32(
-                            ui,
-                            &mut self.pixel_colors.get_off_color_mut(),
-                            egui::color_picker::Alpha::Opaque,
-                        );
-                    });
-
-                    ui.separator();
-
-                    egui::CollapsingHeader::new("Keyboard").show(ui, |ui| {
-                        egui::Grid::new("keyboard_grid")
-                            //.spacing(Vec2::new(20.0, 3.0))
-                            .show(ui, |ui| {
-                                // TODO: Change into a grid with button highlighting
-                                for i in 0..KEYBOARD.len() {
-                                    let key = KEYBOARD[i];
-                                    let key_down = self.c8_device.get_key(&key);
-                                    // Slight hack because spacing doesn't work as expected
-                                    let key_down = if key_down { "Down" } else { "Up      " };
-                                    ui.label(format!("{:?}: {}", key, key_down));
-
-                                    if i % 4 == 3 {
-                                        ui.end_row();
-                                    }
-                                }
-                            });
-                    });
                 });
 
             // "Powered by" text
