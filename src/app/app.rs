@@ -1,5 +1,8 @@
 use crate::{
-    device::c8::*,
+    device::{
+        c8::*,
+        display::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    },
     localization::{Languages, LANGUAGE_LIST, LOCALES},
     roms::TEST_ROMS,
 };

@@ -43,6 +43,7 @@ pub struct C8 {
 }
 
 /// Quirks for the Chip-8 device
+// Note: this could be implemented as a bitfield in the future
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Quirks {
     /// Quirk: Some programs expect VF to be 0
@@ -103,15 +104,6 @@ const FONT: &'static [u8] = &[
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
-
-/// Screen width constant
-pub const SCREEN_WIDTH: i32 = 64;
-
-/// Screen height constant
-pub const SCREEN_HEIGHT: i32 = 32;
-
-/// Screen size constant
-pub const SCREEN_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
 
 impl Default for C8 {
     fn default() -> Self {
