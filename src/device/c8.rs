@@ -3,6 +3,8 @@ use rand::prelude::*;
 
 use crate::app::keyboard::get_key_index;
 
+use super::display;
+
 /// Chip-8 Device
 #[derive(Debug)]
 pub struct C8 {
@@ -10,7 +12,7 @@ pub struct C8 {
     pub memory: Vec<u8>,
 
     /// The display of the device (64x32)
-    pub display: Vec<u8>,
+    pub display: display::Display,
 
     /// Index register
     pub index_register: u16,
@@ -118,7 +120,7 @@ impl Default for C8 {
             memory: vec![0; 4096],
 
             // 64x32 display
-            display: vec![0; SCREEN_SIZE],
+            display: display::Display::default(),
             index_register: 0,
             program_counter: 0x200,
             stack: vec![],
@@ -157,7 +159,7 @@ impl C8 {
     /// Resets the device
     fn reset_device(&mut self) {
         self.memory = vec![0; 4096];
-        self.display = vec![0; SCREEN_SIZE];
+        self.display = display::Display::default();
         self.index_register = 0;
         self.program_counter = 0x200;
         self.stack = vec![];
@@ -166,25 +168,6 @@ impl C8 {
         self.registers = vec![0; 16];
         self.is_running = false;
         self.keyboard = [0; 16];
-    }
-
-    /// Uses i32 for x and y to allow for wrapping around the screen
-    fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
-        // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
-        // This may be implemented in the future with a toggle.
-
-        // If the pixels are out of bounds, wrap them around
-        let x = x % SCREEN_WIDTH;
-        let y = y % SCREEN_HEIGHT;
-
-        // Set the pixel
-        let index = (y * SCREEN_WIDTH + x) as usize;
-
-        // Pixels are XORed on the display
-        self.display[index] ^= 1;
-
-        // Return the pixel value
-        self.display[index]
     }
 
     /// Set the state of a key
@@ -211,11 +194,6 @@ impl C8 {
         };
 
         self.keyboard[key_index as usize] == 1
-    }
-
-    /// Clear the screen, resets all pixels to 0.
-    fn clear_screen(&mut self) {
-        self.display = vec![0; SCREEN_SIZE];
     }
 
     /// Step the device
@@ -267,7 +245,7 @@ impl C8 {
                 match opcode {
                     0x00E0 => {
                         // Clear the display
-                        self.clear_screen();
+                        self.display.clear();
                     }
                     0x00EE => {
                         // Return from a subroutine
@@ -431,7 +409,7 @@ impl C8 {
 
                     for col in 0..8 {
                         if (pixel & (0x80 >> col)) != 0 {
-                            if self.set_pixel(x + col, y + row as i32) == 0 {
+                            if self.display.set_pixel(x + col, y + row as i32) == 0 {
                                 self.registers[0xF] = 1;
                             }
                         }

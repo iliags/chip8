@@ -4,7 +4,7 @@
 pub mod app;
 
 /// The Chip-8 device
-pub mod c8;
+pub mod device;
 
 /// ROMs included with the emulator
 pub mod roms;

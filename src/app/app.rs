@@ -1,4 +1,5 @@
 use crate::{
+    device::c8::*,
     localization::{Languages, LANGUAGE_LIST, LOCALES},
     roms::TEST_ROMS,
 };
@@ -86,6 +87,7 @@ impl App {
 
     /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
+        for (i, &pixel) in self.c8_device.display.get_pixels().iter().enumerate() {
             self.display_image.pixels[i] = self.pixel_colors.get_color(pixel).clone();
         }
     }
