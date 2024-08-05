@@ -1,5 +1,4 @@
 use crate::{
-    c8::*,
     localization::{Languages, LANGUAGE_LIST, LOCALES},
     roms::TEST_ROMS,
 };
@@ -87,8 +86,32 @@ impl App {
 
     /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
-        for (i, &pixel) in self.c8_device.display.iter().enumerate() {
             self.display_image.pixels[i] = self.pixel_colors.get_color(pixel).clone();
+        }
+    }
+
+    fn load_rom(&mut self, rom_data: Vec<u8>) {
+        // Assign the rom data to the rom file copy
+        self.rom_file = Some(rom_data.clone());
+
+        let data = self.rom_file.as_ref().unwrap_or(&Vec::new()).clone();
+
+        if rom_data.is_empty() {
+            println!("ROM data is empty");
+            return;
+        }
+
+        self.c8_device.load_rom(data);
+    }
+
+    fn reload_rom(&mut self) {
+        if self.rom_file.is_some() {
+            self.c8_device
+                .load_rom(self.rom_file.as_ref().unwrap().clone());
+
+            println!("ROM reloaded");
+        } else {
+            println!("No ROM loaded");
         }
     }
 }
@@ -113,11 +136,14 @@ impl eframe::App for App {
                     |ui| {
                         for rom in TEST_ROMS.iter() {
                             if ui.button(rom.get_name()).clicked() {
-                                self.rom_file = Some(rom.get_data().to_vec());
-                                self.c8_device
-                                    .load_rom(self.rom_file.as_ref().unwrap().clone());
+                                self.load_rom(rom.get_data().to_vec());
+
                                 println!("ROM loaded: {}", rom.get_name());
+
+                                // Close the menu
                                 ui.close_menu();
+
+                                // Break out of the loop
                                 break;
                             }
                         }
@@ -132,16 +158,9 @@ impl eframe::App for App {
                 {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        self.rom_file = future::block_on(async move { load_file().await });
+                        let rom_file = future::block_on(async move { load_file().await });
 
-                        if self.rom_file.is_some() {
-                            self.c8_device
-                                .load_rom(self.rom_file.as_ref().unwrap().clone());
-
-                            println!("ROM loaded");
-                        } else {
-                            println!("No ROM selected");
-                        }
+                        self.load_rom(rom_file.unwrap_or_default());
                     }
 
                     #[cfg(target_arch = "wasm32")]
@@ -162,9 +181,7 @@ impl eframe::App for App {
                 {
                     match self.file_data.take() {
                         Some(file_data) => {
-                            self.rom_file = Some(file_data);
-                            self.c8_device
-                                .load_rom(self.rom_file.as_ref().unwrap().clone());
+                            self.load_rom(file_data);
                             self.file_data = Rc::new(RefCell::new(None));
                         }
                         None => {}
@@ -182,9 +199,7 @@ impl eframe::App for App {
                     )
                     .clicked()
                 {
-                    self.c8_device
-                        .load_rom(self.rom_file.as_ref().unwrap().clone());
-                    println!("ROM reloaded");
+                    self.reload_rom();
                 }
 
                 ui.separator();
