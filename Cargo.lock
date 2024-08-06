@@ -558,7 +558,7 @@ dependencies = [
 
 [[package]]
 name = "chip8"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "bevy_tasks",
  "eframe",
