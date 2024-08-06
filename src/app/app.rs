@@ -1,3 +1,7 @@
+use super::{
+    keyboard::{get_key_name, KEYBOARD},
+    pixel_color::PixelColors,
+};
 use crate::{
     device::{
         c8::*,
@@ -10,18 +14,8 @@ use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
-use unic_langid::LanguageIdentifier;
-
-use super::{
-    keyboard::{get_key_name, KEYBOARD},
-    pixel_color::PixelColors,
-};
-
-#[cfg(target_arch = "wasm32")]
 use std::{cell::RefCell, rc::Rc};
-
-#[cfg(not(target_arch = "wasm32"))]
-use bevy_tasks::futures_lite::future;
+use unic_langid::LanguageIdentifier;
 
 const DEFAULT_CPU_SPEED: u32 = 50;
 
@@ -52,8 +46,6 @@ pub struct App {
     /// The display scale
     display_scale: f32,
 
-    // TODO: Use this for both web and native
-    #[cfg(target_arch = "wasm32")]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
     current_language: Languages,
@@ -73,7 +65,7 @@ impl Default for App {
             pixel_colors: PixelColors::default(),
             display_scale: DEFAULT_DISPLAY_SCALE,
 
-            #[cfg(target_arch = "wasm32")]
+            //#[cfg(target_arch = "wasm32")]
             file_data: Rc::new(RefCell::new(None)),
 
             // Current language
@@ -161,18 +153,23 @@ impl eframe::App for App {
                     .button(LOCALES.lookup(&self.current_language.value(), "open_rom"))
                     .clicked()
                 {
+                    // Clone the file data reference
+                    let data_clone = Rc::clone(&self.file_data.clone());
+
                     #[cfg(not(target_arch = "wasm32"))]
                     {
-                        let rom_file = future::block_on(async move { load_file().await });
+                        use bevy_tasks::futures_lite::future;
 
-                        self.load_rom(rom_file.unwrap_or_default());
+                        future::block_on(async move {
+                            let file_data = load_file().await;
+
+                            // Update the shared state
+                            *data_clone.borrow_mut() = file_data;
+                        });
                     }
 
                     #[cfg(target_arch = "wasm32")]
                     {
-                        // Clone the file data for the async block
-                        let data_clone = Rc::clone(&self.file_data.clone());
-
                         wasm_bindgen_futures::spawn_local(async move {
                             let file_data = load_file().await;
 
@@ -182,15 +179,13 @@ impl eframe::App for App {
                     }
                 }
 
-                #[cfg(target_arch = "wasm32")]
-                {
-                    match self.file_data.take() {
-                        Some(file_data) => {
-                            self.load_rom(file_data);
-                            self.file_data = Rc::new(RefCell::new(None));
-                        }
-                        None => {}
+                // Check if the file data has been updated
+                match self.file_data.take() {
+                    Some(file_data) => {
+                        self.load_rom(file_data);
+                        self.file_data = Rc::new(RefCell::new(None));
                     }
+                    None => {}
                 }
 
                 ui.separator();
