@@ -3,7 +3,7 @@ use rand::prelude::*;
 
 use crate::app::keyboard::get_key_index;
 
-use super::display;
+use super::{display, quirks::Quirks};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -40,25 +40,6 @@ pub struct C8 {
 
     /// Quirks
     pub quirks: Quirks,
-}
-
-/// Quirks for the Chip-8 device
-// Note: this could be implemented as a bitfield in the future
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Quirks {
-    /// Quirk: Some programs expect VF to be 0
-    pub vf_zero: bool,
-
-    /// Quirk: Some programs expect I to be incremented
-    pub i_incremented: bool,
-
-    /// Quirk: Some programs expect VX to be shifted directly without assigning VY
-    pub vx_shifted_directly: bool,
-    // TODO
-    //display_waiting: bool,
-
-    // TODO
-    //clip_sprites: bool,
 }
 
 // Dead code is allowed here because:
@@ -121,11 +102,7 @@ impl Default for C8 {
             registers: vec![0; 16],
             is_running: false,
             keyboard: [0; 16],
-            quirks: Quirks {
-                vf_zero: true,
-                i_incremented: true,
-                vx_shifted_directly: true,
-            },
+            quirks: Quirks::default(),
         }
     }
 }
@@ -140,6 +117,19 @@ impl C8 {
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
     pub fn load_rom(&mut self, rom: Vec<u8>) {
+        // Make sure the ROM data is valid
+        match rom.len() {
+            0 => {
+                println!("No ROM data provided");
+                return;
+            }
+            len if len > 3584 => {
+                println!("ROM data is too large: {} bytes", len);
+                return;
+            }
+            _ => {}
+        }
+
         self.reset_device();
         self.load_font();
         for (i, &byte) in rom.iter().enumerate() {
