@@ -96,15 +96,15 @@ impl App {
     }
 
     fn load_rom(&mut self, rom_data: Vec<u8>) {
-        // Assign the rom data to the rom file copy
-        self.rom_file = Some(rom_data.clone());
-
-        let data = self.rom_file.as_ref().unwrap_or(&Vec::new()).clone();
-
         if rom_data.is_empty() {
             println!("ROM data is empty");
             return;
         }
+
+        // Assign the rom data to the rom file copy
+        self.rom_file = Some(rom_data.clone());
+
+        let data = self.rom_file.as_ref().unwrap_or(&Vec::new()).clone();
 
         self.c8_device.load_rom(data);
     }
