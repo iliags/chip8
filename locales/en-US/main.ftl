@@ -38,6 +38,7 @@ quirk_set_vxvy_hover = VX is set to VY directly during shift operations
 
 ## About
 about = About
+version = Version: {" "}
 source = Source code
 powered_by = Powered by {" "}
 and = {" "} and {" "}

@@ -206,6 +206,12 @@ impl eframe::App for App {
                     ui.menu_button(
                         LOCALES.lookup(&self.current_language.value(), "about"),
                         |ui| {
+                            let version_label = format!(
+                                "{}{}",
+                                LOCALES.lookup(&self.current_language.value(), "version"),
+                                env!("CARGO_PKG_VERSION")
+                            );
+                            ui.label(version_label);
 
                             ui.separator();
 
