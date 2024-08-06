@@ -400,9 +400,10 @@ impl eframe::App for App {
                 .resizable(true)
                 .show(ctx, |ui| {
                     // Note: This is hacky
+                    // TODO: Figure out how to do this without cloning the image
                     let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
 
-                    let texture_options = TextureOptions {
+                    const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
                         magnification: egui::TextureFilter::Nearest,
                         minification: egui::TextureFilter::Nearest,
                         wrap_mode: egui::TextureWrapMode::ClampToEdge,
@@ -410,13 +411,13 @@ impl eframe::App for App {
 
                     match &mut self.display_handle {
                         Some(handle) => {
-                            handle.set(image_data, texture_options);
+                            handle.set(image_data, TEXTURE_OPTIONS);
                         }
                         None => {
                             self.display_handle = Some(ctx.load_texture(
                                 "DisplayTexture",
                                 image_data,
-                                texture_options,
+                                TEXTURE_OPTIONS,
                             ));
                         }
                     }
