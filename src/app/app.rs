@@ -66,8 +66,6 @@ impl Default for App {
             c8_device: C8::default(),
             pixel_colors: PixelColors::default(),
             display_scale: DEFAULT_DISPLAY_SCALE,
-
-            //#[cfg(target_arch = "wasm32")]
             file_data: Rc::new(RefCell::new(None)),
 
             // Current language
@@ -208,7 +206,6 @@ impl eframe::App for App {
                     ui.menu_button(
                         LOCALES.lookup(&self.current_language.value(), "about"),
                         |ui| {
-                            ui.label(env!("CARGO_PKG_VERSION"));
 
                             ui.separator();
 
