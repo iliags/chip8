@@ -175,7 +175,10 @@ impl eframe::App for App {
                 // Check if the file data has been updated
                 match self.file_data.take() {
                     Some(file_data) => {
+                        // Load the ROM
                         self.load_rom(file_data);
+
+                        // Reset the file data
                         self.file_data = Rc::new(RefCell::new(None));
                     }
                     None => {}
