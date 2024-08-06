@@ -451,13 +451,13 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) 
 }
 
 async fn load_file() -> Option<Vec<u8>> {
-    let file = AsyncFileDialog::new()
+    let file_task = AsyncFileDialog::new()
         .add_filter("Chip8", &["ch8"])
         .set_directory("/")
         .pick_file()
         .await;
 
-    match file {
+    match file_task {
         Some(file) => {
             let file = file.read().await;
             Some(file)
