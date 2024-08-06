@@ -35,7 +35,7 @@ pub struct App {
     cpu_speed: u32,
 
     /// The ROM file
-    rom_file: Option<Vec<u8>>,
+    rom_file: Vec<u8>,
 
     /// The Chip8 device
     c8_device: C8,
@@ -46,8 +46,10 @@ pub struct App {
     /// The display scale
     display_scale: f32,
 
+    /// File data used when loading the ROM
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
+    /// The current language the app is using
     current_language: Languages,
 }
 
@@ -59,7 +61,7 @@ impl Default for App {
                 Color32::BLACK,
             ),
             display_handle: None,
-            rom_file: None,
+            rom_file: Vec::new(),
             cpu_speed: DEFAULT_CPU_SPEED,
             c8_device: C8::default(),
             pixel_colors: PixelColors::default(),
@@ -94,22 +96,13 @@ impl App {
         }
 
         // Assign the rom data to the rom file copy
-        self.rom_file = Some(rom_data.clone());
+        self.rom_file = rom_data.clone();
 
-        let data = self.rom_file.as_ref().unwrap_or(&Vec::new()).clone();
-
-        self.c8_device.load_rom(data);
+        self.c8_device.load_rom(self.rom_file.clone());
     }
 
     fn reload_rom(&mut self) {
-        if self.rom_file.is_some() {
-            self.c8_device
-                .load_rom(self.rom_file.as_ref().unwrap().clone());
-
-            println!("ROM reloaded");
-        } else {
-            println!("No ROM loaded");
-        }
+        self.c8_device.load_rom(self.rom_file.clone());
     }
 }
 
@@ -192,7 +185,7 @@ impl eframe::App for App {
 
                 if ui
                     .add_enabled(
-                        self.rom_file.is_some(),
+                        self.rom_file.len() > 0,
                         egui::Button::new(
                             LOCALES.lookup(&self.current_language.value(), "reload_rom"),
                         ),
