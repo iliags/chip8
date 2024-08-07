@@ -29,3 +29,9 @@ const FONT: &'static [u8] = &[
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
+
+/// Maximum memory size
+pub const MAX_MEMORY: usize = 4096;
+
+/// Program entry point
+pub const PROGRAM_START: u16 = 0x200;

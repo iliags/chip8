@@ -11,3 +11,6 @@ pub mod roms;
 
 /// Localization for the emulator
 pub mod localization;
+
+/// Assembler/disassembler for Chip-8
+pub mod asm;
