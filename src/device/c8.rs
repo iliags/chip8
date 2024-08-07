@@ -2,7 +2,7 @@ use egui::Key;
 
 use crate::app::keyboard::get_key_index;
 
-use super::{cpu::CPU, display, quirks::Quirks};
+use super::{cpu::CPU, display, quirks::Quirks, MAX_MEMORY};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -33,7 +33,7 @@ impl Default for C8 {
     fn default() -> Self {
         Self {
             // 4kb of memory
-            memory: vec![0; 4096],
+            memory: vec![0; MAX_MEMORY],
 
             // 64x32 display
             display: display::Display::default(),

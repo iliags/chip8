@@ -1,4 +1,4 @@
-use super::{display, quirks};
+use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
 
 // Dead code is allowed here because:
@@ -48,7 +48,7 @@ impl Default for CPU {
     fn default() -> Self {
         Self {
             index_register: 0,
-            program_counter: 0x200,
+            program_counter: PROGRAM_START,
             registers: vec![0; 16],
             delay_timer: 0,
             sound_timer: 0,
@@ -60,7 +60,7 @@ impl CPU {
     /// Resets the CPU
     pub fn reset_cpu(&mut self) {
         self.index_register = 0;
-        self.program_counter = 0x200;
+        self.program_counter = PROGRAM_START;
         self.registers = vec![0; 16];
         self.delay_timer = 0;
         self.sound_timer = 0;
