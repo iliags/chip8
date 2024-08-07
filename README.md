@@ -4,6 +4,8 @@ A Chip-8 emulator for practice.
 
 [Live version here](https://iliags.github.io/chip8/)
 
+![Screenshot](./assets/screenshot.png)
+
 ## Emulator Info
 
 ### Input Mapping
