@@ -6,19 +6,6 @@ edition = "2021"
 publish = false
 build = "build.rs"
 
-[workspace]
-members = ["crates/*"]
-resolver = "2"
-
-[lints]
-workspace = true
-
-[workspace.lints.rust]
-unsafe_op_in_unsafe_fn = "warn"
-missing_docs = "warn"
-unsafe_code = "deny"
-
-
 [dependencies]
 egui = "0.28"
 eframe = { version = "0.28", default-features = false, features = [
@@ -59,3 +46,8 @@ lto = true
 # Optimize all dependencies even in debug builds:
 [profile.dev.package."*"]
 opt-level = 3
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+missing_docs = "warn"
+unsafe_code = "deny"
