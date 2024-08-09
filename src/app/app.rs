@@ -425,17 +425,17 @@ impl App {
             ui,
             |ui| {
                 ui.checkbox(
-                    &mut self.c8_device.quirks.vf_zero,
+                    &mut self.c8_device.get_quirks_mut().vf_zero,
                     LOCALES.lookup(&self.current_language.value(), "quirk_vf0"),
                 )
                 .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_vf0_hover"));
                 ui.checkbox(
-                    &mut self.c8_device.quirks.i_incremented,
+                    &mut self.c8_device.get_quirks_mut().i_incremented,
                     LOCALES.lookup(&self.current_language.value(), "quirk_i"),
                 )
                 .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_i_hover"));
                 ui.checkbox(
-                    &mut self.c8_device.quirks.vx_shifted_directly,
+                    &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
                     LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy"),
                 )
                 .on_hover_text(

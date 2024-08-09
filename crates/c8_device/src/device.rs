@@ -24,7 +24,7 @@ pub struct C8 {
     keyboard: [u8; 16],
 
     /// Quirks
-    pub quirks: Quirks,
+    quirks: Quirks,
 }
 
 impl Default for C8 {
@@ -45,6 +45,16 @@ impl Default for C8 {
 }
 
 impl C8 {
+    /// Get the quirks of the device
+    pub fn get_quirks(&self) -> &Quirks {
+        &self.quirks
+    }
+
+    /// Get the quirks of the device (mutable)
+    pub fn get_quirks_mut(&mut self) -> &mut Quirks {
+        &mut self.quirks
+    }
+
     /// Get the display of the device
     pub fn get_display(&self) -> &display::Display {
         &self.display
