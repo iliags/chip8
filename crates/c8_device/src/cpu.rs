@@ -37,9 +37,11 @@ pub struct CPU {
     /// General purpose registers
     registers: Vec<u8>,
 
+    // TODO: Make private when timers are implemented
     /// Delay timer
     pub(crate) delay_timer: u8,
 
+    // TODO: Make private when timers are implemented
     /// Sound timer
     pub(crate) sound_timer: u8,
 }
