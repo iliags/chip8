@@ -1,12 +1,13 @@
 use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
 
+/// The general purpose registers of the Chip-8
 // Dead code is allowed here because:
 // A) Removing unused registers would mandate manual register mapping
 // B) Unused registers may be used in the future (i.e. for debugging or testing)
-#[allow(dead_code)]
+#[allow(dead_code, missing_docs)]
 #[derive(Debug)]
-enum Register {
+pub enum Register {
     V0,
     V1,
     V2,
