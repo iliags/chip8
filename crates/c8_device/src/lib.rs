@@ -1,14 +1,12 @@
-/// The display of the Chip-8
+pub mod cpu;
+
 pub mod display;
 
-/// The Chip-8 device
-pub mod c8;
+pub mod device;
 
-/// Quirks for the Chip-8 device
 pub mod quirks;
 
-/// The Chip-8 CPU
-pub mod cpu;
+pub mod keyboard;
 
 /// Font data
 const FONT: &'static [u8] = &[

@@ -1,6 +1,4 @@
-use egui::Key;
-
-use crate::app::keyboard::get_key_index;
+use crate::keyboard::{get_key_index, KeyboardKey};
 
 use super::{cpu::CPU, display, quirks::Quirks, MAX_MEMORY};
 
@@ -88,29 +86,13 @@ impl C8 {
     }
 
     /// Set the state of a key
-    pub fn set_key(&mut self, key: &Key, pressed: bool) {
-        let key_index = match get_key_index(key) {
-            Some(index) => index,
-            None => {
-                println!("Unknown key: {:?}", key);
-                return;
-            }
-        };
-
-        self.keyboard[key_index as usize] = pressed as u8;
+    pub fn set_key(&mut self, key: &KeyboardKey, pressed: bool) {
+        self.keyboard[get_key_index(key)] = pressed as u8;
     }
 
     /// Get the state of a key
-    pub fn get_key(&self, key: &Key) -> bool {
-        let key_index = match get_key_index(key) {
-            Some(index) => index,
-            None => {
-                println!("Unknown key: {:?}", key);
-                return false;
-            }
-        };
-
-        self.keyboard[key_index as usize] == 1
+    pub fn get_key(&self, key: &KeyboardKey) -> bool {
+        self.keyboard[get_key_index(key)] == 1
     }
 
     /// Step the device

@@ -35,7 +35,7 @@ impl Languages {
 #[cfg(debug_assertions)]
 static_loader! {
     pub static LOCALES = {
-        locales: "./locales",
+        locales: "locales",
         fallback_language: "en-US",
         // Should only set to false when testing.
         customise: |bundle| bundle.set_use_isolating(false),
@@ -45,7 +45,7 @@ static_loader! {
 #[cfg(not(debug_assertions))]
 static_loader! {
     pub static LOCALES = {
-        locales: "./locales",
+        locales: "locales",
         fallback_language: "en-US",
     };
 }

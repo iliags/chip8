@@ -1,15 +1,14 @@
+use crate::roms::TEST_ROMS;
+
 use super::{
     keyboard::{get_key_name, KEYBOARD},
     pixel_color::PixelColors,
 };
-use crate::{
-    device::{
-        c8::*,
-        display::{SCREEN_HEIGHT, SCREEN_WIDTH},
-    },
-    localization::{Languages, LANGUAGE_LIST, LOCALES},
-    roms::TEST_ROMS,
+use c8_device::{
+    device::C8,
+    display::{SCREEN_HEIGHT, SCREEN_WIDTH},
 };
+use c8_i18n::localization::{Languages, LANGUAGE_LIST, LOCALES};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
@@ -84,7 +83,8 @@ impl eframe::App for App {
 
             // Process input
             for key in KEYBOARD {
-                ctx.input(|i| self.c8_device.set_key(key, i.key_down(*key)));
+                // TODO
+                //ctx.input(|i| self.c8_device.set_key(key, i.key_down(*key)));
             }
 
             // Draw the UI
@@ -387,7 +387,9 @@ impl App {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for i in 0..KEYBOARD.len() {
                         let key = KEYBOARD[i];
-                        let key_down = self.c8_device.get_key(&key);
+                        // TODO
+                        //let key_down = self.c8_device.get_key(&key);
+                        let key_down = false;
                         let key_name = get_key_name(&key);
                         let text = format!("{}", key_name);
 

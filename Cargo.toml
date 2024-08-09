@@ -6,6 +6,22 @@ edition = "2021"
 publish = false
 build = "build.rs"
 
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+#missing_docs = "warn"
+unsafe_code = "deny"
+
+[workspace.dependencies]
+# Accessibility
+fluent = "0.16"
+fluent-templates = "0.9"
+unic-langid = "0.9"
+rand = { version = "0.8" }
+
 [dependencies]
 egui = "0.28"
 eframe = { version = "0.28", default-features = false, features = [
@@ -15,12 +31,14 @@ eframe = { version = "0.28", default-features = false, features = [
 ] }
 log = "0.4"
 rfd = "0.14"
-rand = { version = "0.8" }
 
-# Accessibility
-fluent = "0.16"
-fluent-templates = "0.9"
-unic-langid = "0.9"
+fluent = { workspace = true }
+fluent-templates = { workspace = true }
+unic-langid = { workspace = true }
+
+c8_device = { path = "crates/c8_device" }
+c8_i18n = { path = "crates/c8_i18n" }
+
 
 [build-dependencies]
 embed-resource = { version = "2.4" }
@@ -46,8 +64,3 @@ lto = true
 # Optimize all dependencies even in debug builds:
 [profile.dev.package."*"]
 opt-level = 3
-
-[lints.rust]
-unsafe_op_in_unsafe_fn = "warn"
-missing_docs = "warn"
-unsafe_code = "deny"
