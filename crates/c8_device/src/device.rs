@@ -6,19 +6,19 @@ use super::{cpu::CPU, display, quirks::Quirks, MAX_MEMORY};
 #[derive(Debug)]
 pub struct C8 {
     /// The RAM (4kb)
-    pub memory: Vec<u8>,
+    memory: Vec<u8>,
 
     /// The display of the device (64x32)
-    pub display: display::Display,
+    display: display::Display,
 
     /// Chip-8 CPU
-    pub cpu: CPU,
+    cpu: CPU,
 
     /// Stack memory
-    pub stack: Vec<u16>,
+    stack: Vec<u16>,
 
     /// Whether the device is running
-    pub is_running: bool,
+    is_running: bool,
 
     /// Keyboard state
     keyboard: [u8; 16],
@@ -45,6 +45,11 @@ impl Default for C8 {
 }
 
 impl C8 {
+    /// Get the display of the device
+    pub fn get_display(&self) -> &display::Display {
+        &self.display
+    }
+
     /// Load font in the first 512 bytes of memory
     fn load_font(&mut self) {
         for (i, &byte) in super::FONT.iter().enumerate() {
