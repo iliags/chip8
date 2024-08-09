@@ -1,5 +1,4 @@
 //! Chip-8 device library
-//!
 
 /// Chip-8 CPU
 pub mod cpu;
@@ -17,7 +16,7 @@ pub mod quirks;
 pub mod keypad;
 
 /// Font data
-const FONT: &'static [u8] = &[
+const FONT: &[u8] = &[
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -41,3 +40,6 @@ pub const MAX_MEMORY: usize = 4096;
 
 /// Program entry point
 pub const PROGRAM_START: u16 = 0x200;
+
+/// Maximum ROM size
+pub const MAX_ROM_SIZE: usize = MAX_MEMORY - PROGRAM_START as usize;

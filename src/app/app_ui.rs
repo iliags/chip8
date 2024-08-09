@@ -24,7 +24,7 @@ const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
 const DEFAULT_DISPLAY_SCALE: f32 = 1.0;
 
 /// The application state
-pub struct App {
+pub struct AppUI {
     /// The image used to display the video memory
     display_image: egui::ColorImage,
 
@@ -53,7 +53,7 @@ pub struct App {
     current_language: Languages,
 }
 
-impl Default for App {
+impl Default for AppUI {
     fn default() -> Self {
         Self {
             display_image: egui::ColorImage::new(
@@ -74,7 +74,7 @@ impl Default for App {
     }
 }
 
-impl eframe::App for App {
+impl eframe::App for AppUI {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -101,22 +101,19 @@ impl eframe::App for App {
                 self.menu_open_rom(ui);
 
                 // Check if the file data has been updated
-                match self.file_data.take() {
-                    Some(file_data) => {
-                        // Load the ROM
-                        self.load_rom(file_data);
+                if let Some(file_data) = self.file_data.take() {
+                    // Load the ROM
+                    self.load_rom(file_data);
 
-                        // Reset the file data
-                        self.file_data = Rc::new(RefCell::new(None));
-                    }
-                    None => {}
+                    // Reset the file data
+                    self.file_data = Rc::new(RefCell::new(None));
                 }
 
                 ui.separator();
 
                 if ui
                     .add_enabled(
-                        self.rom_file.len() > 0,
+                        !self.rom_file.is_empty(),
                         egui::Button::new(
                             LOCALES.lookup(&self.current_language.value(), "reload_rom"),
                         ),
@@ -206,7 +203,7 @@ impl eframe::App for App {
     }
 }
 
-impl App {
+impl AppUI {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Default::default()
@@ -215,7 +212,7 @@ impl App {
     /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
         for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
-            self.display_image.pixels[i] = self.pixel_colors.get_color(pixel).clone();
+            self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
         }
     }
 
@@ -369,7 +366,7 @@ impl App {
 
                 color_picker_color32(
                     ui,
-                    &mut self.pixel_colors.get_on_color_mut(),
+                    self.pixel_colors.get_on_color_mut(),
                     egui::color_picker::Alpha::Opaque,
                 );
 
@@ -378,7 +375,7 @@ impl App {
                 ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
                 color_picker_color32(
                     ui,
-                    &mut self.pixel_colors.get_off_color_mut(),
+                    self.pixel_colors.get_off_color_mut(),
                     egui::color_picker::Alpha::Opaque,
                 );
             });
@@ -388,17 +385,14 @@ impl App {
         egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "keyboard"))
             .show(ui, |ui| {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
-                    for i in 0..KEYBOARD.len() {
-                        let key = KEYBOARD[i].clone();
+                    for (i, key) in KEYBOARD.iter().enumerate() {
                         let key_down = self
                             .c8_device
-                            .get_key(&get_key_mapping(&key).unwrap_or(KeypadKey::Num0));
-                        let key_name = match get_key_mapping(&key) {
+                            .get_key(&get_key_mapping(key).unwrap_or(KeypadKey::Num0));
+                        let key_name = match get_key_mapping(key) {
                             Some(key_pad) => key_pad.get_name().to_owned(),
                             None => "Unknown".to_owned(),
                         };
-
-                        let text = format!("{}", key_name);
 
                         if key_down {
                             let background_color = if ui.ctx().style().visuals.dark_mode {
@@ -407,9 +401,12 @@ impl App {
                                 Color32::LIGHT_GRAY
                             };
 
-                            ui.label(egui::RichText::new(text).background_color(background_color));
+                            ui.label(
+                                egui::RichText::new(key_name.to_string())
+                                    .background_color(background_color),
+                            );
                         } else {
-                            ui.label(text);
+                            ui.label(key_name.to_string());
                         }
 
                         if i % 4 == 3 {
@@ -469,10 +466,10 @@ fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) 
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
 
-        ui.label(LOCALES.lookup(&language, "powered_by"));
+        ui.label(LOCALES.lookup(language, "powered_by"));
         ui.hyperlink_to("egui", "https://github.com/emilk/egui");
 
-        ui.label(LOCALES.lookup(&language, "and"));
+        ui.label(LOCALES.lookup(language, "and"));
         ui.hyperlink_to(
             "eframe",
             "https://github.com/emilk/egui/tree/master/crates/eframe",

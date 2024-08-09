@@ -39,9 +39,28 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
   - This may take a while
 - Build using ```trunk serve --release```
 
+### Documentation
+
+```cargo doc --workspace --no-deps```
+
 ### Build Warnings
 
 If ```wasm-bindgen-cli``` was installed separately, but not updated, it may print a tool mismatch warning.
+
+## Testing
+
+### Unit/Integration Tests
+
+```cargo test --workspace```
+
+### MIRI
+
+See [miri repository](https://github.com/rust-lang/miri).
+
+- Install miri component on rust nightly: ```rustup +nightly component add miri```
+- Run tests with miri: ```cargo +nightly miri test --workspace```
+- Run application with miri: ```cargo +nightly miri run```
+  - This takes a long time to run and currently fails due to an unsupported operation in `winit`.
 
 ## Wishlist
 

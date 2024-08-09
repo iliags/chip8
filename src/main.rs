@@ -26,7 +26,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Chip 8",
         native_options,
-        Box::new(|cc| Ok(Box::new(chip8::app::app::App::new(cc)))),
+        Box::new(|cc| Ok(Box::new(chip8::app::app_ui::AppUI::new(cc)))),
     )
 }
 
@@ -43,7 +43,7 @@ fn main() {
             .start(
                 "the_canvas_id",
                 web_options,
-                Box::new(|cc| Ok(Box::new(chip8::app::app::App::new(cc)))),
+                Box::new(|cc| Ok(Box::new(chip8::app::app_ui::AppUI::new(cc)))),
             )
             .await;
 

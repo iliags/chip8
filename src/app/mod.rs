@@ -1,5 +1,5 @@
 /// Application
-pub mod app;
+pub mod app_ui;
 
 /// Pixel color option
 pub mod pixel_color;
