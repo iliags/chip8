@@ -29,19 +29,19 @@ enum Register {
 #[derive(Debug)]
 pub struct CPU {
     /// Index register
-    pub index_register: u16,
+    index_register: u16,
 
     /// Program counter
-    pub program_counter: u16,
+    program_counter: u16,
 
     /// General purpose registers
-    pub registers: Vec<u8>,
+    registers: Vec<u8>,
 
     /// Delay timer
-    pub delay_timer: u8,
+    pub(crate) delay_timer: u8,
 
     /// Sound timer
-    pub sound_timer: u8,
+    pub(crate) sound_timer: u8,
 }
 
 impl Default for CPU {
@@ -57,6 +57,21 @@ impl Default for CPU {
 }
 
 impl CPU {
+    /// Get the program counter
+    pub fn get_program_counter(&self) -> u16 {
+        self.program_counter
+    }
+
+    /// Get the index register
+    pub fn get_index_register(&self) -> u16 {
+        self.index_register
+    }
+
+    /// Get the general registers
+    pub fn get_registers(&self) -> Vec<u8> {
+        self.registers.clone()
+    }
+
     /// Resets the CPU
     pub fn reset_cpu(&mut self) {
         self.index_register = 0;
