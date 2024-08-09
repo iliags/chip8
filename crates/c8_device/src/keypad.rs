@@ -1,3 +1,5 @@
+/// Keypad definitions for the Chip 8 buttons
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum KeypadKey {
     Num1,
