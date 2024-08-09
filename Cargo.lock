@@ -494,6 +494,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
 
 [[package]]
+name = "c8_device"
+version = "0.1.0"
+dependencies = [
+ "rand",
+]
+
+[[package]]
+name = "c8_i18n"
+version = "0.1.0"
+dependencies = [
+ "fluent",
+ "fluent-templates",
+ "unic-langid",
+]
+
+[[package]]
 name = "calloop"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -561,6 +577,8 @@ name = "chip8"
 version = "0.1.8"
 dependencies = [
  "bevy_tasks",
+ "c8_device",
+ "c8_i18n",
  "eframe",
  "egui",
  "embed-resource",
@@ -569,7 +587,6 @@ dependencies = [
  "fluent-templates",
  "getrandom",
  "log",
- "rand",
  "rfd",
  "unic-langid",
  "wasm-bindgen-futures",

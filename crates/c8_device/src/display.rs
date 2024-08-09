@@ -31,9 +31,23 @@ impl Default for Display {
 }
 
 impl Display {
-    /// Get the pixels of the display
+    /// Get the pixels container of the display
     pub fn get_pixels(&self) -> &Vec<u8> {
         &self.pixels
+    }
+
+    /// Get the pixel at the given x and y coordinates
+    pub fn get_pixel(&self, x: i32, y: i32) -> u8 {
+        // Get the pixel index
+        let index = self.get_pixel_index(x, y);
+
+        // Return the pixel value
+        self.pixels[index]
+    }
+
+    /// Get if a pixel is on or off at the given x and y coordinates
+    pub fn get_pixel_state(&self, x: i32, y: i32) -> bool {
+        self.get_pixel(x, y) == 1
     }
 
     /// Clear the display
@@ -43,12 +57,18 @@ impl Display {
 
     /// Toggle a pixel at the given x and y coordinates
     ///
-    /// x: The x coordinate
-    ///
-    /// y: The y coordinate
-    ///
-    /// returns The value of the pixel after toggling
+    /// Returns the value of the pixel after toggling
     pub fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
+        let index = self.get_pixel_index(x, y);
+
+        // Pixels are XORed on the display
+        self.pixels[index] ^= 1;
+
+        // Return the pixel value
+        self.pixels[index]
+    }
+
+    const fn get_pixel_index(&self, x: i32, y: i32) -> usize {
         // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
         // This may be implemented in the future with a toggle.
 
@@ -56,14 +76,8 @@ impl Display {
         let x = x % SCREEN_WIDTH;
         let y = y % SCREEN_HEIGHT;
 
-        // Set the pixel
-        let index = (y * SCREEN_WIDTH + x) as usize;
-
-        // Pixels are XORed on the display
-        self.pixels[index] ^= 1;
-
-        // Return the pixel value
-        self.pixels[index]
+        // Get the pixel index
+        (y * SCREEN_WIDTH + x) as usize
     }
 }
 

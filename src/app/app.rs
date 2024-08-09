@@ -1,15 +1,15 @@
+use crate::roms::TEST_ROMS;
+
 use super::{
-    keyboard::{get_key_name, KEYBOARD},
+    keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::PixelColors,
 };
-use crate::{
-    device::{
-        c8::*,
-        display::{SCREEN_HEIGHT, SCREEN_WIDTH},
-    },
-    localization::{Languages, LANGUAGE_LIST, LOCALES},
-    roms::TEST_ROMS,
+use c8_device::{
+    device::C8,
+    display::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    keypad::KeypadKey,
 };
+use c8_i18n::localization::{Languages, LANGUAGE_LIST, LOCALES};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
@@ -84,7 +84,10 @@ impl eframe::App for App {
 
             // Process input
             for key in KEYBOARD {
-                ctx.input(|i| self.c8_device.set_key(key, i.key_down(*key)));
+                ctx.input(|i| {
+                    let current_key = &get_key_mapping(key).unwrap();
+                    self.c8_device.set_key(current_key, i.key_down(*key))
+                });
             }
 
             // Draw the UI
@@ -211,7 +214,7 @@ impl App {
 
     /// Update the display image with the current display buffer
     fn update_display_image(&mut self) {
-        for (i, &pixel) in self.c8_device.display.get_pixels().iter().enumerate() {
+        for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
             self.display_image.pixels[i] = self.pixel_colors.get_color(pixel).clone();
         }
     }
@@ -386,9 +389,15 @@ impl App {
             .show(ui, |ui| {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for i in 0..KEYBOARD.len() {
-                        let key = KEYBOARD[i];
-                        let key_down = self.c8_device.get_key(&key);
-                        let key_name = get_key_name(&key);
+                        let key = KEYBOARD[i].clone();
+                        let key_down = self
+                            .c8_device
+                            .get_key(&get_key_mapping(&key).unwrap_or(KeypadKey::Num0));
+                        let key_name = match get_key_mapping(&key) {
+                            Some(key_pad) => key_pad.get_name().to_owned(),
+                            None => "Unknown".to_owned(),
+                        };
+
                         let text = format!("{}", key_name);
 
                         if key_down {
@@ -416,17 +425,17 @@ impl App {
             ui,
             |ui| {
                 ui.checkbox(
-                    &mut self.c8_device.quirks.vf_zero,
+                    &mut self.c8_device.get_quirks_mut().vf_zero,
                     LOCALES.lookup(&self.current_language.value(), "quirk_vf0"),
                 )
                 .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_vf0_hover"));
                 ui.checkbox(
-                    &mut self.c8_device.quirks.i_incremented,
+                    &mut self.c8_device.get_quirks_mut().i_incremented,
                     LOCALES.lookup(&self.current_language.value(), "quirk_i"),
                 )
                 .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_i_hover"));
                 ui.checkbox(
-                    &mut self.c8_device.quirks.vx_shifted_directly,
+                    &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
                     LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy"),
                 )
                 .on_hover_text(

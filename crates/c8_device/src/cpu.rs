@@ -1,12 +1,13 @@
-use super::{display, quirks};
+use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
 
+/// The general purpose registers of the Chip-8
 // Dead code is allowed here because:
 // A) Removing unused registers would mandate manual register mapping
 // B) Unused registers may be used in the future (i.e. for debugging or testing)
-#[allow(dead_code)]
+#[allow(dead_code, missing_docs)]
 #[derive(Debug)]
-enum Register {
+pub enum Register {
     V0,
     V1,
     V2,
@@ -29,26 +30,28 @@ enum Register {
 #[derive(Debug)]
 pub struct CPU {
     /// Index register
-    pub index_register: u16,
+    index_register: u16,
 
     /// Program counter
-    pub program_counter: u16,
+    program_counter: u16,
 
     /// General purpose registers
-    pub registers: Vec<u8>,
+    registers: Vec<u8>,
 
+    // TODO: Make private when timers are implemented
     /// Delay timer
-    pub delay_timer: u8,
+    pub(crate) delay_timer: u8,
 
+    // TODO: Make private when timers are implemented
     /// Sound timer
-    pub sound_timer: u8,
+    pub(crate) sound_timer: u8,
 }
 
 impl Default for CPU {
     fn default() -> Self {
         Self {
             index_register: 0,
-            program_counter: 0x200,
+            program_counter: PROGRAM_START,
             registers: vec![0; 16],
             delay_timer: 0,
             sound_timer: 0,
@@ -57,10 +60,25 @@ impl Default for CPU {
 }
 
 impl CPU {
+    /// Get the program counter
+    pub fn get_program_counter(&self) -> u16 {
+        self.program_counter
+    }
+
+    /// Get the index register
+    pub fn get_index_register(&self) -> u16 {
+        self.index_register
+    }
+
+    /// Get the general registers
+    pub fn get_registers(&self) -> Vec<u8> {
+        self.registers.clone()
+    }
+
     /// Resets the CPU
     pub fn reset_cpu(&mut self) {
         self.index_register = 0;
-        self.program_counter = 0x200;
+        self.program_counter = PROGRAM_START;
         self.registers = vec![0; 16];
         self.delay_timer = 0;
         self.sound_timer = 0;

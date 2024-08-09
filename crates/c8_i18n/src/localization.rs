@@ -1,3 +1,4 @@
+// The static loader macro doesn't work with documentation comments, so we have to disable the warning.
 #![allow(missing_docs)]
 use fluent_templates::static_loader;
 use unic_langid::{langid, LanguageIdentifier};
@@ -35,7 +36,7 @@ impl Languages {
 #[cfg(debug_assertions)]
 static_loader! {
     pub static LOCALES = {
-        locales: "./locales",
+        locales: "locales",
         fallback_language: "en-US",
         // Should only set to false when testing.
         customise: |bundle| bundle.set_use_isolating(false),
@@ -45,7 +46,7 @@ static_loader! {
 #[cfg(not(debug_assertions))]
 static_loader! {
     pub static LOCALES = {
-        locales: "./locales",
+        locales: "locales",
         fallback_language: "en-US",
     };
 }
