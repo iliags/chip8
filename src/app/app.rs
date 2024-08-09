@@ -1,7 +1,7 @@
 use crate::roms::TEST_ROMS;
 
 use super::{
-    keyboard::{get_key_name, KEYBOARD},
+    keyboard::{get_key_mapping, get_key_name, KEYBOARD},
     pixel_color::PixelColors,
 };
 use c8_device::{
@@ -83,8 +83,10 @@ impl eframe::App for App {
 
             // Process input
             for key in KEYBOARD {
-                // TODO
-                //ctx.input(|i| self.c8_device.set_key(key, i.key_down(*key)));
+                ctx.input(|i| {
+                    self.c8_device
+                        .set_key(&get_key_mapping(key), i.key_down(*key))
+                });
             }
 
             // Draw the UI
@@ -387,9 +389,7 @@ impl App {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for i in 0..KEYBOARD.len() {
                         let key = KEYBOARD[i];
-                        // TODO
-                        //let key_down = self.c8_device.get_key(&key);
-                        let key_down = false;
+                        let key_down = self.c8_device.get_key(&get_key_mapping(&key));
                         let key_name = get_key_name(&key);
                         let text = format!("{}", key_name);
 

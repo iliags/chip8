@@ -1,3 +1,4 @@
+use c8_device::keyboard::KeyboardKey;
 use egui::Key;
 
 /// The keys on the keyboard that correspond to the Chip-8 keys
@@ -43,6 +44,29 @@ pub const fn get_key_index(key: &Key) -> Option<i32> {
     };
 
     Some(key_index)
+}
+
+pub fn get_key_mapping(key: &Key) -> KeyboardKey {
+    match key {
+        Key::Num1 => KeyboardKey::Num1,
+        Key::Num2 => KeyboardKey::Num2,
+        Key::Num3 => KeyboardKey::Num3,
+        Key::Num4 => KeyboardKey::C,
+        Key::Q => KeyboardKey::Num4,
+        Key::W => KeyboardKey::Num5,
+        Key::E => KeyboardKey::Num6,
+        Key::R => KeyboardKey::D,
+        Key::A => KeyboardKey::Num7,
+        Key::S => KeyboardKey::Num8,
+        Key::D => KeyboardKey::Num9,
+        Key::F => KeyboardKey::E,
+        Key::Z => KeyboardKey::A,
+        Key::X => KeyboardKey::Num0,
+        Key::C => KeyboardKey::B,
+        Key::V => KeyboardKey::F,
+        // TODO: Fix this
+        _ => KeyboardKey::Num0,
+    }
 }
 
 /// Get the name of the key for the UI
