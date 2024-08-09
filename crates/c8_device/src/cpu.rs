@@ -78,7 +78,7 @@ impl CPU {
     /// Step the CPU by one instruction
     pub fn step(
         &mut self,
-        memory: &mut Vec<u8>,
+        memory: &mut [u8],
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
@@ -99,13 +99,13 @@ impl CPU {
 
         self.program_counter += 2;
 
-        self.execute_instruction(opcode, memory, display, stack, &quirks, keyboard);
+        self.execute_instruction(opcode, memory, display, stack, quirks, keyboard);
     }
 
     fn execute_instruction(
         &mut self,
         opcode: u16,
-        memory: &mut Vec<u8>,
+        memory: &mut [u8],
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
@@ -284,10 +284,10 @@ impl CPU {
                     let pixel = memory[(self.index_register + row) as usize];
 
                     for col in 0..8 {
-                        if (pixel & (0x80 >> col)) != 0 {
-                            if display.set_pixel(x + col, y + row as i32) == 0 {
-                                self.registers[0xF] = 1;
-                            }
+                        if (pixel & (0x80 >> col)) != 0
+                            && display.set_pixel(x + col, y + row as i32) == 0
+                        {
+                            self.registers[0xF] = 1;
                         }
                     }
                 }
@@ -326,8 +326,8 @@ impl CPU {
 
                         let mut key_pressed = false;
 
-                        for i in 0..16 {
-                            if keyboard[i] != 0 {
+                        for (i, key) in keyboard.iter().enumerate() {
+                            if *key != 0 {
                                 key_pressed = true;
                                 self.registers[x] = i as u8;
                                 break;
