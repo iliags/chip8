@@ -1,3 +1,4 @@
+// The static loader macro doesn't work with documentation comments, so we have to disable the warning.
 #![allow(missing_docs)]
 use fluent_templates::static_loader;
 use unic_langid::{langid, LanguageIdentifier};
