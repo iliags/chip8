@@ -75,15 +75,6 @@ impl CPU {
         self.registers.clone()
     }
 
-    /// Resets the CPU
-    pub fn reset_cpu(&mut self) {
-        self.index_register = 0;
-        self.program_counter = PROGRAM_START;
-        self.registers = vec![0; 16];
-        self.delay_timer = 0;
-        self.sound_timer = 0;
-    }
-
     /// Step the CPU by one instruction
     pub fn step(
         &mut self,

@@ -41,3 +41,6 @@ pub const MAX_MEMORY: usize = 4096;
 
 /// Program entry point
 pub const PROGRAM_START: u16 = 0x200;
+
+/// Maximum ROM size
+pub const MAX_ROM_SIZE: usize = MAX_MEMORY - PROGRAM_START as usize;
