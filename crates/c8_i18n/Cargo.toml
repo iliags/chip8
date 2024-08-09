@@ -10,3 +10,7 @@ unic-langid = { workspace = true }
 
 [lints]
 workspace = true
+
+[lib]
+test = true
+doctest = true
