@@ -1,4 +1,4 @@
-use crate::keyboard::{get_key_index, KeyboardKey};
+use crate::keypad::KeypadKey;
 
 use super::{cpu::CPU, display, quirks::Quirks, MAX_MEMORY};
 
@@ -86,13 +86,13 @@ impl C8 {
     }
 
     /// Set the state of a key
-    pub fn set_key(&mut self, key: &KeyboardKey, pressed: bool) {
-        self.keyboard[get_key_index(key)] = pressed as u8;
+    pub fn set_key(&mut self, key: &KeypadKey, pressed: bool) {
+        self.keyboard[key.get_key_index()] = pressed as u8;
     }
 
     /// Get the state of a key
-    pub fn get_key(&self, key: &KeyboardKey) -> bool {
-        self.keyboard[get_key_index(key)] == 1
+    pub fn get_key(&self, key: &KeypadKey) -> bool {
+        self.keyboard[key.get_key_index()] == 1
     }
 
     /// Step the device

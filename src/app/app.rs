@@ -1,12 +1,13 @@
 use crate::roms::TEST_ROMS;
 
 use super::{
-    keyboard::{get_key_mapping, get_key_name, KEYBOARD},
+    keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::PixelColors,
 };
 use c8_device::{
     device::C8,
     display::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    keypad::KeypadKey,
 };
 use c8_i18n::localization::{Languages, LANGUAGE_LIST, LOCALES};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
@@ -84,8 +85,8 @@ impl eframe::App for App {
             // Process input
             for key in KEYBOARD {
                 ctx.input(|i| {
-                    self.c8_device
-                        .set_key(&get_key_mapping(key), i.key_down(*key))
+                    let current_key = &get_key_mapping(key).unwrap();
+                    self.c8_device.set_key(current_key, i.key_down(*key))
                 });
             }
 
@@ -388,9 +389,15 @@ impl App {
             .show(ui, |ui| {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for i in 0..KEYBOARD.len() {
-                        let key = KEYBOARD[i];
-                        let key_down = self.c8_device.get_key(&get_key_mapping(&key));
-                        let key_name = get_key_name(&key);
+                        let key = KEYBOARD[i].clone();
+                        let key_down = self
+                            .c8_device
+                            .get_key(&get_key_mapping(&key).unwrap_or(KeypadKey::Num0));
+                        let key_name = match get_key_mapping(&key) {
+                            Some(key_pad) => key_pad.get_name().to_owned(),
+                            None => "Unknown".to_owned(),
+                        };
+
                         let text = format!("{}", key_name);
 
                         if key_down {

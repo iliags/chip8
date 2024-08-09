@@ -6,7 +6,7 @@ pub mod device;
 
 pub mod quirks;
 
-pub mod keyboard;
+pub mod keypad;
 
 /// Font data
 const FONT: &'static [u8] = &[
