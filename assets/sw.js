@@ -1,9 +1,9 @@
-var cacheName = 'egui-template-pwa';
+var cacheName = 'chip8-pwa';
 var filesToCache = [
   './',
   './index.html',
-  './eframe_template.js',
-  './eframe_template_bg.wasm',
+  './chip8.js',
+  './chip8.wasm',
 ];
 
 /* Start the service worker and cache all of the app's content */

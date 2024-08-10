@@ -119,6 +119,8 @@
 </head>
 
 <body>
+    <link data-trunk rel="inline" href="assets/sound.js" />
+
     <!-- The WASM code will resize the canvas dynamically -->
     <!-- the id is hardcoded in main.rs . so, make sure both match. -->
     <canvas id="the_canvas_id"></canvas>
@@ -131,6 +133,8 @@
         <div class="lds-dual-ring"></div>
     </div>
 
+
+
     <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
     <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
     <script>
@@ -140,6 +144,12 @@
                 navigator.serviceWorker.register('sw.js');
             });
         }
+
+        document.addEventListener('click', () => {
+            if (!window.audioContext) {
+                window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        });
     </script>
 </body>
 
