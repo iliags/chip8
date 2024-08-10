@@ -14,11 +14,34 @@ use std::{
     sync::mpsc::{Receiver, Sender},
 };
 
+#[derive(Debug, Clone, Copy)]
+pub struct BeeperSettings {
+    /// Tone pitch
+    pub pitch: f32,
+
+    /// Tone octave
+    pub octave: f32,
+
+    /// Tone volume
+    pub volume: f32,
+}
+
+impl Default for BeeperSettings {
+    fn default() -> Self {
+        BeeperSettings {
+            pitch: 440.0,
+            octave: 2.0,
+            volume: 0.05,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Message {
     Play,
     Pause,
     Stop,
+    Update,
 }
 
 #[derive(Default)]
@@ -26,6 +49,9 @@ pub struct Beeper {
     sender: Option<Sender<Message>>,
 
     stream_cell: Rc<Cell<Option<Stream>>>,
+
+    // TODO: Make thread safe
+    pub settings: BeeperSettings,
 }
 
 impl std::fmt::Debug for Beeper {
@@ -96,6 +122,7 @@ impl Beeper {
             return Beeper {
                 sender: Some(sender),
                 stream_cell: Rc::new(Cell::new(None)),
+                settings: BeeperSettings::default(),
             };
         }
     }
@@ -135,10 +162,18 @@ impl Beeper {
             .default_output_config()
             .expect("no default output config");
 
+        let settings = BeeperSettings::default();
+
         match config.sample_format() {
-            cpal::SampleFormat::F32 => Self::create_stream::<f32>(&device, &config.into()),
-            cpal::SampleFormat::I16 => Self::create_stream::<i16>(&device, &config.into()),
-            cpal::SampleFormat::U16 => Self::create_stream::<u16>(&device, &config.into()),
+            cpal::SampleFormat::F32 => {
+                Self::create_stream::<f32>(&device, &config.into(), settings)
+            }
+            cpal::SampleFormat::I16 => {
+                Self::create_stream::<i16>(&device, &config.into(), settings)
+            }
+            cpal::SampleFormat::U16 => {
+                Self::create_stream::<u16>(&device, &config.into(), settings)
+            }
             sample_format => Err(BuildStreamError::BackendSpecific {
                 err: BackendSpecificError {
                     description: format!("Unsupported sample format '{sample_format}'"),
@@ -166,6 +201,11 @@ impl Beeper {
                             let _ = stream.pause();
                             return;
                         }
+                        Ok(Message::Update) => {
+                            // TODO: Implement update stream with change detection
+                            let _ = stream.pause();
+                            return;
+                        }
                         Err(e) => {
                             eprintln!("Receive error: {}", e);
                         }
@@ -178,9 +218,11 @@ impl Beeper {
         }
     }
 
+    // TODO: Create update stream method
     fn create_stream<T>(
         device: &cpal::Device,
         config: &cpal::StreamConfig,
+        settings: BeeperSettings,
     ) -> Result<Stream, BuildStreamError>
     where
         T: SizedSample + FromSample<f32>,
@@ -192,7 +234,9 @@ impl Beeper {
         let mut sample_clock = 0f32;
         let mut next_value = move || {
             sample_clock = (sample_clock + 1.0) % sample_rate;
-            (sample_clock * 440.0 * 2.0 * std::f32::consts::PI / sample_rate).sin()
+            (sample_clock * settings.pitch * settings.octave * std::f32::consts::PI / sample_rate)
+                .sin()
+                * settings.volume
         };
 
         let err_fn = |err| eprintln!("Stream error: {}", err);

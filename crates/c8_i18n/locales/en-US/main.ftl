@@ -49,3 +49,6 @@ language = Language
 
 ## Audio
 audio_controls = Audio Controls
+pitch = Pitch
+octave = Octave
+volume = Volume

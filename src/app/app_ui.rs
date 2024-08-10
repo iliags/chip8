@@ -468,7 +468,9 @@ impl AppUI {
             });
     }
 
-    fn controls_audio(&self, ui: &mut egui::Ui) {
+    fn controls_audio(&mut self, ui: &mut egui::Ui) {
+        // Disable on WASM for now
+        #[cfg(not(target_arch = "wasm32"))]
         egui::CollapsingHeader::new(
             LOCALES.lookup(&self.current_language.value(), "audio_controls"),
         )
@@ -484,9 +486,26 @@ impl AppUI {
                     self.c8_device.beeper.pause();
                 }
 
+                /*
                 if ui.button("Stop").clicked() {
                     self.c8_device.beeper.stop();
                 }
+                 */
+            });
+
+            ui.vertical(|ui| {
+                ui.add(
+                    egui::Slider::new(&mut self.c8_device.beeper.settings.volume, 0.0..=1.0)
+                        .text(LOCALES.lookup(&self.current_language.value(), "volume")),
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.c8_device.beeper.settings.pitch, 20.0..=20000.0)
+                        .text(LOCALES.lookup(&self.current_language.value(), "pitch")),
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.c8_device.beeper.settings.octave, 1.0..=4.0)
+                        .text(LOCALES.lookup(&self.current_language.value(), "octave")),
+                );
             });
         });
     }
