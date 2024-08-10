@@ -47,6 +47,9 @@ pub struct AppUI {
     display_scale: f32,
 
     /// File data used when loading the ROM
+    ///
+    /// This uses a RefCell to allow the async file dialog code to work on both
+    /// native and web platforms.
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
     /// The current language the app is using
