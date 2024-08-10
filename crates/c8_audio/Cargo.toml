@@ -1,0 +1,10 @@
+[package]
+name = "c8_audio"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cpal = { workspace = true }
+
+[lints]
+workspace = true
