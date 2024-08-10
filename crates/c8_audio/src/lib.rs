@@ -10,12 +10,14 @@ use cpal::{
 
 use std::sync::mpsc::{self, Receiver, Sender};
 
+#[derive(Debug)]
 pub enum Message {
     Play,
     Pause,
     Stop,
 }
 
+#[derive(Debug)]
 pub struct Beeper {
     sender: Sender<Message>,
 }
@@ -34,7 +36,7 @@ impl Beeper {
 
         let (sender, receiver): (Sender<Message>, Receiver<Message>) = mpsc::channel();
 
-        //#[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(target_arch = "wasm32"))]
         {
             use std::thread;
             thread::spawn(move || {
@@ -104,9 +106,6 @@ impl Beeper {
                 eprintln!("BuildStreamError {:?}", e);
             }
         }
-
-        // TODO
-        //Ok(Self { sender: s })
     }
 
     fn create_stream<T>(

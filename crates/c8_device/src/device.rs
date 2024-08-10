@@ -1,3 +1,5 @@
+use c8_audio::Beeper;
+
 use crate::{cpu::CPU, display, keypad::KeypadKey, quirks::Quirks, FONT, MAX_MEMORY};
 
 /// Chip-8 Device
@@ -23,6 +25,9 @@ pub struct C8 {
 
     /// Quirks
     quirks: Quirks,
+
+    /// Audio
+    pub beeper: Beeper,
 }
 
 impl Default for C8 {
@@ -37,6 +42,7 @@ impl Default for C8 {
             is_running: false,
             keyboard: [0; 16],
             quirks: Quirks::default(),
+            beeper: Beeper::new(),
         }
     }
 }
@@ -110,7 +116,10 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-                // TODO: Play sound
+                self.beeper.play();
+            } else {
+                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
+                self.beeper.pause();
             }
 
             // Execute instructions

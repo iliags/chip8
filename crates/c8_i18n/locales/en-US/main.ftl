@@ -46,3 +46,6 @@ and = {" "} and {" "}
 ## Emulator
 emulator = Emulator
 language = Language
+
+## Audio
+audio_controls = Audio Controls

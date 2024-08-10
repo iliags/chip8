@@ -16,6 +16,10 @@ missing_docs = "warn"
 unsafe_code = "deny"
 
 [workspace.dependencies]
+c8_audio = { path = "crates/c8_audio" }
+c8_device = { path = "crates/c8_device" }
+c8_i18n = { path = "crates/c8_i18n" }
+
 # Accessibility
 fluent = "0.16"
 fluent-templates = "0.9"
@@ -40,10 +44,9 @@ rfd = "0.14"
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
 unic-langid = { workspace = true }
-
-c8_audio = { path = "crates/c8_audio" }
-c8_device = { path = "crates/c8_device" }
-c8_i18n = { path = "crates/c8_i18n" }
+c8_audio = { workspace = true }
+c8_device = { workspace = true }
+c8_i18n = { workspace = true }
 
 
 [build-dependencies]

@@ -160,6 +160,10 @@ impl eframe::App for AppUI {
                 ui.separator();
 
                 self.controls_emulator(ui);
+
+                ui.separator();
+
+                self.controls_audio(ui);
             });
         });
 
@@ -459,6 +463,29 @@ impl AppUI {
                     }
                 });
             });
+    }
+
+    fn controls_audio(&self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(
+            LOCALES.lookup(&self.current_language.value(), "audio_controls"),
+        )
+        .show(ui, |ui| {
+            //ui.label(LOCALES.lookup(&self.current_language.value(), "audio_controls"));
+
+            ui.horizontal(|ui| {
+                if ui.button("Play").clicked() {
+                    self.c8_device.beeper.play();
+                }
+
+                if ui.button("Pause").clicked() {
+                    self.c8_device.beeper.pause();
+                }
+
+                if ui.button("Stop").clicked() {
+                    self.c8_device.beeper.stop();
+                }
+            });
+        });
     }
 }
 
