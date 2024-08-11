@@ -1,6 +1,6 @@
 use c8_audio::Beeper;
 
-use crate::{cpu::CPU, display, keypad::KeypadKey, quirks::Quirks, FONT, MAX_MEMORY};
+use crate::{cpu::CPU, display, keypad::Keypad, quirks::Quirks, FONT, MAX_MEMORY};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct C8 {
     is_running: bool,
 
     /// Keyboard state
-    keyboard: [u8; 16],
+    keypad: Keypad,
 
     /// Quirks
     quirks: Quirks,
@@ -40,7 +40,7 @@ impl Default for C8 {
             cpu: CPU::default(),
             stack: vec![],
             is_running: false,
-            keyboard: [0; 16],
+            keypad: Keypad::default(),
             quirks: Quirks::default(),
             beeper: Beeper::new(),
         }
@@ -61,6 +61,21 @@ impl C8 {
     /// Get the display of the device
     pub fn get_display(&self) -> &display::Display {
         &self.display
+    }
+
+    /// Get the keypad of the device
+    pub fn get_keypad(&self) -> &Keypad {
+        &self.keypad
+    }
+
+    /// Get the keypad of the device (mutable)
+    pub fn get_keypad_mut(&mut self) -> &mut Keypad {
+        &mut self.keypad
+    }
+
+    /// Get if the device is running
+    pub fn get_is_running(&self) -> bool {
+        self.is_running
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
@@ -94,16 +109,6 @@ impl C8 {
         *self = Self::default();
     }
 
-    /// Set the state of a key
-    pub fn set_key(&mut self, key: &KeypadKey, pressed: bool) {
-        self.keyboard[key.get_key_index()] = pressed as u8;
-    }
-
-    /// Get the state of a key
-    pub fn get_key(&self, key: &KeypadKey) -> bool {
-        self.keyboard[key.get_key_index()] == 1
-    }
-
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) {
         if self.is_running {
@@ -130,7 +135,7 @@ impl C8 {
                     &mut self.display,
                     &mut self.stack,
                     &self.quirks,
-                    self.keyboard,
+                    &self.keypad,
                 );
             }
         }
@@ -190,24 +195,6 @@ mod tests {
         assert_eq!(c8.memory[0x201], 0x00);
         assert_eq!(c8.memory[0x202], 0x00);
         assert_eq!(c8.memory[0x203], 0x00);
-    }
-
-    #[test]
-    fn test_set_key() {
-        let mut c8 = C8::default();
-        c8.set_key(&KeypadKey::Num1, true);
-        assert_eq!(c8.keyboard[0x1], 1);
-        c8.set_key(&KeypadKey::Num1, false);
-        assert_eq!(c8.keyboard[0x1], 0);
-    }
-
-    #[test]
-    fn test_get_key() {
-        let mut c8 = C8::default();
-        c8.keyboard[0x1] = 1;
-        assert_eq!(c8.get_key(&KeypadKey::Num1), true);
-        c8.keyboard[0x1] = 0;
-        assert_eq!(c8.get_key(&KeypadKey::Num1), false);
     }
 
     #[test]

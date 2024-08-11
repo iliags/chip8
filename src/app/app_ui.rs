@@ -7,7 +7,6 @@ use super::{
 use c8_device::{
     device::C8,
     display::{SCREEN_HEIGHT, SCREEN_WIDTH},
-    keypad::KeypadKey,
 };
 use c8_i18n::localization::{Languages, LANGUAGE_LIST, LOCALES};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
@@ -93,7 +92,10 @@ impl eframe::App for AppUI {
             for key in KEYBOARD {
                 ctx.input(|i| {
                     let current_key = &get_key_mapping(key).unwrap();
-                    self.c8_device.set_key(current_key, i.key_down(*key))
+
+                    self.c8_device
+                        .get_keypad_mut()
+                        .set_key(current_key, i.key_down(*key))
                 });
             }
 
@@ -220,8 +222,6 @@ impl eframe::App for AppUI {
         });
 
         // By default, egui will only repaint if input is detected. This isn't
-        // ideal for this application, so we request a repaint every frame.
-        ctx.request_repaint();
     }
 }
 
@@ -410,7 +410,9 @@ impl AppUI {
                     for (i, key) in KEYBOARD.iter().enumerate() {
                         let key_down = self
                             .c8_device
-                            .get_key(&get_key_mapping(key).unwrap_or(KeypadKey::Num0));
+                            .get_keypad()
+                            .is_key_pressed(&get_key_mapping(key).unwrap());
+
                         let key_name = match get_key_mapping(key) {
                             Some(key_pad) => key_pad.get_name().to_owned(),
                             None => "Unknown".to_owned(),

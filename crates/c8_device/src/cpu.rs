@@ -1,3 +1,5 @@
+use crate::keypad::Keypad;
+
 use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
 
@@ -82,7 +84,7 @@ impl CPU {
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
-        keyboard: [u8; 16],
+        keypad: &Keypad,
     ) {
         const SHIFT: u8 = 8;
 
@@ -99,7 +101,7 @@ impl CPU {
 
         self.program_counter += 2;
 
-        self.execute_instruction(opcode, memory, display, stack, quirks, keyboard);
+        self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
     }
 
     fn execute_instruction(
@@ -109,7 +111,7 @@ impl CPU {
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
-        keyboard: [u8; 16],
+        keypad: &Keypad,
     ) {
         // Extract the opcode parts
         let x = ((opcode & 0x0F00) >> 8) as usize;
@@ -298,7 +300,7 @@ impl CPU {
                         // Skip next instruction if key with the value of Vx is pressed
                         let key = self.registers[x] as usize;
 
-                        if keyboard[key] != 0 {
+                        if keypad.get_key(&key.into()) != 0 {
                             self.program_counter += 2;
                         }
                     }
@@ -306,7 +308,7 @@ impl CPU {
                         // Skip next instruction if key with the value of Vx is not pressed
                         let key = self.registers[x] as usize;
 
-                        if keyboard[key] == 0 {
+                        if keypad.get_key(&key.into()) == 0 {
                             self.program_counter += 2;
                         }
                     }
@@ -326,7 +328,7 @@ impl CPU {
 
                         let mut key_pressed = false;
 
-                        for (i, key) in keyboard.iter().enumerate() {
+                        for (i, key) in keypad.get_keys().iter().enumerate() {
                             if *key != 0 {
                                 key_pressed = true;
                                 self.registers[x] = i as u8;
