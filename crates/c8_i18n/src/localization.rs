@@ -5,20 +5,20 @@ use unic_langid::{langid, LanguageIdentifier};
 
 /// The languages available for localization
 #[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
-pub enum Languages {
+pub enum Language {
     English,
 }
 
 /// Array of available languages for iteration
-pub const LANGUAGE_LIST: [Languages; 1] = [Languages::English];
+pub const LANGUAGE_LIST: [Language; 1] = [Language::English];
 
-impl Default for Languages {
+impl Default for Language {
     fn default() -> Self {
         Self::English
     }
 }
 
-impl Languages {
+impl Language {
     pub fn value(&self) -> LanguageIdentifier {
         match self {
             Self::English => langid!("en-US"),

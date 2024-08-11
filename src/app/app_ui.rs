@@ -8,7 +8,10 @@ use c8_device::{
     device::C8,
     display::{SCREEN_HEIGHT, SCREEN_WIDTH},
 };
-use c8_i18n::localization::{Languages, LANGUAGE_LIST, LOCALES};
+use c8_i18n::{
+    locale::Locale,
+    localization::{LANGUAGE_LIST, LOCALES},
+};
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
@@ -59,7 +62,7 @@ pub struct AppUI {
     display_scale: f32,
 
     // The current language the app is using
-    current_language: Languages,
+    language: Locale,
 
     // Whether the control panel is expanded
     control_panel_expanded: bool,
@@ -83,7 +86,7 @@ impl Default for AppUI {
             file_data: Rc::new(RefCell::new(None)),
 
             // Current language
-            current_language: Languages::English,
+            language: Locale::default(),
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
@@ -124,12 +127,12 @@ impl eframe::App for AppUI {
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
                     &mut self.control_panel_expanded,
-                    LOCALES.lookup(&self.current_language.value(), "control_panel"),
+                    self.language.get_locale_string("control_panel"),
                 );
 
                 ui.toggle_value(
                     &mut self.visualizer_panel_expanded,
-                    LOCALES.lookup(&self.current_language.value(), "visualizer_panel"),
+                    self.language.get_locale_string("visualizer_panel"),
                 );
 
                 ui.separator();
@@ -156,9 +159,7 @@ impl eframe::App for AppUI {
                 if ui
                     .add_enabled(
                         !self.rom_file.is_empty(),
-                        egui::Button::new(
-                            LOCALES.lookup(&self.current_language.value(), "reload_rom"),
-                        ),
+                        egui::Button::new(self.language.get_locale_string("reload_rom")),
                     )
                     .clicked()
                 {
@@ -253,7 +254,7 @@ impl AppUI {
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context) {
-        egui::Window::new(LOCALES.lookup(&self.current_language.value(), "display"))
+        egui::Window::new(self.language.get_locale_string("display"))
             .resizable(false)
             .show(ctx, |ui| {
                 // Note: This is hacky
@@ -304,29 +305,26 @@ impl AppUI {
     }
 
     fn menu_test_roms(&mut self, ui: &mut egui::Ui) {
-        ui.menu_button(
-            LOCALES.lookup(&self.current_language.value(), "test_roms"),
-            |ui| {
-                for rom in TEST_ROMS.iter() {
-                    if ui.button(rom.get_name()).clicked() {
-                        self.load_rom(rom.get_data().to_vec());
+        ui.menu_button(self.language.get_locale_string("test_roms"), |ui| {
+            for rom in TEST_ROMS.iter() {
+                if ui.button(rom.get_name()).clicked() {
+                    self.load_rom(rom.get_data().to_vec());
 
-                        println!("ROM loaded: {}", rom.get_name());
+                    println!("ROM loaded: {}", rom.get_name());
 
-                        // Close the menu
-                        ui.close_menu();
+                    // Close the menu
+                    ui.close_menu();
 
-                        // Break out of the loop
-                        break;
-                    }
+                    // Break out of the loop
+                    break;
                 }
-            },
-        );
+            }
+        });
     }
 
     fn menu_open_rom(&mut self, ui: &mut egui::Ui) {
         if ui
-            .button(LOCALES.lookup(&self.current_language.value(), "open_rom"))
+            .button(self.language.get_locale_string("open_rom"))
             .clicked()
         {
             // Clone the file data reference
@@ -357,268 +355,251 @@ impl AppUI {
     }
 
     fn menu_about(&self, ui: &mut egui::Ui) {
-        ui.menu_button(
-            LOCALES.lookup(&self.current_language.value(), "about"),
-            |ui| {
-                let version_label = format!(
-                    "{}{}",
-                    LOCALES.lookup(&self.current_language.value(), "version"),
-                    env!("CARGO_PKG_VERSION")
-                );
-                ui.label(version_label);
+        ui.menu_button(self.language.get_locale_string("about"), |ui| {
+            let version_label = format!(
+                "{}{}",
+                self.language.get_locale_string("version"),
+                env!("CARGO_PKG_VERSION")
+            );
+            ui.label(version_label);
 
+            ui.separator();
+
+            ui.hyperlink_to(
+                self.language.get_locale_string("source"),
+                "https://github.com/iliags/chip8",
+            );
+
+            ui.separator();
+
+            Self::powered_by_egui_and_eframe(ui, &self.language.get_language().value());
+
+            #[cfg(debug_assertions)]
+            {
                 ui.separator();
 
-                ui.hyperlink_to(
-                    LOCALES.lookup(&self.current_language.value(), "source"),
-                    "https://github.com/iliags/chip8",
-                );
-
-                ui.separator();
-
-                Self::powered_by_egui_and_eframe(ui, &self.current_language.value());
-
-                #[cfg(debug_assertions)]
-                {
-                    ui.separator();
-
-                    egui::warn_if_debug_build(ui);
-                }
-            },
-        );
+                egui::warn_if_debug_build(ui);
+            }
+        });
     }
 
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "cpu_speed"))
-            .show(ui, |ui| {
-                ui.add(
-                    egui::Slider::new(&mut self.cpu_speed, 1..=240)
-                        .text(LOCALES.lookup(&self.current_language.value(), "speed")),
-                )
-                .on_hover_text(LOCALES.lookup(&self.current_language.value(), "speed_hover"));
+        egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
+            ui.add(
+                egui::Slider::new(&mut self.cpu_speed, 1..=240)
+                    .text(self.language.get_locale_string("speed")),
+            )
+            .on_hover_text(self.language.get_locale_string("speed_hover"));
 
-                if ui
-                    .button(LOCALES.lookup(&self.current_language.value(), "default_speed"))
-                    .clicked()
-                {
-                    self.cpu_speed = DEFAULT_CPU_SPEED;
-                }
-            });
+            if ui
+                .button(self.language.get_locale_string("default_speed"))
+                .clicked()
+            {
+                self.cpu_speed = DEFAULT_CPU_SPEED;
+            }
+        });
     }
 
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "display"))
-            .show(ui, |ui| {
-                ui.add(
-                    egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
-                        .text(LOCALES.lookup(&self.current_language.value(), "scale")),
-                );
+        egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
+            ui.add(
+                egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
+                    .text(self.language.get_locale_string("scale")),
+            );
 
-                if ui
-                    .button(LOCALES.lookup(&self.current_language.value(), "default_scale"))
-                    .clicked()
-                {
-                    self.display_scale = DEFAULT_DISPLAY_SCALE;
-                }
-            });
+            if ui
+                .button(self.language.get_locale_string("default_scale"))
+                .clicked()
+            {
+                self.display_scale = DEFAULT_DISPLAY_SCALE;
+            }
+        });
     }
 
     fn controls_pixel_color(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "pixel_colors"))
-            .show(ui, |ui| {
+        egui::CollapsingHeader::new(self.language.get_locale_string("pixel_colors")).show(
+            ui,
+            |ui| {
                 // TODO: Make this look nicer
                 if ui
-                    .button(LOCALES.lookup(&self.current_language.value(), "default_colors"))
+                    .button(self.language.get_locale_string("default_colors"))
                     .clicked()
                 {
                     self.pixel_colors = PixelColors::default();
                 }
 
-                //ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
-                egui::CollapsingHeader::new(
-                    LOCALES.lookup(&self.current_language.value(), "pixel_on"),
-                )
-                .show(ui, |ui| {
-                    color_picker_color32(
-                        ui,
-                        self.pixel_colors.get_on_color_mut(),
-                        egui::color_picker::Alpha::Opaque,
-                    );
-                });
+                //ui.label(self.language.get_locale_string( "pixel_on"));
+                egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
+                    ui,
+                    |ui| {
+                        color_picker_color32(
+                            ui,
+                            self.pixel_colors.get_on_color_mut(),
+                            egui::color_picker::Alpha::Opaque,
+                        );
+                    },
+                );
 
                 ui.separator();
 
-                //ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
+                //ui.label(self.language.get_locale_string( "pixel_off"));
 
-                egui::CollapsingHeader::new(
-                    LOCALES.lookup(&self.current_language.value(), "pixel_off"),
-                )
-                .show(ui, |ui| {
-                    color_picker_color32(
-                        ui,
-                        self.pixel_colors.get_off_color_mut(),
-                        egui::color_picker::Alpha::Opaque,
-                    );
-                });
-            });
-    }
-
-    fn controls_keyboard_grid(&self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "keyboard"))
-            .show(ui, |ui| {
-                egui::Grid::new("keyboard_grid").show(ui, |ui| {
-                    for (i, key) in KEYBOARD.iter().enumerate() {
-                        let key_down = self.c8_device.get_keypad().is_key_pressed(
-                            &get_key_mapping(key).unwrap_or_else(|| {
-                                panic!("Key mapping not found for key: {:?}", key)
-                            }),
+                egui::CollapsingHeader::new(self.language.get_locale_string("pixel_off")).show(
+                    ui,
+                    |ui| {
+                        color_picker_color32(
+                            ui,
+                            self.pixel_colors.get_off_color_mut(),
+                            egui::color_picker::Alpha::Opaque,
                         );
-
-                        let key_name = match get_key_mapping(key) {
-                            Some(key_pad) => key_pad.get_name().to_owned(),
-                            None => "Unknown".to_owned(),
-                        };
-
-                        if key_down {
-                            let background_color = if ui.ctx().style().visuals.dark_mode {
-                                Color32::DARK_GRAY
-                            } else {
-                                Color32::LIGHT_GRAY
-                            };
-
-                            ui.label(
-                                egui::RichText::new(key_name.to_string())
-                                    .background_color(background_color),
-                            );
-                        } else {
-                            ui.label(key_name.to_string());
-                        }
-
-                        if i % 4 == 3 {
-                            ui.end_row();
-                        }
-                    }
-                });
-            });
-    }
-
-    fn controls_quirks(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "quirks")).show(
-            ui,
-            |ui| {
-                ui.checkbox(
-                    &mut self.c8_device.get_quirks_mut().vf_zero,
-                    LOCALES.lookup(&self.current_language.value(), "quirk_vf0"),
-                )
-                .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_vf0_hover"));
-                ui.checkbox(
-                    &mut self.c8_device.get_quirks_mut().i_incremented,
-                    LOCALES.lookup(&self.current_language.value(), "quirk_i"),
-                )
-                .on_hover_text(LOCALES.lookup(&self.current_language.value(), "quirk_i_hover"));
-                ui.checkbox(
-                    &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
-                    LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy"),
-                )
-                .on_hover_text(
-                    LOCALES.lookup(&self.current_language.value(), "quirk_set_vxvy_hover"),
+                    },
                 );
             },
         );
     }
 
+    fn controls_keyboard_grid(&self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.language.get_locale_string("keyboard")).show(ui, |ui| {
+            egui::Grid::new("keyboard_grid").show(ui, |ui| {
+                for (i, key) in KEYBOARD.iter().enumerate() {
+                    let key_down = self.c8_device.get_keypad().is_key_pressed(
+                        &get_key_mapping(key)
+                            .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key)),
+                    );
+
+                    let key_name = match get_key_mapping(key) {
+                        Some(key_pad) => key_pad.get_name().to_owned(),
+                        None => "Unknown".to_owned(),
+                    };
+
+                    if key_down {
+                        let background_color = if ui.ctx().style().visuals.dark_mode {
+                            Color32::DARK_GRAY
+                        } else {
+                            Color32::LIGHT_GRAY
+                        };
+
+                        ui.label(
+                            egui::RichText::new(key_name.to_string())
+                                .background_color(background_color),
+                        );
+                    } else {
+                        ui.label(key_name.to_string());
+                    }
+
+                    if i % 4 == 3 {
+                        ui.end_row();
+                    }
+                }
+            });
+        });
+    }
+
+    fn controls_quirks(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.language.get_locale_string("quirks")).show(ui, |ui| {
+            ui.checkbox(
+                &mut self.c8_device.get_quirks_mut().vf_zero,
+                self.language.get_locale_string("quirk_vf0"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_vf0_hover"));
+            ui.checkbox(
+                &mut self.c8_device.get_quirks_mut().i_incremented,
+                self.language.get_locale_string("quirk_i"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_i_hover"));
+            ui.checkbox(
+                &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
+                self.language.get_locale_string("quirk_set_vxvy"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_set_vxvy_hover"));
+        });
+    }
+
     fn controls_emulator(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "emulator"))
-            .show(ui, |ui| {
-                egui::ComboBox::from_label(
-                    LOCALES.lookup(&self.current_language.value(), "language"),
-                )
-                .selected_text(self.current_language.as_str())
+        egui::CollapsingHeader::new(self.language.get_locale_string("emulator")).show(ui, |ui| {
+            egui::ComboBox::from_label(self.language.get_locale_string("language"))
+                .selected_text(self.language.get_language().as_str())
                 .show_ui(ui, |ui| {
                     for language in LANGUAGE_LIST {
                         ui.selectable_value(
-                            &mut self.current_language,
-                            language.clone(),
+                            &mut self.language.get_language_mut(),
+                            &mut language.clone(),
                             language.as_str(),
                         );
                     }
                 });
-            });
-    }
-
-    fn controls_audio(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(
-            LOCALES.lookup(&self.current_language.value(), "audio_controls"),
-        )
-        .show(ui, |ui| {
-            #[cfg(target_arch = "wasm32")]
-            ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
-
-            // Disable on WASM for now
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                ui.horizontal(|ui| {
-                    if ui.button("Play").clicked() {
-                        self.c8_device.beeper.play();
-                    }
-
-                    if ui.button("Pause").clicked() {
-                        self.c8_device.beeper.pause();
-                    }
-
-                    /*
-                    if ui.button("Stop").clicked() {
-                        self.c8_device.beeper.stop();
-                    }
-                     */
-                });
-
-                ui.vertical(|ui| {
-                    ui.add(
-                        egui::Slider::new(&mut self.c8_device.beeper.settings.volume, 0.0..=1.0)
-                            .text(LOCALES.lookup(&self.current_language.value(), "volume")),
-                    )
-                    .on_hover_text(
-                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
-                    );
-
-                    ui.add(
-                        egui::Slider::new(
-                            &mut self.c8_device.beeper.settings.pitch,
-                            20.0..=20000.0,
-                        )
-                        .text(LOCALES.lookup(&self.current_language.value(), "pitch")),
-                    )
-                    .on_hover_text(
-                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
-                    );
-
-                    ui.add(
-                        egui::Slider::new(&mut self.c8_device.beeper.settings.octave, 1.0..=4.0)
-                            .text(LOCALES.lookup(&self.current_language.value(), "octave")),
-                    )
-                    .on_hover_text(
-                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
-                    );
-                });
-            }
         });
     }
 
-    fn visualizer_memory(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "memory")).show(
+    fn controls_audio(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
             ui,
             |ui| {
-                ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
+                #[cfg(target_arch = "wasm32")]
+                ui.label(self.language.get_locale_string("under_construction"));
+
+                // Disable on WASM for now
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    ui.horizontal(|ui| {
+                        if ui.button("Play").clicked() {
+                            self.c8_device.beeper.play();
+                        }
+
+                        if ui.button("Pause").clicked() {
+                            self.c8_device.beeper.pause();
+                        }
+
+                        /*
+                        if ui.button("Stop").clicked() {
+                            self.c8_device.beeper.stop();
+                        }
+                         */
+                    });
+
+                    ui.vertical(|ui| {
+                        ui.add(
+                            egui::Slider::new(
+                                &mut self.c8_device.beeper.settings.volume,
+                                0.0..=1.0,
+                            )
+                            .text(self.language.get_locale_string("volume")),
+                        )
+                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+
+                        ui.add(
+                            egui::Slider::new(
+                                &mut self.c8_device.beeper.settings.pitch,
+                                20.0..=20000.0,
+                            )
+                            .text(self.language.get_locale_string("pitch")),
+                        )
+                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+
+                        ui.add(
+                            egui::Slider::new(
+                                &mut self.c8_device.beeper.settings.octave,
+                                1.0..=4.0,
+                            )
+                            .text(self.language.get_locale_string("octave")),
+                        )
+                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                    });
+                }
             },
         );
     }
 
+    fn visualizer_memory(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.language.get_locale_string("memory")).show(ui, |ui| {
+            ui.label(self.language.get_locale_string("under_construction"));
+        });
+    }
+
     fn visualizer_registers(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "registers"))
-            .show(ui, |ui| {
-                ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
-            });
+        egui::CollapsingHeader::new(self.language.get_locale_string("registers")).show(ui, |ui| {
+            ui.label(self.language.get_locale_string("under_construction"));
+        });
     }
 
     fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {
