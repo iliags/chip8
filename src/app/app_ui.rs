@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::{cell::RefCell, rc::Rc};
 use unic_langid::LanguageIdentifier;
 
-const DEFAULT_CPU_SPEED: u32 = 50;
+const DEFAULT_CPU_SPEED: u32 = 60;
 
 const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
 
@@ -392,9 +392,10 @@ impl AppUI {
         egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "cpu_speed"))
             .show(ui, |ui| {
                 ui.add(
-                    egui::Slider::new(&mut self.cpu_speed, 1..=100)
+                    egui::Slider::new(&mut self.cpu_speed, 1..=240)
                         .text(LOCALES.lookup(&self.current_language.value(), "speed")),
-                );
+                )
+                .on_hover_text(LOCALES.lookup(&self.current_language.value(), "speed_hover"));
 
                 if ui
                     .button(LOCALES.lookup(&self.current_language.value(), "default_speed"))

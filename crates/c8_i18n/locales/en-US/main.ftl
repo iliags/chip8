@@ -16,6 +16,7 @@ not_implemented = Not implemented
 ## CPU
 cpu_speed = CPU Speed
 speed = Speed
+speed_hover = The number of instructions executed per frame (the UI updates at 60Hz/16ms)
 default_speed = Default Speed
 
 ## Display
