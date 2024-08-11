@@ -26,41 +26,42 @@ const DEFAULT_DISPLAY_SCALE: f32 = 1.0;
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct AppUI {
-    /// The image used to display the video memory
+    // The image used to display the video memory
     #[serde(skip)]
     display_image: egui::ColorImage,
 
-    /// The handle to the display texture
+    // The handle to the display texture
     #[serde(skip)]
     display_handle: Option<egui::TextureHandle>,
 
-    /// The CPU speed
-    cpu_speed: u32,
-
-    /// The ROM file
-    #[serde(skip)]
-    rom_file: Vec<u8>,
-
-    /// The Chip8 device
-    #[serde(skip)]
-    c8_device: C8,
-
-    /// The pixel colors
-    pixel_colors: PixelColors,
-
-    /// The display scale
-    display_scale: f32,
-
-    /// File data used when loading the ROM
-    ///
-    /// This uses a RefCell to allow the async file dialog code to work on both
-    /// native and web platforms.
+    // File data used when loading the ROM
+    //
+    // This uses a RefCell to allow the async file dialog code to work on both
+    // native and web platforms.
     #[serde(skip)]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
-    /// The current language the app is using
+    // The ROM file
+    #[serde(skip)]
+    rom_file: Vec<u8>,
+
+    // The Chip8 device
+    #[serde(skip)]
+    c8_device: C8,
+
+    // The CPU speed
+    cpu_speed: u32,
+
+    // The pixel colors
+    pixel_colors: PixelColors,
+
+    // The display scale
+    display_scale: f32,
+
+    // The current language the app is using
     current_language: Languages,
 
+    // Whether the control panel is expanded
     control_panel_expanded: bool,
 
     visualizer_panel_expanded: bool,
@@ -75,8 +76,8 @@ impl Default for AppUI {
             ),
             display_handle: None,
             rom_file: Vec::new(),
-            cpu_speed: DEFAULT_CPU_SPEED,
             c8_device: C8::default(),
+            cpu_speed: DEFAULT_CPU_SPEED,
             pixel_colors: PixelColors::default(),
             display_scale: DEFAULT_DISPLAY_SCALE,
             file_data: Rc::new(RefCell::new(None)),
