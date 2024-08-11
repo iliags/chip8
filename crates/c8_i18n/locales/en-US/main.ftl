@@ -6,6 +6,7 @@ test_roms = Test ROMs
 open_rom = Open ROM
 reload_rom = Reload ROM
 control_panel = Control Panel
+visualizer_panel = Visualizer Panel
 
 # Controls
 
@@ -56,3 +57,7 @@ audio_controls = Audio Controls
 pitch = Pitch
 octave = Octave
 volume = Volume
+
+## Visualizer
+memory = Memory
+registers = Registers

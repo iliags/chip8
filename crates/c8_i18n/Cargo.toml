@@ -7,6 +7,7 @@ edition = "2021"
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
 unic-langid = { workspace = true }
+serde = { workspace = true }
 
 [lints]
 workspace = true

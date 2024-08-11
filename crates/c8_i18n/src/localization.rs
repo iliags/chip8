@@ -4,7 +4,7 @@ use fluent_templates::static_loader;
 use unic_langid::{langid, LanguageIdentifier};
 
 /// The languages available for localization
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
 pub enum Languages {
     English,
 }

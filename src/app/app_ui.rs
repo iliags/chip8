@@ -23,20 +23,26 @@ const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
 const DEFAULT_DISPLAY_SCALE: f32 = 1.0;
 
 /// The application state
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct AppUI {
     /// The image used to display the video memory
+    #[serde(skip)]
     display_image: egui::ColorImage,
 
     /// The handle to the display texture
+    #[serde(skip)]
     display_handle: Option<egui::TextureHandle>,
 
     /// The CPU speed
     cpu_speed: u32,
 
     /// The ROM file
+    #[serde(skip)]
     rom_file: Vec<u8>,
 
     /// The Chip8 device
+    #[serde(skip)]
     c8_device: C8,
 
     /// The pixel colors
@@ -49,12 +55,15 @@ pub struct AppUI {
     ///
     /// This uses a RefCell to allow the async file dialog code to work on both
     /// native and web platforms.
+    #[serde(skip)]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
     /// The current language the app is using
     current_language: Languages,
 
     control_panel_expanded: bool,
+
+    visualizer_panel_expanded: bool,
 }
 
 impl Default for AppUI {
@@ -76,17 +85,27 @@ impl Default for AppUI {
             current_language: Languages::English,
 
             control_panel_expanded: true,
+            visualizer_panel_expanded: false,
         }
     }
 }
 
 impl eframe::App for AppUI {
+    /// Called by the frame work to save state before shutdown.
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
+
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Step the emulator
             self.c8_device.step(self.cpu_speed);
-            self.update_display_image();
+
+            // Update the display image with the current display buffer
+            for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
+                self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
+            }
 
             // Process input
             for key in KEYBOARD {
@@ -100,11 +119,16 @@ impl eframe::App for AppUI {
                 });
             }
 
-            // Draw the UI
+            // Menu bar
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
                     &mut self.control_panel_expanded,
                     LOCALES.lookup(&self.current_language.value(), "control_panel"),
+                );
+
+                ui.toggle_value(
+                    &mut self.visualizer_panel_expanded,
+                    LOCALES.lookup(&self.current_language.value(), "visualizer_panel"),
                 );
 
                 ui.separator();
@@ -143,6 +167,7 @@ impl eframe::App for AppUI {
                 ui.separator();
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    // Global dark/light mode buttons
                     egui::widgets::global_dark_light_mode_buttons(ui);
 
                     ui.separator();
@@ -152,7 +177,8 @@ impl eframe::App for AppUI {
             });
         });
 
-        egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show_animated(
+        // Control panel
+        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
             ctx,
             self.control_panel_expanded,
             |ui| {
@@ -188,43 +214,19 @@ impl eframe::App for AppUI {
             },
         );
 
+        // Central panel with display window
         egui::CentralPanel::default().show(ctx, |_ui| {
-            egui::Window::new(LOCALES.lookup(&self.current_language.value(), "display"))
-                .resizable(true)
-                .show(ctx, |ui| {
-                    // Note: This is hacky
-                    // TODO: Figure out how to do this without cloning the image
-                    let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
-
-                    const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
-                        magnification: egui::TextureFilter::Nearest,
-                        minification: egui::TextureFilter::Nearest,
-                        wrap_mode: egui::TextureWrapMode::ClampToEdge,
-                    };
-
-                    match &mut self.display_handle {
-                        Some(handle) => {
-                            handle.set(image_data, TEXTURE_OPTIONS);
-                        }
-                        None => {
-                            self.display_handle = Some(ctx.load_texture(
-                                "DisplayTexture",
-                                image_data,
-                                TEXTURE_OPTIONS,
-                            ));
-                        }
-                    }
-
-                    let image = match &self.display_handle {
-                        Some(handle) => egui::Image::new(handle),
-                        None => {
-                            panic!("Display handle is None, this should never happen");
-                        }
-                    };
-
-                    ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale));
-                });
+            self.update_display_window(ctx);
         });
+
+        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
+            ctx,
+            self.visualizer_panel_expanded,
+            |ui| {
+                self.visualizer_memory(ui);
+                self.visualizer_registers(ui);
+            },
+        );
 
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
@@ -236,15 +238,52 @@ impl eframe::App for AppUI {
 
 impl AppUI {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // This is also where app-wide settings can be set, such as fonts and visuals.
+        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+
+        // Load previous app state (if any).
+        // Note that you must enable the `persistence` feature for this to work.
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
         Default::default()
     }
 
-    /// Update the display image with the current display buffer
-    fn update_display_image(&mut self) {
-        for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
-            self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
-        }
+    fn update_display_window(&mut self, ctx: &egui::Context) {
+        egui::Window::new(LOCALES.lookup(&self.current_language.value(), "display"))
+            .resizable(false)
+            .show(ctx, |ui| {
+                // Note: This is hacky
+                // TODO: Figure out how to do this without cloning the image
+                let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
+
+                const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
+                    magnification: egui::TextureFilter::Nearest,
+                    minification: egui::TextureFilter::Nearest,
+                    wrap_mode: egui::TextureWrapMode::ClampToEdge,
+                };
+
+                match &mut self.display_handle {
+                    Some(handle) => {
+                        handle.set(image_data, TEXTURE_OPTIONS);
+                    }
+                    None => {
+                        self.display_handle =
+                            Some(ctx.load_texture("DisplayTexture", image_data, TEXTURE_OPTIONS));
+                    }
+                }
+
+                let image = match &self.display_handle {
+                    Some(handle) => egui::Image::new(handle),
+                    None => {
+                        panic!("Display handle is None, this should never happen");
+                    }
+                };
+
+                ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale));
+            });
     }
 
     fn load_rom(&mut self, rom_data: Vec<u8>) {
@@ -393,22 +432,32 @@ impl AppUI {
                     self.pixel_colors = PixelColors::default();
                 }
 
-                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
-
-                color_picker_color32(
-                    ui,
-                    self.pixel_colors.get_on_color_mut(),
-                    egui::color_picker::Alpha::Opaque,
-                );
+                //ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_on"));
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "pixel_on"),
+                )
+                .show(ui, |ui| {
+                    color_picker_color32(
+                        ui,
+                        self.pixel_colors.get_on_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+                });
 
                 ui.separator();
 
-                ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
-                color_picker_color32(
-                    ui,
-                    self.pixel_colors.get_off_color_mut(),
-                    egui::color_picker::Alpha::Opaque,
-                );
+                //ui.label(LOCALES.lookup(&self.current_language.value(), "pixel_off"));
+
+                egui::CollapsingHeader::new(
+                    LOCALES.lookup(&self.current_language.value(), "pixel_off"),
+                )
+                .show(ui, |ui| {
+                    color_picker_color32(
+                        ui,
+                        self.pixel_colors.get_off_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+                });
             });
     }
 
@@ -554,11 +603,21 @@ impl AppUI {
         });
     }
 
-    #[allow(dead_code, unused_variables)]
-    fn visualizer_memory(&mut self, ui: &mut egui::Ui) {}
+    fn visualizer_memory(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "memory")).show(
+            ui,
+            |ui| {
+                ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
+            },
+        );
+    }
 
-    #[allow(dead_code, unused_variables)]
-    fn visualizer_registers(&mut self, ui: &mut egui::Ui) {}
+    fn visualizer_registers(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(LOCALES.lookup(&self.current_language.value(), "registers"))
+            .show(ui, |ui| {
+                ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
+            });
+    }
 }
 
 fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {

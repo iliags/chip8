@@ -552,6 +552,7 @@ version = "0.1.0"
 dependencies = [
  "fluent",
  "fluent-templates",
+ "serde",
  "unic-langid",
 ]
 
@@ -676,6 +677,7 @@ dependencies = [
  "getrandom",
  "log",
  "rfd",
+ "serde",
  "unic-langid",
  "wasm-bindgen-futures",
  "web-sys",

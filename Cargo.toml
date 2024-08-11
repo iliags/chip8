@@ -28,6 +28,8 @@ unic-langid = "0.9"
 # Random number generator
 rand = { version = "0.8" }
 
+serde = { version = "1", features = ["derive"] }
+
 # Audio
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
 
@@ -41,9 +43,11 @@ eframe = { version = "0.28", default-features = false, features = [
 log = "0.4"
 rfd = "0.14"
 
+
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
 unic-langid = { workspace = true }
+serde = { workspace = true }
 c8_audio = { workspace = true }
 c8_device = { workspace = true }
 c8_i18n = { workspace = true }
