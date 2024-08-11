@@ -1,7 +1,8 @@
 //! Audio utilities for the CHIP-8 emulator.
 
-// Remove when the module is more complete.
-#![allow(missing_docs, dead_code)]
+#![allow(dead_code)]
+
+// TODO: WASM audio has popping when pausing then playing the audio.
 
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
@@ -9,11 +10,12 @@ use cpal::{
 };
 
 use std::{
-    cell::Cell,
+    cell::OnceCell,
     rc::Rc,
     sync::mpsc::{Receiver, Sender},
 };
 
+/// Beeper settings
 #[derive(Debug, Clone, Copy)]
 pub struct BeeperSettings {
     /// Tone pitch
@@ -36,21 +38,30 @@ impl Default for BeeperSettings {
     }
 }
 
-#[derive(Debug)]
+/// Messages for the beeper
+#[derive(Debug, PartialEq)]
 pub enum Message {
+    /// Play the audio
     Play,
+    /// Pause the audio
     Pause,
+    /// Stop the audio
     Stop,
+    /// Update the audio settings
     Update,
 }
 
+/// Beeper
 #[derive(Default)]
 pub struct Beeper {
+    /// Sender used on non-wasm32 targets
     sender: Option<Sender<Message>>,
 
-    stream_cell: Rc<Cell<Option<Stream>>>,
+    /// Stream cell used on wasm32 targets
+    stream_cell: Rc<OnceCell<Option<Stream>>>,
 
     // TODO: Make thread safe
+    /// Beeper settings
     pub settings: BeeperSettings,
 }
 
@@ -61,11 +72,10 @@ impl std::fmt::Debug for Beeper {
 }
 
 impl Beeper {
+    /// Create a new beeper instance
     pub fn new() -> Self {
         #[cfg(target_arch = "wasm32")]
         {
-            Beeper::default()
-            /*
             use wasm_bindgen::prelude::*;
             use web_sys::{window, HtmlElement};
 
@@ -80,8 +90,14 @@ impl Beeper {
                     let device = Self::create_stream_device();
                     match device {
                         Ok(device) => {
-                            console::log_1(&"Creating Beeper".into());
-                            stream.set(Some(device));
+                            match stream.set(Some(device)) {
+                                Ok(_) => {
+                                    console::log_1(&"Stream set".into());
+                                }
+                                Err(_) => {
+                                    // Trying to set the stream again will always fail because of OnceCell
+                                }
+                            }
                         }
                         Err(e) => {
                             let error = format!("Error creating stream device: {:?}", e);
@@ -102,14 +118,15 @@ impl Beeper {
                 closure.forget();
             }
 
-            return beeper;
-             */
+            beeper
         }
 
         #[cfg(not(target_arch = "wasm32"))]
         {
             use std::sync::mpsc;
             use std::thread;
+
+            let mut beeper = Beeper::default();
 
             let (sender, receiver): (Sender<Message>, Receiver<Message>) = mpsc::channel();
 
@@ -119,36 +136,72 @@ impl Beeper {
                 Self::stream_audio(receiver, device);
             });
 
-            return Beeper {
-                sender: Some(sender),
-                stream_cell: Rc::new(Cell::new(None)),
-                settings: BeeperSettings::default(),
-            };
+            beeper.sender = Some(sender);
+
+            beeper
         }
     }
 
+    /// Play the audio
     pub fn play(&self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Play),
             None => Ok(()),
         };
+
+        #[cfg(target_arch = "wasm32")]
+        match self.stream_cell.get() {
+            Some(stream) => match stream {
+                Some(ref _stream) => {
+                    // Disable audio for now
+                    //let _ = stream.play();
+                }
+                None => {}
+            },
+            None => {}
+        }
     }
 
+    /// Pause the audio
     pub fn pause(&self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Pause),
             None => Ok(()),
         };
+
+        #[cfg(target_arch = "wasm32")]
+        match self.stream_cell.get() {
+            Some(stream) => match stream {
+                Some(ref _stream) => {
+                    // Disable audio for now
+                    //let _ = stream.pause();
+                }
+                None => {}
+            },
+            None => {}
+        }
     }
 
+    /// Stop the audio
     pub fn stop(&self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Stop),
             None => Ok(()),
         };
+
+        #[cfg(target_arch = "wasm32")]
+        match self.stream_cell.get() {
+            Some(stream) => match stream {
+                Some(ref stream) => {
+                    let _ = stream.pause();
+                }
+                None => {}
+            },
+            None => {}
+        }
     }
 
     fn create_stream_device() -> Result<Stream, BuildStreamError> {
@@ -266,13 +319,10 @@ impl Beeper {
 
 impl Drop for Beeper {
     fn drop(&mut self) {
-        match self.sender {
-            Some(ref sender) => {
-                let _ = sender.send(Message::Stop).unwrap_or_else(|e| {
-                    eprintln!("Error sending stop message: {}", e);
-                });
-            }
-            None => {}
+        if let Some(ref sender) = self.sender {
+            sender.send(Message::Stop).unwrap_or_else(|e| {
+                eprintln!("Error sending stop message: {}", e);
+            });
         }
     }
 }

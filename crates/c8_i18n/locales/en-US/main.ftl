@@ -8,6 +8,8 @@ reload_rom = Reload ROM
 
 # Controls
 
+under_construction = Under construction
+
 ## CPU
 cpu_speed = CPU Speed
 speed = Speed

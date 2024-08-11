@@ -119,7 +119,7 @@
 </head>
 
 <body>
-    <link data-trunk rel="inline" href="assets/sound.js" />
+    <!-- <link data-trunk rel="inline" href="assets/sound.js" /> -->
 
     <!-- The WASM code will resize the canvas dynamically -->
     <!-- the id is hardcoded in main.rs . so, make sure both match. -->
@@ -145,11 +145,13 @@
             });
         }
 
+        /*
         document.addEventListener('click', () => {
             if (!window.audioContext) {
                 window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
         });
+        */
     </script>
 </body>
 

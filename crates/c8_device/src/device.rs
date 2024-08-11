@@ -90,6 +90,7 @@ impl C8 {
 
     /// Resets the device
     fn reset_device(&mut self) {
+        self.beeper.stop();
         *self = Self::default();
     }
 

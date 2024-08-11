@@ -469,44 +469,50 @@ impl AppUI {
     }
 
     fn controls_audio(&mut self, ui: &mut egui::Ui) {
-        // Disable on WASM for now
-        #[cfg(not(target_arch = "wasm32"))]
         egui::CollapsingHeader::new(
             LOCALES.lookup(&self.current_language.value(), "audio_controls"),
         )
         .show(ui, |ui| {
-            //ui.label(LOCALES.lookup(&self.current_language.value(), "audio_controls"));
+            #[cfg(target_arch = "wasm32")]
+            ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
 
-            ui.horizontal(|ui| {
-                if ui.button("Play").clicked() {
-                    self.c8_device.beeper.play();
-                }
+            // Disable on WASM for now
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                ui.horizontal(|ui| {
+                    if ui.button("Play").clicked() {
+                        self.c8_device.beeper.play();
+                    }
 
-                if ui.button("Pause").clicked() {
-                    self.c8_device.beeper.pause();
-                }
+                    if ui.button("Pause").clicked() {
+                        self.c8_device.beeper.pause();
+                    }
 
-                /*
-                if ui.button("Stop").clicked() {
-                    self.c8_device.beeper.stop();
-                }
-                 */
-            });
+                    /*
+                    if ui.button("Stop").clicked() {
+                        self.c8_device.beeper.stop();
+                    }
+                     */
+                });
 
-            ui.vertical(|ui| {
-                ui.add(
-                    egui::Slider::new(&mut self.c8_device.beeper.settings.volume, 0.0..=1.0)
-                        .text(LOCALES.lookup(&self.current_language.value(), "volume")),
-                );
-                ui.add(
-                    egui::Slider::new(&mut self.c8_device.beeper.settings.pitch, 20.0..=20000.0)
+                ui.vertical(|ui| {
+                    ui.add(
+                        egui::Slider::new(&mut self.c8_device.beeper.settings.volume, 0.0..=1.0)
+                            .text(LOCALES.lookup(&self.current_language.value(), "volume")),
+                    );
+                    ui.add(
+                        egui::Slider::new(
+                            &mut self.c8_device.beeper.settings.pitch,
+                            20.0..=20000.0,
+                        )
                         .text(LOCALES.lookup(&self.current_language.value(), "pitch")),
-                );
-                ui.add(
-                    egui::Slider::new(&mut self.c8_device.beeper.settings.octave, 1.0..=4.0)
-                        .text(LOCALES.lookup(&self.current_language.value(), "octave")),
-                );
-            });
+                    );
+                    ui.add(
+                        egui::Slider::new(&mut self.c8_device.beeper.settings.octave, 1.0..=4.0)
+                            .text(LOCALES.lookup(&self.current_language.value(), "octave")),
+                    );
+                });
+            }
         });
     }
 }
