@@ -75,19 +75,17 @@ impl From<usize> for KeypadKey {
 
 /// Current state of the keypad
 #[derive(Debug, PartialEq, Default)]
-pub struct Keypad {
-    keys: [u8; 16],
-}
+pub struct Keypad([u8; 16]);
 
 impl Keypad {
     /// Set the state of a key
     pub fn set_key(&mut self, key: &KeypadKey, state: bool) {
-        self.keys[key.get_key_index()] = state as u8;
+        self.0[key.get_key_index()] = state as u8;
     }
 
     /// Get the state of a key
     pub fn get_key(&self, key: &KeypadKey) -> u8 {
-        self.keys[key.get_key_index()]
+        self.0[key.get_key_index()]
     }
 
     /// Get the state of a key as a boolean
@@ -97,7 +95,7 @@ impl Keypad {
 
     /// Get the underlying key array
     pub fn get_keys(&self) -> &[u8; 16] {
-        &self.keys
+        &self.0
     }
 }
 
