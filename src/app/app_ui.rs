@@ -222,6 +222,10 @@ impl eframe::App for AppUI {
         });
 
         // By default, egui will only repaint if input is detected. This isn't
+        // ideal for this application, so we request a repaint every frame if running.
+        if self.c8_device.get_is_running() {
+            ctx.request_repaint();
+        }
     }
 }
 
