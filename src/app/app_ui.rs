@@ -91,7 +91,8 @@ impl eframe::App for AppUI {
             // Process input
             for key in KEYBOARD {
                 ctx.input(|i| {
-                    let current_key = &get_key_mapping(key).unwrap();
+                    let current_key = &get_key_mapping(key)
+                        .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
                     self.c8_device
                         .get_keypad_mut()
@@ -214,10 +215,14 @@ impl eframe::App for AppUI {
                         }
                     }
 
-                    let image = egui::Image::new(self.display_handle.as_ref().unwrap())
-                        .fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale);
+                    let image = match &self.display_handle {
+                        Some(handle) => egui::Image::new(handle),
+                        None => {
+                            panic!("Display handle is None, this should never happen");
+                        }
+                    };
 
-                    ui.add(image);
+                    ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale));
                 });
         });
 
@@ -412,10 +417,11 @@ impl AppUI {
             .show(ui, |ui| {
                 egui::Grid::new("keyboard_grid").show(ui, |ui| {
                     for (i, key) in KEYBOARD.iter().enumerate() {
-                        let key_down = self
-                            .c8_device
-                            .get_keypad()
-                            .is_key_pressed(&get_key_mapping(key).unwrap());
+                        let key_down = self.c8_device.get_keypad().is_key_pressed(
+                            &get_key_mapping(key).unwrap_or_else(|| {
+                                panic!("Key mapping not found for key: {:?}", key)
+                            }),
+                        );
 
                         let key_name = match get_key_mapping(key) {
                             Some(key_pad) => key_pad.get_name().to_owned(),
