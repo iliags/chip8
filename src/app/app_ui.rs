@@ -336,7 +336,7 @@ impl AppUI {
                 use bevy_tasks::futures_lite::future;
 
                 future::block_on(async move {
-                    let file_data = load_file().await;
+                    let file_data = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
@@ -346,7 +346,7 @@ impl AppUI {
             #[cfg(target_arch = "wasm32")]
             {
                 wasm_bindgen_futures::spawn_local(async move {
-                    let file_data = load_file().await;
+                    let file_data = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
@@ -375,7 +375,7 @@ impl AppUI {
 
                 ui.separator();
 
-                powered_by_egui_and_eframe(ui, &self.current_language.value());
+                Self::powered_by_egui_and_eframe(ui, &self.current_language.value());
 
                 #[cfg(debug_assertions)]
                 {
@@ -618,36 +618,36 @@ impl AppUI {
                 ui.label(LOCALES.lookup(&self.current_language.value(), "under_construction"));
             });
     }
-}
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
+    fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
 
-        ui.label(LOCALES.lookup(language, "powered_by"));
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+            ui.label(LOCALES.lookup(language, "powered_by"));
+            ui.hyperlink_to("egui", "https://github.com/emilk/egui");
 
-        ui.label(LOCALES.lookup(language, "and"));
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
-}
+            ui.label(LOCALES.lookup(language, "and"));
+            ui.hyperlink_to(
+                "eframe",
+                "https://github.com/emilk/egui/tree/master/crates/eframe",
+            );
+            ui.label(".");
+        });
+    }
 
-async fn load_file() -> Option<Vec<u8>> {
-    let file_task = AsyncFileDialog::new()
-        .add_filter("Chip8", &["ch8"])
-        .set_directory("/")
-        .pick_file()
-        .await;
+    async fn load_file() -> Option<Vec<u8>> {
+        let file_task = AsyncFileDialog::new()
+            .add_filter("Chip8", &["ch8"])
+            .set_directory("/")
+            .pick_file()
+            .await;
 
-    match file_task {
-        Some(file) => {
-            let file = file.read().await;
-            Some(file)
+        match file_task {
+            Some(file) => {
+                let file = file.read().await;
+                Some(file)
+            }
+            None => None,
         }
-        None => None,
     }
 }
