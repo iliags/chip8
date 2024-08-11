@@ -51,7 +51,7 @@ impl KeypadKey {
 
 impl From<usize> for KeypadKey {
     fn from(value: usize) -> Self {
-        match value.clamp(0, 16) {
+        match value.clamp(0, 15) {
             0x1 => KeypadKey::Num1,
             0x2 => KeypadKey::Num2,
             0x3 => KeypadKey::Num3,
@@ -116,5 +116,31 @@ mod tests {
         // Test key up
         keypad.set_key(&KeypadKey::Num1, false);
         assert_eq!(keypad.is_key_pressed(&KeypadKey::Num1), false);
+    }
+
+    #[test]
+    fn test_key_index() {
+        assert_eq!(KeypadKey::Num1.get_key_index(), 0);
+        assert_eq!(KeypadKey::Num2.get_key_index(), 1);
+        assert_eq!(KeypadKey::Num3.get_key_index(), 2);
+        assert_eq!(KeypadKey::C.get_key_index(), 3);
+        assert_eq!(KeypadKey::Num4.get_key_index(), 4);
+        assert_eq!(KeypadKey::Num5.get_key_index(), 5);
+        assert_eq!(KeypadKey::Num6.get_key_index(), 6);
+        assert_eq!(KeypadKey::D.get_key_index(), 7);
+        assert_eq!(KeypadKey::Num7.get_key_index(), 8);
+        assert_eq!(KeypadKey::Num8.get_key_index(), 9);
+        assert_eq!(KeypadKey::Num9.get_key_index(), 10);
+        assert_eq!(KeypadKey::E.get_key_index(), 11);
+        assert_eq!(KeypadKey::A.get_key_index(), 12);
+        assert_eq!(KeypadKey::Num0.get_key_index(), 13);
+        assert_eq!(KeypadKey::B.get_key_index(), 14);
+        assert_eq!(KeypadKey::F.get_key_index(), 15);
+    }
+
+    #[test]
+    fn test_from_guard() {
+        assert_eq!(KeypadKey::from(0) == KeypadKey::Num0, true);
+        assert_eq!(KeypadKey::from(66) == KeypadKey::F, true);
     }
 }
