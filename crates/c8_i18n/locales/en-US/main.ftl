@@ -5,10 +5,12 @@ app_name = Chip 8
 test_roms = Test ROMs
 open_rom = Open ROM
 reload_rom = Reload ROM
+control_panel = Control Panel
 
 # Controls
 
 under_construction = Under construction
+not_implemented = Not implemented
 
 ## CPU
 cpu_speed = CPU Speed

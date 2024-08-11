@@ -54,6 +54,8 @@ pub struct AppUI {
 
     /// The current language the app is using
     current_language: Languages,
+
+    control_panel_expanded: bool,
 }
 
 impl Default for AppUI {
@@ -73,6 +75,8 @@ impl Default for AppUI {
 
             // Current language
             current_language: Languages::English,
+
+            control_panel_expanded: true,
         }
     }
 }
@@ -95,6 +99,13 @@ impl eframe::App for AppUI {
 
             // Draw the UI
             egui::menu::bar(ui, |ui| {
+                ui.toggle_value(
+                    &mut self.control_panel_expanded,
+                    LOCALES.lookup(&self.current_language.value(), "control_panel"),
+                );
+
+                ui.separator();
+
                 // Test rom menu
                 self.menu_test_roms(ui);
 
@@ -128,47 +139,51 @@ impl eframe::App for AppUI {
 
                 ui.separator();
 
-                egui::widgets::global_dark_light_mode_buttons(ui);
-
-                ui.separator();
-
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    egui::widgets::global_dark_light_mode_buttons(ui);
+
+                    ui.separator();
+
                     self.menu_about(ui);
                 });
             });
         });
 
-        egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show(ctx, |ui| {
-            ui.add_space(5.0);
+        egui::SidePanel::new(egui::panel::Side::Left, "LeftPanel").show_animated(
+            ctx,
+            self.control_panel_expanded,
+            |ui| {
+                ui.add_space(5.0);
 
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                self.controls_cpu_speed(ui);
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.controls_cpu_speed(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_display_scale(ui);
+                    self.controls_display_scale(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_pixel_color(ui);
+                    self.controls_pixel_color(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_keyboard_grid(ui);
+                    self.controls_keyboard_grid(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_quirks(ui);
+                    self.controls_quirks(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_emulator(ui);
+                    self.controls_emulator(ui);
 
-                ui.separator();
+                    ui.separator();
 
-                self.controls_audio(ui);
-            });
-        });
+                    self.controls_audio(ui);
+                });
+            },
+        );
 
         egui::CentralPanel::default().show(ctx, |_ui| {
             egui::Window::new(LOCALES.lookup(&self.current_language.value(), "display"))
@@ -499,22 +514,39 @@ impl AppUI {
                     ui.add(
                         egui::Slider::new(&mut self.c8_device.beeper.settings.volume, 0.0..=1.0)
                             .text(LOCALES.lookup(&self.current_language.value(), "volume")),
+                    )
+                    .on_hover_text(
+                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
                     );
+
                     ui.add(
                         egui::Slider::new(
                             &mut self.c8_device.beeper.settings.pitch,
                             20.0..=20000.0,
                         )
                         .text(LOCALES.lookup(&self.current_language.value(), "pitch")),
+                    )
+                    .on_hover_text(
+                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
                     );
+
                     ui.add(
                         egui::Slider::new(&mut self.c8_device.beeper.settings.octave, 1.0..=4.0)
                             .text(LOCALES.lookup(&self.current_language.value(), "octave")),
+                    )
+                    .on_hover_text(
+                        LOCALES.lookup(&self.current_language.value(), "not_implemented"),
                     );
                 });
             }
         });
     }
+
+    #[allow(dead_code, unused_variables)]
+    fn visualizer_memory(&mut self, ui: &mut egui::Ui) {}
+
+    #[allow(dead_code, unused_variables)]
+    fn visualizer_registers(&mut self, ui: &mut egui::Ui) {}
 }
 
 fn powered_by_egui_and_eframe(ui: &mut egui::Ui, language: &LanguageIdentifier) {
