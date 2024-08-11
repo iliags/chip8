@@ -1,6 +1,6 @@
 use c8_audio::Beeper;
 
-use crate::{cpu::CPU, display, keypad::Keypad, quirks::Quirks, FONT, MAX_MEMORY};
+use crate::{cpu::CPU, display::Display, keypad::Keypad, quirks::Quirks, FONT, MAX_MEMORY};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -9,7 +9,7 @@ pub struct C8 {
     memory: Vec<u8>,
 
     /// The display of the device (64x32)
-    display: display::Display,
+    display: Display,
 
     /// Chip-8 CPU
     cpu: CPU,
@@ -32,11 +32,12 @@ pub struct C8 {
 
 impl Default for C8 {
     fn default() -> Self {
-        Self {
-            memory: create_new_memory(),
+        let mut memory = vec![0; MAX_MEMORY];
+        memory.splice(0..FONT.len(), FONT.iter().cloned());
 
-            // 64x32 display
-            display: display::Display::default(),
+        Self {
+            memory,
+            display: Display::default(),
             cpu: CPU::default(),
             stack: vec![],
             is_running: false,
@@ -59,7 +60,7 @@ impl C8 {
     }
 
     /// Get the display of the device
-    pub fn get_display(&self) -> &display::Display {
+    pub fn get_display(&self) -> &Display {
         &self.display
     }
 
@@ -140,13 +141,6 @@ impl C8 {
             }
         }
     }
-}
-
-/// Creates a blank memory vector (4096 bytes) with the font data loaded in the first 512 bytes
-fn create_new_memory() -> Vec<u8> {
-    let mut memory = vec![0; MAX_MEMORY];
-    memory.splice(0..FONT.len(), FONT.iter().cloned());
-    memory
 }
 
 #[cfg(test)]
