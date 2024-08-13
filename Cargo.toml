@@ -5,6 +5,10 @@ authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
+exclude = [
+    # Exclude source art assets from the binary
+    "assets/source/*",
+]
 
 [workspace]
 members = ["crates/*"]
