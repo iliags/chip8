@@ -5,11 +5,11 @@ use crate::{
     PROGRAM_START,
 };
 
-/// Maximum memory size
-pub const MAX_MEMORY: usize = 4096;
+// Note: The extended option changes the memory size from 4096 to 65536.
+// Changing the underlying container may be necessary if the memory usage is a concern.
+const ENABLE_XO: bool = true;
 
-/// Maximum ROM size
-pub const MAX_ROM_SIZE: usize = MAX_MEMORY - PROGRAM_START as usize;
+const MAX_MEMORY: usize = if ENABLE_XO { 65536 } else { 4096 };
 
 /// Device memory
 #[derive(Debug)]
@@ -83,27 +83,13 @@ impl Memory {
                 println!("No ROM data provided");
                 return;
             }
-            len if len > MAX_ROM_SIZE => {
-                println!("ROM data is too large: {} bytes", len);
-                return;
-            }
             _ => {}
         }
-        // TODO: Check if the ROM requires the XO extension
-        self.set_xo_enabled(false);
 
         let start = PROGRAM_START as usize;
         let end = start + data.len();
 
         self.data.splice(start..end, data.iter().cloned());
-    }
-
-    fn set_xo_enabled(&mut self, enabled: bool) {
-        self.enable_xo = enabled;
-
-        if enabled {
-        } else {
-        }
     }
 }
 
