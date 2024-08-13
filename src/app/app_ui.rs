@@ -552,7 +552,7 @@ impl AppUI {
 
             // Emulator font
             // TODO: Move this to emulator settings
-            let current_font_name: String = self.c8_device.get_memory().1.clone().into();
+            let current_font_name: String = self.c8_device.get_memory().1.into();
             egui::ComboBox::from_label(self.language.get_locale_string("font_small"))
                 .selected_text(current_font_name)
                 .show_ui(ui, |ui| {
@@ -561,7 +561,7 @@ impl AppUI {
                             continue;
                         }
 
-                        let font_string: String = font.name.clone().into();
+                        let font_string: String = font.name.into();
 
                         ui.selectable_label(
                             self.c8_device.get_memory_mut().1 == font.name,

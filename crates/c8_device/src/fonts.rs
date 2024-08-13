@@ -24,22 +24,22 @@ pub enum FontName {
     SUPERCHIP = 5,
 }
 
-impl Into<usize> for FontName {
-    fn into(self) -> usize {
-        self as usize
+impl From<FontName> for usize {
+    fn from(val: FontName) -> usize {
+        val as usize
     }
 }
 
 // TODO: Get localized font names
-impl Into<String> for FontName {
-    fn into(self) -> String {
-        match self {
+impl From<FontName> for String {
+    fn from(val: FontName) -> String {
+        match val {
             FontName::CHIP8 => "CHIP-8".to_string(),
             FontName::VIP => "VIP".to_string(),
             FontName::DREAM6800 => "DREAM 6800".to_string(),
             FontName::ETI660 => "ETI 660".to_string(),
-            FontName::FISHIE => "FISHIE".to_string(),
-            FontName::SUPERCHIP => "SUPER-CHIP".to_string(),
+            FontName::FISHIE => "Fish'n'Chips".to_string(),
+            FontName::SUPERCHIP => "SUPERCHIP".to_string(),
         }
     }
 }
