@@ -168,6 +168,16 @@ impl eframe::App for AppUI {
                     self.reload_rom();
                 }
 
+                if ui
+                    .add_enabled(
+                        self.c8_device.get_is_running(),
+                        egui::Button::new(self.language.get_locale_string("unload_rom")),
+                    )
+                    .clicked()
+                {
+                    self.unload_rom();
+                }
+
                 ui.separator();
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
@@ -304,6 +314,10 @@ impl AppUI {
 
     fn reload_rom(&mut self) {
         self.c8_device.load_rom(self.rom_file.clone());
+    }
+
+    fn unload_rom(&mut self) {
+        self.c8_device.reset_device();
     }
 
     fn menu_roms(&mut self, ui: &mut egui::Ui) {

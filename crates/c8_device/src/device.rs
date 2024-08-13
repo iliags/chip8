@@ -96,7 +96,7 @@ impl C8 {
     }
 
     /// Resets the device
-    fn reset_device(&mut self) {
+    pub fn reset_device(&mut self) {
         self.beeper.stop();
         let current_font = self.memory.system_font;
         *self = Self::default();
