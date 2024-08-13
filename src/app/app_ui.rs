@@ -7,6 +7,7 @@ use super::{
 use c8_device::{
     device::C8,
     display::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    fonts::FONT_DATA,
 };
 use c8_i18n::{
     locale_text::LocaleText,
@@ -518,6 +519,7 @@ impl AppUI {
 
     fn controls_emulator(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("emulator")).show(ui, |ui| {
+            // Emulator language
             egui::ComboBox::from_label(self.language.get_locale_string("language"))
                 .selected_text(self.language.get_language().as_str())
                 .show_ui(ui, |ui| {
@@ -527,6 +529,40 @@ impl AppUI {
                             &mut language.clone(),
                             language.as_str(),
                         );
+                    }
+                });
+
+            // Emulator font
+            // TODO: Move this to emulator settings
+            let current_font_name: String = self.c8_device.get_memory().1.clone().into();
+            egui::ComboBox::from_label(self.language.get_locale_string("font_small"))
+                .selected_text(current_font_name)
+                .show_ui(ui, |ui| {
+                    for font in FONT_DATA {
+                        if font.small_data.is_empty() {
+                            continue;
+                        }
+
+                        /*
+                        ui.selectable_value(
+                            &mut ,
+                            &mut font.0.clone(),
+                            self.c8_device.get_memory_mut().1,
+                        );
+                         */
+
+                        let font_string: String = font.name.clone().into();
+
+                        ui.selectable_label(
+                            self.c8_device.get_memory_mut().1 == font.name,
+                            font_string,
+                        )
+                        .clicked()
+                        .then(|| {
+                            self.c8_device
+                                .get_memory_mut()
+                                .load_font_small(font.clone());
+                        });
                     }
                 });
         });

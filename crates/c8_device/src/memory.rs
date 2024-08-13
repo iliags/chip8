@@ -13,11 +13,11 @@ pub const MAX_ROM_SIZE: usize = MAX_MEMORY - PROGRAM_START as usize;
 
 /// Device memory
 #[derive(Debug)]
-pub struct Memory(pub Vec<u8>);
+pub struct Memory(pub Vec<u8>, pub FontName);
 
 impl Default for Memory {
     fn default() -> Self {
-        let mut new_self = Self(vec![0; MAX_MEMORY]);
+        let mut new_self = Self(vec![0; MAX_MEMORY], FontName::CHIP8);
 
         new_self.load_font_small(FONT_DATA[FontName::CHIP8 as usize].clone());
 
@@ -32,6 +32,7 @@ impl Memory {
         let end = data.small_data.len();
 
         self.0.splice(start..end, data.small_data.iter().cloned());
+        self.1 = data.name;
     }
 
     /// Load large font data into memory
@@ -46,6 +47,11 @@ impl Memory {
             FontSize::Small => self.load_font_small(data),
             FontSize::Large => self.load_font_large(data),
         }
+    }
+
+    /// Load font data into memory by name
+    pub fn load_font_name(&mut self, name: FontName, size: FontSize) {
+        self.load_font(FONT_DATA[name as usize].clone(), size);
     }
 
     /// Load ROM data into memory

@@ -52,6 +52,8 @@ and = {" "} and {" "}
 ## Emulator
 emulator = Emulator
 language = Language
+font_small = Small Font
+font_large = Large Font
 
 ## Audio
 audio_controls = Audio Controls

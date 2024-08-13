@@ -11,20 +11,44 @@ pub const FONT: &[u8] = FONT_DATA[FontName::CHIP8 as usize].small_data;
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]
 pub struct FontData {
-    pub name: &'static str,
+    pub name: FontName,
     pub small_data: &'static [u8],
     pub large_data: &'static [u8],
 }
 
 /// Font name accessors
 #[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FontName {
     CHIP8 = 0,
     VIP = 1,
     DREAM6800 = 2,
     ETI660 = 3,
     FISHIE = 4,
+    SUPERCHIP = 5,
 }
+
+impl Into<usize> for FontName {
+    fn into(self) -> usize {
+        self as usize
+    }
+}
+
+// TODO: Get localized font names
+impl Into<String> for FontName {
+    fn into(self) -> String {
+        match self {
+            FontName::CHIP8 => "CHIP-8".to_string(),
+            FontName::VIP => "VIP".to_string(),
+            FontName::DREAM6800 => "DREAM 6800".to_string(),
+            FontName::ETI660 => "ETI 660".to_string(),
+            FontName::FISHIE => "FISHIE".to_string(),
+            FontName::SUPERCHIP => "SUPER-CHIP".to_string(),
+        }
+    }
+}
+
+impl FontName {}
 
 /// Font sizes
 #[allow(missing_docs)]
@@ -36,7 +60,7 @@ pub enum FontSize {
 /// Font data collection
 pub const FONT_DATA: &[FontData] = &[
     FontData {
-        name: "CHIP-8",
+        name: FontName::CHIP8,
         small_data: &[
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
             0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -75,7 +99,7 @@ pub const FONT_DATA: &[FontData] = &[
         ],
     },
     FontData {
-        name: "VIP",
+        name: FontName::VIP,
         small_data: &[
             0xF0, 0x90, 0x90, 0x90, 0xF0, 0x60, 0x20, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80,
             0xF0, 0xF0, 0x10, 0xF0, 0x10, 0xF0, 0xA0, 0xA0, 0xF0, 0x20, 0x20, 0xF0, 0x80, 0xF0,
@@ -87,7 +111,7 @@ pub const FONT_DATA: &[FontData] = &[
         large_data: &[],
     },
     FontData {
-        name: "Dream 6800",
+        name: FontName::DREAM6800,
         small_data: &[
             0xE0, 0xA0, 0xA0, 0xA0, 0xE0, 0x40, 0x40, 0x40, 0x40, 0x40, 0xE0, 0x20, 0xE0, 0x80,
             0xE0, 0xE0, 0x20, 0xE0, 0x20, 0xE0, 0x80, 0xA0, 0xA0, 0xE0, 0x20, 0xE0, 0x80, 0xE0,
@@ -99,7 +123,7 @@ pub const FONT_DATA: &[FontData] = &[
         large_data: &[],
     },
     FontData {
-        name: "ETI 660",
+        name: FontName::ETI660,
         small_data: &[
             0xE0, 0xA0, 0xA0, 0xA0, 0xE0, 0x20, 0x20, 0x20, 0x20, 0x20, 0xE0, 0x20, 0xE0, 0x80,
             0xE0, 0xE0, 0x20, 0xE0, 0x20, 0xE0, 0xA0, 0xA0, 0xE0, 0x20, 0x20, 0xE0, 0x80, 0xE0,
@@ -111,7 +135,7 @@ pub const FONT_DATA: &[FontData] = &[
         large_data: &[],
     },
     FontData {
-        name: "Fishie",
+        name: FontName::FISHIE,
         small_data: &[
             0x60, 0xA0, 0xA0, 0xA0, 0xC0, 0x40, 0xC0, 0x40, 0x40, 0xE0, 0xC0, 0x20, 0x40, 0x80,
             0xE0, 0xC0, 0x20, 0x40, 0x20, 0xC0, 0x20, 0xA0, 0xE0, 0x20, 0x20, 0xE0, 0x80, 0xC0,
@@ -137,7 +161,7 @@ pub const FONT_DATA: &[FontData] = &[
         ],
     },
     FontData {
-        name: "Super Chip 8",
+        name: FontName::SUPERCHIP,
         small_data: &[],
         large_data: &[
             0x3C, 0x7E, 0xE7, 0xC3, 0xC3, 0xC3, 0xC3, 0xE7, 0x7E, 0x3C, 0x18, 0x38, 0x58, 0x18,

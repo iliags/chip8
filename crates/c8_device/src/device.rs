@@ -46,6 +46,16 @@ impl Default for C8 {
 }
 
 impl C8 {
+    /// Get the memory of the device
+    pub fn get_memory(&self) -> &Memory {
+        &self.memory
+    }
+
+    /// Get the memory of the device (mutable)
+    pub fn get_memory_mut(&mut self) -> &mut Memory {
+        &mut self.memory
+    }
+
     /// Get the quirks of the device
     pub fn get_quirks(&self) -> &Quirks {
         &self.quirks
@@ -88,7 +98,12 @@ impl C8 {
     /// Resets the device
     fn reset_device(&mut self) {
         self.beeper.stop();
+        let current_font = self.memory.1;
         *self = Self::default();
+
+        // Reload font data
+        self.memory
+            .load_font_name(current_font, crate::fonts::FontSize::Small)
     }
 
     /// Step the device
