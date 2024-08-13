@@ -8,10 +8,11 @@
 pub const FONT: &[u8] = &FONT_DATA[FontName::CHIP8 as usize].small_data;
 
 /// Static font data
+#[allow(missing_docs)]
 pub struct FontData {
-    name: &'static str,
-    small_data: &'static [u8],
-    large_data: &'static [u8],
+    pub name: &'static str,
+    pub small_data: &'static [u8],
+    pub large_data: &'static [u8],
 }
 
 /// Font name accessors
@@ -31,7 +32,8 @@ pub enum FontSize {
     Large,
 }
 
-const FONT_DATA: &[FontData] = &[
+/// Font data collection
+pub const FONT_DATA: &[FontData] = &[
     FontData {
         name: "CHIP-8",
         small_data: &[
