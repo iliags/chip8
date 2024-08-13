@@ -662,7 +662,7 @@ dependencies = [
 
 [[package]]
 name = "chip8"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "bevy_tasks",
  "c8_audio",
