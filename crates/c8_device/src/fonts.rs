@@ -3,10 +3,6 @@
 ///
 /// The non-default Chip-8 font was copied from Octo's font file.
 
-// Deprecated, remains for compatibility until fonts are implemented
-//#[deprecated(note = "please use `SMALL_FONTS` instead")]
-pub const FONT: &[u8] = FONT_DATA[FontName::CHIP8 as usize].small_data;
-
 /// Static font data
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]

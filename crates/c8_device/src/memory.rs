@@ -78,24 +78,23 @@ impl Memory {
 
 #[cfg(test)]
 mod tests {
-    use crate::fonts::FONT;
-
     use super::*;
 
     #[test]
     fn test_default_memory() {
         let memory = Memory::default();
+        let font_data = FONT_DATA[FontName::CHIP8 as usize].small_data;
 
         // Check that the memory is the correct size
         assert_eq!(memory.0.len(), MAX_MEMORY);
 
         // Check that the font data is loaded
-        for (i, &byte) in FONT.iter().enumerate() {
+        for (i, &byte) in font_data.iter().enumerate() {
             assert_eq!(memory.0[i], byte);
         }
 
         // Check that the rest of the memory is zero
-        for i in FONT.len()..MAX_MEMORY {
+        for i in font_data.len()..MAX_MEMORY {
             assert_eq!(memory.0[i], 0);
         }
     }
