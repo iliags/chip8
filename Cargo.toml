@@ -7,7 +7,7 @@ publish = false
 build = "build.rs"
 exclude = [
     # Exclude source art assets from the binary
-    "assets/source/*",
+    "art/*",
 ]
 
 [workspace]
