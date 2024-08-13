@@ -3,11 +3,11 @@ use fluent_templates::Loader;
 
 /// Struct to hold the current locale of the application.
 #[derive(Default, Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
-pub struct Locale {
+pub struct LocaleText {
     language: Language,
 }
 
-impl Locale {
+impl LocaleText {
     /// Get the current language
     pub fn get_language(&self) -> Language {
         self.language.clone()

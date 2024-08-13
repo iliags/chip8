@@ -4,4 +4,4 @@
 pub mod localization;
 
 /// Types to make working with localized text easier.
-pub mod locale;
+pub mod locale_text;

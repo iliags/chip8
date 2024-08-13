@@ -9,7 +9,7 @@ use c8_device::{
     display::{SCREEN_HEIGHT, SCREEN_WIDTH},
 };
 use c8_i18n::{
-    locale::Locale,
+    locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
 };
 use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
@@ -62,7 +62,7 @@ pub struct AppUI {
     display_scale: f32,
 
     // The current language the app is using
-    language: Locale,
+    language: LocaleText,
 
     // Whether the control panel is expanded
     control_panel_expanded: bool,
@@ -86,7 +86,7 @@ impl Default for AppUI {
             file_data: Rc::new(RefCell::new(None)),
 
             // Current language
-            language: Locale::default(),
+            language: LocaleText::default(),
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
