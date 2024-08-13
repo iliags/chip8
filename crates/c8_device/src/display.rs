@@ -1,71 +1,171 @@
 /// Screen width constant
-pub const SCREEN_WIDTH: i32 = 64;
+pub const DEFAULT_SCREEN_WIDTH: i32 = 64;
 
 /// Screen height constant
-pub const SCREEN_HEIGHT: i32 = 32;
+pub const DEFAULT_SCREEN_HEIGHT: i32 = 32;
 
-/// Screen size constant
-pub const SCREEN_SIZE: usize = (SCREEN_WIDTH * SCREEN_HEIGHT) as usize;
+/// Low resolution screen size constant
+pub const SCREEN_SIZE_LOW: usize = (DEFAULT_SCREEN_WIDTH * DEFAULT_SCREEN_HEIGHT) as usize;
+
+/// High resolution screen size constant
+pub const SCREEN_SIZE_HIGH: usize = SCREEN_SIZE_LOW * 2;
+
+// Note: There are two planes, plane 0 and 1; drawing to plane 2 (i.e. plane 3) draws to both planes.
+// When retrieving pixels, plane 1 is superimposed on plane 0, allowing for more colors. Plane 0 is
+// used for regular monochrome displays (default chip-8 behavior).
+
+/// Display resolution
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(missing_docs)]
+pub enum DisplayResolution {
+    Low,
+    High,
+}
 
 /// Struct representing the display of the Chip-8
 #[derive(Debug)]
 pub struct Display {
-    // Reserved for future use
-    _width: u32,
-
-    // Reserved for future use
-    _height: u32,
-
     // The pixels in the display
+    planes: Vec<Plane>,
+
+    // The resolution of the display
+    resolution: DisplayResolution,
+}
+
+/// Struct for a plane of pixels on the display
+#[derive(Debug, Clone)]
+pub struct Plane {
     pixels: Vec<u8>,
+}
+
+impl Default for Plane {
+    fn default() -> Self {
+        Self {
+            pixels: vec![0; SCREEN_SIZE_LOW],
+        }
+    }
 }
 
 impl Default for Display {
     fn default() -> Self {
         Self {
-            _width: SCREEN_WIDTH as u32,
-            _height: SCREEN_HEIGHT as u32,
-            pixels: vec![0; SCREEN_SIZE],
+            planes: vec![Plane::default(); 2],
+            resolution: DisplayResolution::Low,
         }
     }
 }
 
 impl Display {
+    /// Get the display resolution
+    pub fn get_resolution(&self) -> DisplayResolution {
+        self.resolution
+    }
+
+    /// Set the display resolution
+    pub fn set_resolution(&mut self, resolution: DisplayResolution) {
+        self.resolution = resolution;
+
+        // TODO: Update the display resolution
+    }
+
+    /// Get the screen size XY
+    pub const fn get_screen_size_xy(&self) -> (i32, i32) {
+        match self.resolution {
+            DisplayResolution::Low => (DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT),
+            DisplayResolution::High => (DEFAULT_SCREEN_WIDTH * 2, DEFAULT_SCREEN_HEIGHT * 2),
+        }
+    }
+
+    /// Get the screen size
+    pub const fn get_screen_size(&self) -> usize {
+        match self.resolution {
+            DisplayResolution::Low => SCREEN_SIZE_LOW,
+            DisplayResolution::High => SCREEN_SIZE_HIGH,
+        }
+    }
+
     /// Get the pixels container of the display
+    #[deprecated(note = "Use the version with planes instead")]
     pub fn get_pixels(&self) -> &Vec<u8> {
-        &self.pixels
+        &self.planes[0].pixels
+    }
+
+    /// Get the pixels of a plane
+    pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
+        let plane = plane % self.planes.len();
+        &self.planes[plane].pixels
     }
 
     /// Get the pixel at the given x and y coordinates
+    #[deprecated(note = "Use the version with planes instead")]
     pub fn get_pixel(&self, x: i32, y: i32) -> u8 {
         // Get the pixel index
         let index = self.get_pixel_index(x, y);
 
         // Return the pixel value
-        self.pixels[index]
+        self.planes[0].pixels[index]
+    }
+
+    /// Get the pixel at the given x and y coordinates for a plane
+    pub fn get_plane_pixel(&self, plane: usize, x: i32, y: i32) -> u8 {
+        let plane = plane % self.planes.len();
+        // Get the pixel index
+        let index = self.get_pixel_index(x, y);
+
+        // Return the pixel value
+        self.planes[plane].pixels[index]
     }
 
     /// Get if a pixel is on or off at the given x and y coordinates
+    #[deprecated(note = "Use the version with planes instead")]
     pub fn get_pixel_state(&self, x: i32, y: i32) -> bool {
         self.get_pixel(x, y) == 1
     }
 
+    /// Get if a pixel is on or off at the given x and y coordinates
+    pub fn get_plane_pixel_state(&self, plane: usize, x: i32, y: i32) -> bool {
+        self.get_plane_pixel(plane, x, y) == 1
+    }
+
     /// Clear the display
     pub fn clear(&mut self) {
-        self.pixels = vec![0; SCREEN_SIZE];
+        let screen_size = match self.resolution {
+            DisplayResolution::Low => SCREEN_SIZE_LOW,
+            DisplayResolution::High => SCREEN_SIZE_HIGH,
+        };
+
+        for plane in self.planes.iter_mut() {
+            plane.pixels = vec![0; screen_size];
+        }
     }
 
     /// Toggle a pixel at the given x and y coordinates
     ///
     /// Returns the value of the pixel after toggling
+    #[deprecated(note = "Use the version with planes instead")]
     pub fn set_pixel(&mut self, x: i32, y: i32) -> u8 {
         let index = self.get_pixel_index(x, y);
 
         // Pixels are XORed on the display
-        self.pixels[index] ^= 1;
+        self.planes[0].pixels[index] ^= 1;
 
         // Return the pixel value
-        self.pixels[index]
+        self.planes[0].pixels[index]
+    }
+
+    /// Toggle a pixel at the given x and y coordinates
+    ///
+    /// Returns the value of the pixel after toggling
+    pub fn set_plane_pixel(&mut self, plane: usize, x: i32, y: i32) -> u8 {
+        // TODO: If plane is 2, draw to both planes
+        let plane = plane % self.planes.len();
+        let index = self.get_pixel_index(x, y);
+
+        // Pixels are XORed on the display
+        self.planes[plane].pixels[index] ^= 1;
+
+        // Return the pixel value
+        self.planes[plane].pixels[index]
     }
 
     const fn get_pixel_index(&self, x: i32, y: i32) -> usize {
@@ -73,49 +173,83 @@ impl Display {
         // This may be implemented in the future with a toggle.
 
         // If the pixels are out of bounds, wrap them around
-        let x = x % SCREEN_WIDTH;
-        let y = y % SCREEN_HEIGHT;
+        let (width, height) = self.get_screen_size_xy();
+
+        let x = x % width;
+        let y = y % height;
 
         // Get the pixel index
-        (y * SCREEN_WIDTH + x) as usize
+        (y * width + x) as usize
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
+
     use super::*;
 
     #[test]
     fn test_display_default() {
         let display = Display::default();
 
-        assert_eq!(display._width, SCREEN_WIDTH as u32);
-        assert_eq!(display._height, SCREEN_HEIGHT as u32);
-        assert_eq!(display.pixels.len(), SCREEN_SIZE);
+        for plane in display.planes.iter() {
+            assert_eq!(plane.pixels, vec![0; SCREEN_SIZE_LOW]);
+        }
+    }
+
+    #[test]
+    fn test_display_resolution() {
+        let mut display = Display::default();
+
+        display.set_resolution(DisplayResolution::High);
+        assert_eq!(display.get_resolution(), DisplayResolution::High);
+        assert_eq!(display.get_screen_size(), SCREEN_SIZE_HIGH);
+
+        display.set_resolution(DisplayResolution::Low);
+        assert_eq!(display.get_resolution(), DisplayResolution::Low);
+        assert_eq!(display.get_screen_size(), SCREEN_SIZE_LOW);
     }
 
     #[test]
     fn test_display_clear() {
         let mut display = Display::default();
+        let screen_size = display.get_screen_size();
 
-        display.pixels = vec![1; SCREEN_SIZE];
+        display.planes[0].pixels = vec![1; screen_size];
 
         display.clear();
 
-        assert_eq!(display.pixels, vec![0; SCREEN_SIZE]);
+        assert_eq!(display.planes[0].pixels, vec![0; screen_size]);
     }
 
     #[test]
     fn test_display_set_pixel() {
         let mut display = Display::default();
 
-        display.set_pixel(0, 0);
-        assert_eq!(display.pixels[0], 1);
+        let mut rng = rand::thread_rng();
+        let range = 0..display.get_screen_size();
 
-        display.set_pixel(0, 0);
-        assert_eq!(display.pixels[0], 0);
+        for plane in 0..2 {
+            let (x, y) = (
+                rng.gen_range(range.clone()) as i32,
+                rng.gen_range(range.clone()) as i32,
+            );
+            let pixel_index = display.get_pixel_index(x, y);
 
-        display.set_pixel(SCREEN_WIDTH, SCREEN_HEIGHT);
-        assert_eq!(display.pixels[0], 1);
+            display.set_plane_pixel(plane, x, y);
+            assert_eq!(display.planes[plane].pixels[pixel_index], 1);
+
+            display.set_plane_pixel(plane, x, y);
+            assert_eq!(display.planes[plane].pixels[pixel_index], 0);
+
+            let (width, height) = display.get_screen_size_xy();
+
+            display.set_plane_pixel(plane, width, height);
+            assert_eq!(
+                display.planes[plane].pixels[display.get_pixel_index(width, height)],
+                1
+            );
+        }
     }
 }

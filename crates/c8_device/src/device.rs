@@ -71,6 +71,11 @@ impl C8 {
         &self.display
     }
 
+    /// Get the display of the device (mutable)
+    pub fn get_display_mut(&mut self) -> &mut Display {
+        &mut self.display
+    }
+
     /// Get the keypad of the device
     pub fn get_keypad(&self) -> &Keypad {
         &self.keypad
@@ -84,6 +89,11 @@ impl C8 {
     /// Get if the device is running
     pub fn get_is_running(&self) -> bool {
         self.is_running
+    }
+
+    /// Returns whether the device needs a resolution update
+    pub fn needs_resolution_update(&self) -> bool {
+        self.display.get_resolution() != self.cpu.get_current_resolution()
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
@@ -109,6 +119,13 @@ impl C8 {
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) {
         if self.is_running {
+            // TODO: Implement events for cpu requests
+            // This might get out-of-sync
+            if self.needs_resolution_update() {
+                self.display
+                    .set_resolution(self.cpu.get_current_resolution());
+            }
+
             // TODO: Move timers to CPU with events
 
             // Update timers
@@ -134,6 +151,13 @@ impl C8 {
                     &self.quirks,
                     &self.keypad,
                 );
+
+                // Check if the CPU is requesting an exit
+                if self.cpu.requesting_exit() {
+                    self.is_running = false;
+                    self.reset_device();
+                    break;
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-use crate::keypad::Keypad;
+use crate::{display::DisplayResolution, keypad::Keypad};
 
 use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
@@ -47,6 +47,10 @@ pub struct CPU {
     // TODO: Make private when timers are implemented
     /// Sound timer
     pub(crate) sound_timer: u8,
+
+    requesting_exit: bool,
+
+    current_resolution: DisplayResolution,
 }
 
 impl Default for CPU {
@@ -57,6 +61,8 @@ impl Default for CPU {
             registers: vec![0; 16],
             delay_timer: 0,
             sound_timer: 0,
+            requesting_exit: false,
+            current_resolution: DisplayResolution::Low,
         }
     }
 }
@@ -77,6 +83,16 @@ impl CPU {
         self.registers.clone()
     }
 
+    /// Check if the program is requesting an exit
+    pub fn requesting_exit(&self) -> bool {
+        self.requesting_exit
+    }
+
+    /// Get the current resolution of the display
+    pub fn get_current_resolution(&self) -> DisplayResolution {
+        self.current_resolution
+    }
+
     /// Step the CPU by one instruction
     pub fn step(
         &mut self,
@@ -86,6 +102,10 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) {
+        if self.requesting_exit {
+            return;
+        }
+
         const SHIFT: u8 = 8;
 
         let pc = self.program_counter as usize;
@@ -153,8 +173,10 @@ impl CPU {
                         todo!("Scroll left 4 pixels")
                     }
                     0x00FD => {
-                        // TODO: Exit
-                        todo!("Exit")
+                        // Exit
+                        // TODO: Implement a more graceful exit
+                        self.program_counter -= 2;
+                        self.requesting_exit = true;
                     }
                     0x00FE => {
                         // TODO: Enable low-res
@@ -195,6 +217,14 @@ impl CPU {
                 if self.registers[x] == self.registers[y] {
                     self.program_counter += 2;
                 }
+            }
+            0x5002 => {
+                // Save vx to vy
+                todo!("Save vx to vy")
+            }
+            0x5003 => {
+                // Load vx to vy
+                todo!("Load vx to vy")
             }
             0x6000 => {
                 // Set Vx = nn
@@ -306,12 +336,16 @@ impl CPU {
                 // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
                 // This may be implemented in the future with a toggle.
 
+                self.registers[Register::VF as usize] = 0;
+
                 // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
                 let x = self.registers[x] as i32;
                 let y = self.registers[y] as i32;
                 let height = opcode & 0x000F;
 
-                self.registers[0xF] = 0;
+                // TODO: Apparently there's a quirk in "Hap's test rom" for low-res sprites that force the width to 8
+                //let sprite_width = if height == 0 { 16 } else { 8 };
+                //let sprite_height = if height == 0 { 16 } else { height };
 
                 for row in 0..height {
                     let pixel = memory[(self.index_register + row) as usize];
@@ -324,6 +358,9 @@ impl CPU {
                         }
                     }
                 }
+
+                // TODO: Check for collision and store it in VF
+                //self.registers[Register::VF as usize] = 0;
             }
             0xE000 => {
                 match opcode & 0xFF {
@@ -352,14 +389,20 @@ impl CPU {
                 match opcode & 0xFF {
                     0x00 => {
                         // TODO: Load I extended
-                        todo!("Load I extended")
+                        const SHIFT: u8 = 8;
+                        let pc = self.program_counter as usize;
+                        let address = (memory[pc] as u16) << SHIFT | (memory[pc + 1] as u16);
+
+                        self.index_register = address;
+                        self.program_counter += 2;
                     }
                     0x01 => {
                         // TODO: Plane control
                         todo!("Plane control")
                     }
                     0x02 => {
-                        // TODO: Audio control
+                        // Audio control
+                        // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
                         todo!("Audio control")
                     }
                     0x07 => {

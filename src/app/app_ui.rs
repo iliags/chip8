@@ -6,7 +6,7 @@ use super::{
 };
 use c8_device::{
     device::C8,
-    display::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    display::{DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_WIDTH},
     fonts::FONT_DATA,
 };
 use c8_i18n::{
@@ -77,7 +77,10 @@ impl Default for AppUI {
     fn default() -> Self {
         Self {
             display_image: egui::ColorImage::new(
-                [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
+                [
+                    DEFAULT_SCREEN_WIDTH as usize,
+                    DEFAULT_SCREEN_HEIGHT as usize,
+                ],
                 Color32::BLACK,
             ),
             display_handle: None,
@@ -108,6 +111,13 @@ impl eframe::App for AppUI {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Step the emulator
             self.c8_device.step(self.cpu_speed);
+
+            // Update the display resolution
+            if self.c8_device.needs_resolution_update() {
+                let (width, height) = self.c8_device.get_display().get_screen_size_xy();
+                self.display_image =
+                    egui::ColorImage::new([width as usize, height as usize], Color32::BLACK);
+            }
 
             // Update the display image with the current display buffer
             for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
@@ -222,6 +232,19 @@ impl eframe::App for AppUI {
                     ui.separator();
 
                     self.controls_audio(ui);
+
+                    #[cfg(debug_assertions)]
+                    if ui.button("Resolution").clicked() {
+                        let resolution = match self.c8_device.get_display().get_resolution() {
+                            c8_device::display::DisplayResolution::Low => {
+                                c8_device::display::DisplayResolution::High
+                            }
+                            c8_device::display::DisplayResolution::High => {
+                                c8_device::display::DisplayResolution::Low
+                            }
+                        };
+                        self.c8_device.get_display_mut().set_resolution(resolution);
+                    }
                 });
             },
         );
