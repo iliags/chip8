@@ -114,9 +114,11 @@ impl eframe::App for AppUI {
 
             // Update the display resolution
             if self.c8_device.needs_resolution_update() {
+                println!("Updating resolution");
                 let (width, height) = self.c8_device.get_display().get_screen_size_xy();
                 self.display_image =
                     egui::ColorImage::new([width as usize, height as usize], Color32::BLACK);
+                //self.display_handle = None;
             }
 
             // Update the display image with the current display buffer
@@ -234,16 +236,35 @@ impl eframe::App for AppUI {
                     self.controls_audio(ui);
 
                     #[cfg(debug_assertions)]
-                    if ui.button("Resolution").clicked() {
-                        let resolution = match self.c8_device.get_display().get_resolution() {
-                            c8_device::display::DisplayResolution::Low => {
-                                c8_device::display::DisplayResolution::High
-                            }
-                            c8_device::display::DisplayResolution::High => {
-                                c8_device::display::DisplayResolution::Low
-                            }
+                    {
+                        if ui.button("Resolution").clicked() {
+                            let resolution = match self.c8_device.get_display().get_resolution() {
+                                c8_device::display::DisplayResolution::Low => {
+                                    c8_device::display::DisplayResolution::High
+                                }
+                                c8_device::display::DisplayResolution::High => {
+                                    c8_device::display::DisplayResolution::Low
+                                }
+                            };
+                            self.c8_device.get_display_mut().set_resolution(resolution);
+                        }
+
+                        ui.label(self.c8_device.get_display().get_resolution_str());
+
+                        let (width, height) = self.c8_device.get_display().get_screen_size_xy();
+                        ui.label(format!("Device: {}x{}", width, height));
+
+                        let handle_size = match self.display_handle.clone() {
+                            Some(handle) => handle.size_vec2(),
+                            None => Vec2::ZERO,
                         };
-                        self.c8_device.get_display_mut().set_resolution(resolution);
+
+                        ui.label(format!("Handle: {}x{}", handle_size.x, handle_size.y));
+
+                        let (width, height) =
+                            (self.display_image.width(), self.display_image.height());
+
+                        ui.label(format!("Image: {}x{}", width, height));
                     }
                 });
             },

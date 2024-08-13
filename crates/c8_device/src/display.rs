@@ -61,11 +61,18 @@ impl Display {
         self.resolution
     }
 
+    /// Get the display resolution as a string
+    pub fn get_resolution_str(&self) -> &str {
+        match self.resolution {
+            DisplayResolution::Low => "Low",
+            DisplayResolution::High => "High",
+        }
+    }
+
     /// Set the display resolution
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
-
-        // TODO: Update the display resolution
+        self.clear();
     }
 
     /// Get the screen size XY
