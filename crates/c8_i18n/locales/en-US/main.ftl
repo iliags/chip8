@@ -2,6 +2,7 @@
 app_name = Chip 8
 
 # Menu bar
+included_roms = Included ROMs
 test_roms = Test ROMs
 open_rom = Open ROM
 reload_rom = Reload ROM
@@ -54,6 +55,7 @@ emulator = Emulator
 language = Language
 font_small = Small Font
 font_large = Large Font
+font_hover = Font usage may not be supported by all ROMs
 
 ## Audio
 audio_controls = Audio Controls

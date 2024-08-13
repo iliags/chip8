@@ -139,8 +139,7 @@ impl eframe::App for AppUI {
 
                 ui.separator();
 
-                // Test rom menu
-                self.menu_test_roms(ui);
+                self.menu_roms(ui);
 
                 ui.separator();
 
@@ -304,6 +303,20 @@ impl AppUI {
 
     fn reload_rom(&mut self) {
         self.c8_device.load_rom(self.rom_file.clone());
+    }
+
+    fn menu_roms(&mut self, ui: &mut egui::Ui) {
+        ui.menu_button(self.language.get_locale_string("included_roms"), |ui| {
+            // Test rom menu
+            self.menu_test_roms(ui);
+
+            ui.menu_button("Rom Test 2", |ui| {
+                if ui.button("test").clicked() {
+                    println!("Test clicked");
+                    ui.close_menu();
+                }
+            });
+        });
     }
 
     fn menu_test_roms(&mut self, ui: &mut egui::Ui) {
@@ -543,20 +556,13 @@ impl AppUI {
                             continue;
                         }
 
-                        /*
-                        ui.selectable_value(
-                            &mut ,
-                            &mut font.0.clone(),
-                            self.c8_device.get_memory_mut().1,
-                        );
-                         */
-
                         let font_string: String = font.name.clone().into();
 
                         ui.selectable_label(
                             self.c8_device.get_memory_mut().1 == font.name,
                             font_string,
                         )
+                        .on_hover_text(self.language.get_locale_string("font_hover"))
                         .clicked()
                         .then(|| {
                             self.c8_device
