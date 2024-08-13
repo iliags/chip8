@@ -123,6 +123,15 @@ impl CPU {
         match opcode & 0xF000 {
             0x0000 => {
                 match opcode {
+                    0x0000 => {
+                        // NOP
+                    }
+                    0x00C0 => {
+                        // TODO: Scroll down n lines
+                    }
+                    0x00D0 => {
+                        // TODO: Scroll up n lines
+                    }
                     0x00E0 => {
                         // Clear the display
                         display.clear();
@@ -132,6 +141,21 @@ impl CPU {
                         // TODO: Make this more graceful
                         self.program_counter =
                             stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
+                    }
+                    0x00FB => {
+                        // TODO: Scroll right 4 pixels
+                    }
+                    0x00FC => {
+                        // TODO: Scroll left 4 pixels
+                    }
+                    0x00FD => {
+                        // TODO: Exit
+                    }
+                    0x00FE => {
+                        // TODO: Enable low-res
+                    }
+                    0x00FF => {
+                        // TODO: Enable high-res
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -319,6 +343,15 @@ impl CPU {
             }
             0xF000 => {
                 match opcode & 0xFF {
+                    0x00 => {
+                        // TODO: Load I extended
+                    }
+                    0x01 => {
+                        // TODO: Audio control
+                    }
+                    0x02 => {
+                        // TODO:
+                    }
                     0x07 => {
                         // Set Vx to the value of the delay timer
                         self.registers[x] = self.delay_timer;
@@ -356,6 +389,9 @@ impl CPU {
                         // Set I to the location of the sprite for the character in Vx
                         self.index_register = (self.registers[x] * 5) as u16;
                     }
+                    0x30 => {
+                        // TODO: Load I with big sprite
+                    }
                     0x33 => {
                         // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
                         memory[self.index_register as usize] = self.registers[x] / 100;
@@ -383,6 +419,12 @@ impl CPU {
                         if quirks.i_incremented {
                             self.index_register += 1;
                         }
+                    }
+                    0x75 => {
+                        // TODO: Save flags
+                    }
+                    0x85 => {
+                        // TODO: Load flags
                     }
                     _ => {
                         println!("Unknown 0xF000 opcode: {:#X}", opcode);
