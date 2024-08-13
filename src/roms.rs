@@ -47,13 +47,19 @@ pub const TEST_ROMS: &[ROM] = &[
         data: include_bytes!("../assets/test_roms/7-beep.ch8"),
     },
     // Requires Super Chip-8 support
-    //ROM {
-    //    name: "scrolling.ch8",
-    //    data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
-    //},
+    ROM {
+        name: "scrolling.ch8",
+        data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
+    },
 ];
 
-pub const GAME_ROMS: &[ROM] = &[ROM {
-    name: "Octo Sample",
-    data: include_bytes!("../assets/games/octo-sample/octo-sample.ch8"),
-}];
+pub const GAME_ROMS: &[ROM] = &[
+    ROM {
+        name: "Octo Sample",
+        data: include_bytes!("../assets/games/octo-sample/octo-sample.ch8"),
+    },
+    ROM {
+        name: "Glitch Ghost",
+        data: include_bytes!("../assets/games/glitch-ghost/glitch-ghost.ch8"),
+    },
+];
