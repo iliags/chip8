@@ -78,12 +78,9 @@ impl Memory {
     /// Load ROM data into memory
     pub fn load_rom(&mut self, data: Vec<u8>) {
         // Make sure the ROM data is valid
-        match data.len() {
-            0 => {
-                println!("No ROM data provided");
-                return;
-            }
-            _ => {}
+        if data.is_empty() {
+            println!("No ROM data provided");
+            return;
         }
 
         let start = PROGRAM_START as usize;
