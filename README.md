@@ -20,9 +20,14 @@ ZXCV
 
 ### Included ROMs
 
+Some ROMs have been included for users to get familiar with the emulator.
+
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
-- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
+  - Extremely useful for testing functionality during development
 - [Samples from Octo](https://github.com/JohnEarnest/Octo)
+  - Simple game example
+- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
+  - Requires full Octo support, tests more advanced features
 
 ### Localization
 
