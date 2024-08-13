@@ -5,10 +5,11 @@
 
 // Deprecated, remains for compatibility until fonts are implemented
 //#[deprecated(note = "please use `SMALL_FONTS` instead")]
-pub const FONT: &[u8] = &FONT_DATA[FontName::CHIP8 as usize].small_data;
+pub const FONT: &[u8] = FONT_DATA[FontName::CHIP8 as usize].small_data;
 
 /// Static font data
 #[allow(missing_docs)]
+#[derive(Debug, Clone)]
 pub struct FontData {
     pub name: &'static str,
     pub small_data: &'static [u8],

@@ -17,14 +17,11 @@ pub struct Memory(pub Vec<u8>);
 
 impl Default for Memory {
     fn default() -> Self {
-        let mut memory = vec![0; MAX_MEMORY];
-        let data = FONT_DATA[FontName::CHIP8 as usize].small_data;
-        let start = 0;
-        let end = data.len();
+        let mut new_self = Self(vec![0; MAX_MEMORY]);
 
-        memory.splice(start..end, data.iter().cloned());
+        new_self.load_font_small(FONT_DATA[FontName::CHIP8 as usize].clone());
 
-        Self(memory)
+        new_self
     }
 }
 
