@@ -1,6 +1,6 @@
 use c8_audio::Beeper;
 
-use crate::{cpu::CPU, display::Display, keypad::Keypad, quirks::Quirks, FONT, MAX_MEMORY};
+use crate::{cpu::CPU, display::Display, fonts::FONT, keypad::Keypad, quirks::Quirks, MAX_MEMORY};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -155,12 +155,12 @@ mod tests {
         assert_eq!(c8.memory.len(), MAX_MEMORY);
 
         // Check that the font data is loaded
-        for (i, &byte) in crate::FONT.iter().enumerate() {
+        for (i, &byte) in FONT.iter().enumerate() {
             assert_eq!(c8.memory[i], byte);
         }
 
         // Check that the rest of the memory is zero
-        for i in crate::FONT.len()..MAX_MEMORY {
+        for i in FONT.len()..MAX_MEMORY {
             assert_eq!(c8.memory[i], 0);
         }
     }
