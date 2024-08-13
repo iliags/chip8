@@ -35,6 +35,10 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 ```cargo build --release```
 ```cargo run --release```
 
+#### Linux
+
+`libasound2-dev` is required for the `cpal` crate, it can be installed with `sudo apt-get install -y libasound2-dev`.
+
 ### WASM
 
 - Install trunk using ```cargo install trunk```
