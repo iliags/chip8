@@ -1,10 +1,14 @@
 [package]
 name = "chip8"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
+exclude = [
+    # Exclude source art assets from the binary
+    "art/*",
+]
 
 [workspace]
 members = ["crates/*"]
@@ -16,11 +20,22 @@ missing_docs = "warn"
 unsafe_code = "deny"
 
 [workspace.dependencies]
+c8_audio = { path = "crates/c8_audio" }
+c8_device = { path = "crates/c8_device" }
+c8_i18n = { path = "crates/c8_i18n" }
+
 # Accessibility
 fluent = "0.16"
 fluent-templates = "0.9"
 unic-langid = "0.9"
+
+# Random number generator
 rand = { version = "0.8" }
+
+serde = { version = "1", features = ["derive"] }
+
+# Audio
+cpal = { version = "0.15", features = ["wasm-bindgen"] }
 
 [dependencies]
 egui = "0.28"
@@ -32,12 +47,14 @@ eframe = { version = "0.28", default-features = false, features = [
 log = "0.4"
 rfd = "0.14"
 
+
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
 unic-langid = { workspace = true }
-
-c8_device = { path = "crates/c8_device" }
-c8_i18n = { path = "crates/c8_i18n" }
+serde = { workspace = true }
+c8_audio = { workspace = true }
+c8_device = { workspace = true }
+c8_i18n = { workspace = true }
 
 
 [build-dependencies]

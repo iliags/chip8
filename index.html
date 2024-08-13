@@ -14,19 +14,17 @@
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base data-trunk-public-url />
 
-    <link data-trunk rel="icon" href="assets/favicon.ico">
+    <link data-trunk rel="icon" href="assets/windows/icon.ico">
 
 
     <link data-trunk rel="copy-file" href="assets/sw.js" />
     <link data-trunk rel="copy-file" href="assets/manifest.json" />
     <link data-trunk rel="copy-file" href="assets/icon-1024.png" />
     <link data-trunk rel="copy-file" href="assets/icon-256.png" />
-    <link data-trunk rel="copy-file" href="assets/icon_ios_touch_192.png" />
-    <link data-trunk rel="copy-file" href="assets/maskable_icon_x512.png" />
+    <link data-trunk rel="copy-file" href="assets/maskable_icon_x256.png" />
 
 
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon_ios_touch_192.png">
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
 
@@ -119,6 +117,8 @@
 </head>
 
 <body>
+    <!-- <link data-trunk rel="inline" href="assets/sound.js" /> -->
+
     <!-- The WASM code will resize the canvas dynamically -->
     <!-- the id is hardcoded in main.rs . so, make sure both match. -->
     <canvas id="the_canvas_id"></canvas>
@@ -131,6 +131,8 @@
         <div class="lds-dual-ring"></div>
     </div>
 
+
+
     <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
     <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
     <script>
@@ -140,6 +142,14 @@
                 navigator.serviceWorker.register('sw.js');
             });
         }
+
+        /*
+        document.addEventListener('click', () => {
+            if (!window.audioContext) {
+                window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        });
+        */
     </script>
 </body>
 

@@ -1,13 +1,15 @@
-use crate::{cpu::CPU, display, keypad::KeypadKey, quirks::Quirks, FONT, MAX_MEMORY};
+use c8_audio::Beeper;
+
+use crate::{cpu::CPU, display::Display, keypad::Keypad, memory::Memory, quirks::Quirks};
 
 /// Chip-8 Device
 #[derive(Debug)]
 pub struct C8 {
     /// The RAM (4kb)
-    memory: Vec<u8>,
+    memory: Memory,
 
     /// The display of the device (64x32)
-    display: display::Display,
+    display: Display,
 
     /// Chip-8 CPU
     cpu: CPU,
@@ -19,29 +21,41 @@ pub struct C8 {
     is_running: bool,
 
     /// Keyboard state
-    keyboard: [u8; 16],
+    keypad: Keypad,
 
     /// Quirks
     quirks: Quirks,
+
+    /// Audio
+    pub beeper: Beeper,
 }
 
 impl Default for C8 {
     fn default() -> Self {
         Self {
-            memory: create_new_memory(),
-
-            // 64x32 display
-            display: display::Display::default(),
+            memory: Memory::default(),
+            display: Display::default(),
             cpu: CPU::default(),
             stack: vec![],
             is_running: false,
-            keyboard: [0; 16],
+            keypad: Keypad::default(),
             quirks: Quirks::default(),
+            beeper: Beeper::new(),
         }
     }
 }
 
 impl C8 {
+    /// Get the memory of the device
+    pub fn get_memory(&self) -> &Memory {
+        &self.memory
+    }
+
+    /// Get the memory of the device (mutable)
+    pub fn get_memory_mut(&mut self) -> &mut Memory {
+        &mut self.memory
+    }
+
     /// Get the quirks of the device
     pub fn get_quirks(&self) -> &Quirks {
         &self.quirks
@@ -53,48 +67,43 @@ impl C8 {
     }
 
     /// Get the display of the device
-    pub fn get_display(&self) -> &display::Display {
+    pub fn get_display(&self) -> &Display {
         &self.display
+    }
+
+    /// Get the keypad of the device
+    pub fn get_keypad(&self) -> &Keypad {
+        &self.keypad
+    }
+
+    /// Get the keypad of the device (mutable)
+    pub fn get_keypad_mut(&mut self) -> &mut Keypad {
+        &mut self.keypad
+    }
+
+    /// Get if the device is running
+    pub fn get_is_running(&self) -> bool {
+        self.is_running
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
     pub fn load_rom(&mut self, rom: Vec<u8>) {
-        // Make sure the ROM data is valid
-        match rom.len() {
-            0 => {
-                println!("No ROM data provided");
-                return;
-            }
-            len if len > super::MAX_ROM_SIZE => {
-                println!("ROM data is too large: {} bytes", len);
-                return;
-            }
-            _ => {}
-        }
-
         self.reset_device();
 
-        let start = super::PROGRAM_START as usize;
-        let end = start + rom.len();
-
-        self.memory.splice(start..end, rom.iter().cloned());
+        self.memory.load_rom(rom);
 
         self.is_running = true;
     }
 
     /// Resets the device
     fn reset_device(&mut self) {
+        self.beeper.stop();
+        let current_font = self.memory.1;
         *self = Self::default();
-    }
 
-    /// Set the state of a key
-    pub fn set_key(&mut self, key: &KeypadKey, pressed: bool) {
-        self.keyboard[key.get_key_index()] = pressed as u8;
-    }
-
-    /// Get the state of a key
-    pub fn get_key(&self, key: &KeypadKey) -> bool {
-        self.keyboard[key.get_key_index()] == 1
+        // Reload font data
+        self.memory
+            .load_font_name(current_font, crate::fonts::FontSize::Small)
     }
 
     /// Step the device
@@ -110,51 +119,29 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-                // TODO: Play sound
+                self.beeper.play();
+            } else {
+                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
+                self.beeper.pause();
             }
 
             // Execute instructions
             for _ in 0..cpu_speed {
                 self.cpu.step(
-                    &mut self.memory,
+                    &mut self.memory.0,
                     &mut self.display,
                     &mut self.stack,
                     &self.quirks,
-                    self.keyboard,
+                    &self.keypad,
                 );
             }
         }
     }
 }
 
-/// Creates a blank memory vector (4096 bytes) with the font data loaded in the first 512 bytes
-fn create_new_memory() -> Vec<u8> {
-    let mut memory = vec![0; MAX_MEMORY];
-    memory.splice(0..FONT.len(), FONT.iter().cloned());
-    memory
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_memory() {
-        let c8 = C8::default();
-
-        // Check that the memory is the correct size
-        assert_eq!(c8.memory.len(), MAX_MEMORY);
-
-        // Check that the font data is loaded
-        for (i, &byte) in crate::FONT.iter().enumerate() {
-            assert_eq!(c8.memory[i], byte);
-        }
-
-        // Check that the rest of the memory is zero
-        for i in crate::FONT.len()..MAX_MEMORY {
-            assert_eq!(c8.memory[i], 0);
-        }
-    }
 
     // Note: These tests were generated by GitHub Copilot
 
@@ -162,42 +149,24 @@ mod tests {
     fn test_load_rom() {
         let mut c8 = C8::default();
         c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
-        assert_eq!(c8.memory[0x200], 0x00);
-        assert_eq!(c8.memory[0x201], 0xE0);
-        assert_eq!(c8.memory[0x202], 0x00);
-        assert_eq!(c8.memory[0x203], 0xEE);
+        assert_eq!(c8.memory.0[0x200], 0x00);
+        assert_eq!(c8.memory.0[0x201], 0xE0);
+        assert_eq!(c8.memory.0[0x202], 0x00);
+        assert_eq!(c8.memory.0[0x203], 0xEE);
     }
 
     #[test]
     fn test_reset_device() {
         let mut c8 = C8::default();
-        c8.memory[0x200] = 0x01;
-        c8.memory[0x201] = 0x02;
-        c8.memory[0x202] = 0x03;
-        c8.memory[0x203] = 0x04;
+        c8.memory.0[0x200] = 0x01;
+        c8.memory.0[0x201] = 0x02;
+        c8.memory.0[0x202] = 0x03;
+        c8.memory.0[0x203] = 0x04;
         c8.reset_device();
-        assert_eq!(c8.memory[0x200], 0x00);
-        assert_eq!(c8.memory[0x201], 0x00);
-        assert_eq!(c8.memory[0x202], 0x00);
-        assert_eq!(c8.memory[0x203], 0x00);
-    }
-
-    #[test]
-    fn test_set_key() {
-        let mut c8 = C8::default();
-        c8.set_key(&KeypadKey::Num1, true);
-        assert_eq!(c8.keyboard[0x1], 1);
-        c8.set_key(&KeypadKey::Num1, false);
-        assert_eq!(c8.keyboard[0x1], 0);
-    }
-
-    #[test]
-    fn test_get_key() {
-        let mut c8 = C8::default();
-        c8.keyboard[0x1] = 1;
-        assert_eq!(c8.get_key(&KeypadKey::Num1), true);
-        c8.keyboard[0x1] = 0;
-        assert_eq!(c8.get_key(&KeypadKey::Num1), false);
+        assert_eq!(c8.memory.0[0x200], 0x00);
+        assert_eq!(c8.memory.0[0x201], 0x00);
+        assert_eq!(c8.memory.0[0x202], 0x00);
+        assert_eq!(c8.memory.0[0x203], 0x00);
     }
 
     #[test]

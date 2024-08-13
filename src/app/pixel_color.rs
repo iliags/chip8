@@ -2,7 +2,7 @@ use egui::Color32;
 use std::default;
 
 /// The colors used to display the pixels
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Deserialize, serde::Serialize)]
 pub struct PixelColors {
     /// The color of a pixel that is on
     on: Color32,

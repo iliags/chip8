@@ -17,7 +17,7 @@ impl ROM {
 }
 
 /// List of ROMs used for testing the emulator
-pub const TEST_ROMS: [ROM; 6] = [
+pub const TEST_ROMS: &[ROM] = &[
     ROM {
         name: "chip8-logo.ch8",
         data: include_bytes!("../assets/test_roms/1-chip8-logo.ch8"),
@@ -42,15 +42,18 @@ pub const TEST_ROMS: [ROM; 6] = [
         name: "keypad.ch8",
         data: include_bytes!("../assets/test_roms/6-keypad.ch8"),
     },
-    // Requires sound support
-    //ROM {
-    //    name: "beep.ch8",
-    //    data: include_bytes!("../assets/test_roms/7-beep.ch8"),
-    //},
-
+    ROM {
+        name: "beep.ch8",
+        data: include_bytes!("../assets/test_roms/7-beep.ch8"),
+    },
     // Requires Super Chip-8 support
     //ROM {
     //    name: "scrolling.ch8",
     //    data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
     //},
 ];
+
+pub const GAME_ROMS: &[ROM] = &[ROM {
+    name: "Octo Sample",
+    data: include_bytes!("../assets/games/octo-sample/octo-sample.ch8"),
+}];

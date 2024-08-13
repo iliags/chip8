@@ -2,15 +2,25 @@
 app_name = Chip 8
 
 # Menu bar
-test_roms = Test ROMs
 open_rom = Open ROM
 reload_rom = Reload ROM
+control_panel = Control Panel
+visualizer_panel = Visualizer Panel
+
+## ROM
+included_roms = Included ROMs
+test_roms = Test ROMs
+game_roms = Games
 
 # Controls
+
+under_construction = Under construction
+not_implemented = Not implemented
 
 ## CPU
 cpu_speed = CPU Speed
 speed = Speed
+speed_hover = The number of instructions executed per frame (the UI updates at 60Hz/16ms)
 default_speed = Default Speed
 
 ## Display
@@ -46,3 +56,16 @@ and = {" "} and {" "}
 ## Emulator
 emulator = Emulator
 language = Language
+font_small = Small Font
+font_large = Large Font
+font_hover = Font usage may not be supported by all ROMs
+
+## Audio
+audio_controls = Audio Controls
+pitch = Pitch
+octave = Octave
+volume = Volume
+
+## Visualizer
+memory = Memory
+registers = Registers

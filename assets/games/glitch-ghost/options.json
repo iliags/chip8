@@ -1,0 +1,9 @@
+{
+         "tickrate" : "200",
+        "fillColor" : "#FFFFFF",
+  "backgroundColor" : "#555555",
+        "buzzColor" : "#FFFFFF",
+       "quietColor" : "#000000",
+      "shiftQuirks" :  false,
+  "loadStoreQuirks" :  false
+}
