@@ -128,9 +128,11 @@ impl CPU {
                     }
                     0x00C0 => {
                         // TODO: Scroll down n lines
+                        todo!("Scroll down n lines")
                     }
                     0x00D0 => {
                         // TODO: Scroll up n lines
+                        todo!("Scroll up n lines")
                     }
                     0x00E0 => {
                         // Clear the display
@@ -144,18 +146,23 @@ impl CPU {
                     }
                     0x00FB => {
                         // TODO: Scroll right 4 pixels
+                        todo!("Scroll right 4 pixels")
                     }
                     0x00FC => {
                         // TODO: Scroll left 4 pixels
+                        todo!("Scroll left 4 pixels")
                     }
                     0x00FD => {
                         // TODO: Exit
+                        todo!("Exit")
                     }
                     0x00FE => {
                         // TODO: Enable low-res
+                        todo!("Enable low-res")
                     }
                     0x00FF => {
                         // TODO: Enable high-res
+                        todo!("Enable high-res")
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -345,12 +352,15 @@ impl CPU {
                 match opcode & 0xFF {
                     0x00 => {
                         // TODO: Load I extended
+                        todo!("Load I extended")
                     }
                     0x01 => {
-                        // TODO: Audio control
+                        // TODO: Plane control
+                        todo!("Plane control")
                     }
                     0x02 => {
-                        // TODO:
+                        // TODO: Audio control
+                        todo!("Audio control")
                     }
                     0x07 => {
                         // Set Vx to the value of the delay timer
@@ -391,6 +401,7 @@ impl CPU {
                     }
                     0x30 => {
                         // TODO: Load I with big sprite
+                        todo!("Load I with big sprite")
                     }
                     0x33 => {
                         // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
@@ -422,9 +433,11 @@ impl CPU {
                     }
                     0x75 => {
                         // TODO: Save flags
+                        todo!("Save flags")
                     }
                     0x85 => {
                         // TODO: Load flags
+                        todo!("Load flags")
                     }
                     _ => {
                         println!("Unknown 0xF000 opcode: {:#X}", opcode);
