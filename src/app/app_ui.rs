@@ -424,7 +424,7 @@ impl AppUI {
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
+                egui::Slider::new(&mut self.display_scale, 0.5..=3.0)
                     .text(self.language.get_locale_string("scale")),
             );
 
