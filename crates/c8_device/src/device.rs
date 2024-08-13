@@ -98,7 +98,7 @@ impl C8 {
     /// Resets the device
     fn reset_device(&mut self) {
         self.beeper.stop();
-        let current_font = self.memory.1;
+        let current_font = self.memory.system_font;
         *self = Self::default();
 
         // Reload font data
@@ -128,7 +128,7 @@ impl C8 {
             // Execute instructions
             for _ in 0..cpu_speed {
                 self.cpu.step(
-                    &mut self.memory.0,
+                    &mut self.memory.data,
                     &mut self.display,
                     &mut self.stack,
                     &self.quirks,
@@ -149,24 +149,24 @@ mod tests {
     fn test_load_rom() {
         let mut c8 = C8::default();
         c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
-        assert_eq!(c8.memory.0[0x200], 0x00);
-        assert_eq!(c8.memory.0[0x201], 0xE0);
-        assert_eq!(c8.memory.0[0x202], 0x00);
-        assert_eq!(c8.memory.0[0x203], 0xEE);
+        assert_eq!(c8.memory.data[0x200], 0x00);
+        assert_eq!(c8.memory.data[0x201], 0xE0);
+        assert_eq!(c8.memory.data[0x202], 0x00);
+        assert_eq!(c8.memory.data[0x203], 0xEE);
     }
 
     #[test]
     fn test_reset_device() {
         let mut c8 = C8::default();
-        c8.memory.0[0x200] = 0x01;
-        c8.memory.0[0x201] = 0x02;
-        c8.memory.0[0x202] = 0x03;
-        c8.memory.0[0x203] = 0x04;
+        c8.memory.data[0x200] = 0x01;
+        c8.memory.data[0x201] = 0x02;
+        c8.memory.data[0x202] = 0x03;
+        c8.memory.data[0x203] = 0x04;
         c8.reset_device();
-        assert_eq!(c8.memory.0[0x200], 0x00);
-        assert_eq!(c8.memory.0[0x201], 0x00);
-        assert_eq!(c8.memory.0[0x202], 0x00);
-        assert_eq!(c8.memory.0[0x203], 0x00);
+        assert_eq!(c8.memory.data[0x200], 0x00);
+        assert_eq!(c8.memory.data[0x201], 0x00);
+        assert_eq!(c8.memory.data[0x202], 0x00);
+        assert_eq!(c8.memory.data[0x203], 0x00);
     }
 
     #[test]
