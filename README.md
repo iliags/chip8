@@ -21,6 +21,8 @@ ZXCV
 ### Included ROMs
 
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
+- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
+- [Samples from Octo](https://github.com/JohnEarnest/Octo)
 
 ### Localization
 
@@ -74,3 +76,4 @@ Stuff that might be added later.
 - Chip-8 extensions
   - Super-Chip
   - XO-Chip
+- Octo `options.json` compatibility

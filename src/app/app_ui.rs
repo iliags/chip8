@@ -1,4 +1,4 @@
-use crate::roms::TEST_ROMS;
+use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
     keyboard::{get_key_mapping, KEYBOARD},
@@ -308,33 +308,38 @@ impl AppUI {
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
         ui.menu_button(self.language.get_locale_string("included_roms"), |ui| {
             // Test rom menu
-            self.menu_test_roms(ui);
+            ui.menu_button(self.language.get_locale_string("test_roms"), |ui| {
+                for rom in TEST_ROMS.iter() {
+                    if self.menu_rom_button(ui, rom) {
+                        break;
+                    }
+                }
+            });
 
-            ui.menu_button("Rom Test 2", |ui| {
-                if ui.button("test").clicked() {
-                    println!("Test clicked");
-                    ui.close_menu();
+            ui.menu_button(self.language.get_locale_string("game_roms"), |ui| {
+                for rom in GAME_ROMS.iter() {
+                    if self.menu_rom_button(ui, rom) {
+                        break;
+                    }
                 }
             });
         });
     }
 
-    fn menu_test_roms(&mut self, ui: &mut egui::Ui) {
-        ui.menu_button(self.language.get_locale_string("test_roms"), |ui| {
-            for rom in TEST_ROMS.iter() {
-                if ui.button(rom.get_name()).clicked() {
-                    self.load_rom(rom.get_data().to_vec());
+    // Returns true if a ROM was selected
+    fn menu_rom_button(&mut self, ui: &mut egui::Ui, rom: &ROM) -> bool {
+        if ui.button(rom.get_name()).clicked() {
+            self.load_rom(rom.get_data().to_vec());
 
-                    println!("ROM loaded: {}", rom.get_name());
+            println!("ROM loaded: {}", rom.get_name());
 
-                    // Close the menu
-                    ui.close_menu();
+            // Close the menu
+            ui.close_menu();
 
-                    // Break out of the loop
-                    break;
-                }
-            }
-        });
+            return true;
+        }
+
+        false
     }
 
     fn menu_open_rom(&mut self, ui: &mut egui::Ui) {
