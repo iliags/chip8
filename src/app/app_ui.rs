@@ -156,8 +156,6 @@ impl eframe::App for AppUI {
                     self.file_data = Rc::new(RefCell::new(None));
                 }
 
-                ui.separator();
-
                 if ui
                     .add_enabled(
                         !self.rom_file.is_empty(),
