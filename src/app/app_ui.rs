@@ -28,6 +28,7 @@ const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
 const DEFAULT_DISPLAY_SCALE: f32 = 1.0;
 
 /// The application state
+// TODO: Add rom-specific settings
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct AppUI {
@@ -672,6 +673,8 @@ impl AppUI {
             .set_directory("/")
             .pick_file()
             .await;
+
+        // TODO: Check for an `options.json` file in the same directory and convert it to compatible settings
 
         match file_task {
             Some(file) => {
