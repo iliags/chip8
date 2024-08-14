@@ -42,7 +42,9 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 
 #### Linux
 
-`libasound2-dev` is required for the `cpal` crate, it can be installed with `sudo apt-get install -y libasound2-dev`.
+`libasound2-dev` is required for the `cpal` crate on linux, it can be installed with `sudo apt-get install -y libasound2-dev`.
+
+In some cases, linux may also require `sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev`
 
 ### WASM
 
@@ -77,7 +79,7 @@ See [miri repository](https://github.com/rust-lang/miri).
 
 Stuff that might be added later.
 
-- Disassembler
+- Assembler/Disassembler
 - Debugger
 - System visualizer
 - Save states
@@ -86,3 +88,4 @@ Stuff that might be added later.
   - Super-Chip
   - XO-Chip
 - Octo `options.json` compatibility
+- Runtime error messages rather than panicking.
