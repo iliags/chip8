@@ -180,11 +180,11 @@ impl CPU {
                     }
                     0x00FE => {
                         // TODO: Enable low-res
-                        todo!("Enable low-res")
+                        self.current_resolution = DisplayResolution::Low;
                     }
                     0x00FF => {
                         // TODO: Enable high-res
-                        todo!("Enable high-res")
+                        self.current_resolution = DisplayResolution::High;
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -219,12 +219,20 @@ impl CPU {
                 }
             }
             0x5002 => {
-                // Save vx to vy
-                todo!("Save vx to vy")
+                // Save vx through vy
+                //todo!("Save vx through vy")
+
+                for i in x..=y {
+                    memory[(self.index_register + i as u16) as usize] = self.registers[i];
+                }
             }
             0x5003 => {
-                // Load vx to vy
-                todo!("Load vx to vy")
+                // Load vx through vy from i
+                //todo!("Load vx through vy")
+
+                for i in x..=y {
+                    self.registers[i] = memory[(self.index_register + i as u16) as usize];
+                }
             }
             0x6000 => {
                 // Set Vx = nn
@@ -476,11 +484,11 @@ impl CPU {
                     }
                     0x75 => {
                         // TODO: Save flags
-                        todo!("Save flags")
+                        todo!("Save flags to file")
                     }
                     0x85 => {
                         // TODO: Load flags
-                        todo!("Load flags")
+                        todo!("Load flags from file")
                     }
                     _ => {
                         println!("Unknown 0xF000 opcode: {:#X}", opcode);
