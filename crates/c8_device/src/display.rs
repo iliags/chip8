@@ -199,6 +199,26 @@ impl Display {
         self.set_plane_pixel(self.active_plane, x, y)
     }
 
+    /// Scroll planes left by the given number of pixels, only available in high resolution mode
+    pub fn scroll_left(&mut self, _pixels: u8) {
+        todo!("Implement scrolling left")
+    }
+
+    /// Scroll planes right by the given number of pixels, only available in high resolution mode
+    pub fn scroll_right(&mut self, _pixels: u8) {
+        todo!("Implement scrolling right")
+    }
+
+    /// Scroll planes up by the given number of pixels, only available in high resolution mode
+    pub fn scroll_up(&mut self, _pixels: u8) {
+        todo!("Implement scrolling up")
+    }
+
+    /// Scroll planes down by the given number of pixels, only available in high resolution mode
+    pub fn scroll_down(&mut self, _pixels: u8) {
+        todo!("Implement scrolling down")
+    }
+
     const fn get_pixel_index(&self, x: i32, y: i32) -> usize {
         // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
         // This may be implemented in the future with a toggle.

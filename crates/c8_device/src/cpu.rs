@@ -121,6 +121,8 @@ impl CPU {
         let nn = (opcode & 0x00FF) as u8;
         let nnn = opcode & 0x0FFF;
 
+        // TODO: Check if nn is used for scrolling
+
         // Decode the opcode
         match opcode & 0xF000 {
             0x0000 => {
@@ -129,12 +131,12 @@ impl CPU {
                         // NOP
                     }
                     0x00C0 => {
-                        // TODO: Scroll down n lines
-                        todo!("Scroll down n lines")
+                        // Scroll down n lines
+                        display.scroll_down(nn);
                     }
                     0x00D0 => {
-                        // TODO: Scroll up n lines
-                        todo!("Scroll up n lines")
+                        // Scroll up n lines
+                        display.scroll_up(nn);
                     }
                     0x00E0 => {
                         // Clear the display
@@ -147,12 +149,12 @@ impl CPU {
                             stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
                     }
                     0x00FB => {
-                        // TODO: Scroll right 4 pixels
-                        todo!("Scroll right 4 pixels")
+                        // Scroll right n pixels
+                        display.scroll_right(nn);
                     }
                     0x00FC => {
-                        // TODO: Scroll left 4 pixels
-                        todo!("Scroll left 4 pixels")
+                        // Scroll left n pixels
+                        display.scroll_left(nn);
                     }
                     0x00FD => {
                         // Exit
