@@ -156,7 +156,8 @@ impl CPU {
                     }
                     0x00FD => {
                         // Exit
-                        // TODO: Implement a more graceful exit
+                        // Note: The program counter is decremented by 2 to prevent the program from advancing
+
                         self.program_counter -= 2;
                         messages.push(DeviceMessage::Exit);
                     }
@@ -389,8 +390,8 @@ impl CPU {
                         self.program_counter += 2;
                     }
                     0x01 => {
-                        // TODO: Plane control
-                        todo!("Plane control")
+                        // Set active plane from Vx
+                        display.set_active_plane(x as usize)
                     }
                     0x02 => {
                         // Audio control

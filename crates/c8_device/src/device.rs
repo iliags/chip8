@@ -156,7 +156,7 @@ impl C8 {
                 }
                 DeviceMessage::Exit => {
                     self.is_running = false;
-                } //_ => {}
+                }
             }
         }
 

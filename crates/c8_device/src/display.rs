@@ -48,6 +48,8 @@ pub struct Display {
 
     // The resolution of the display
     resolution: DisplayResolution,
+
+    active_plane: usize,
 }
 
 /// Struct for a plane of pixels on the display
@@ -69,6 +71,7 @@ impl Default for Display {
         Self {
             planes: vec![Plane::default(); 2],
             resolution: DisplayResolution::Low,
+            active_plane: 0,
         }
     }
 }
@@ -179,6 +182,21 @@ impl Display {
 
         // Return the pixel value
         self.planes[plane].pixels[index]
+    }
+
+    /// Set the active plane
+    pub fn set_active_plane(&mut self, plane: usize) {
+        self.active_plane = plane;
+    }
+
+    /// Get the active plane
+    pub fn get_active_plane(&self) -> usize {
+        self.active_plane
+    }
+
+    /// Toggle a pixel at the given x and y coordinates for the active plane
+    pub fn set_active_plane_pixel(&mut self, x: i32, y: i32) -> u8 {
+        self.set_plane_pixel(self.active_plane, x, y)
     }
 
     const fn get_pixel_index(&self, x: i32, y: i32) -> usize {
