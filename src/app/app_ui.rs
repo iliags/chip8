@@ -48,9 +48,15 @@ pub struct AppUI {
     #[serde(skip)]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
+    #[serde(skip)]
+    file_name: Rc<RefCell<Option<String>>>,
+
     // The ROM file
     #[serde(skip)]
     rom_file: Vec<u8>,
+
+    #[serde(skip)]
+    rom_name: String,
 
     // The Chip8 device
     #[serde(skip)]
@@ -86,11 +92,13 @@ impl Default for AppUI {
             ),
             display_handle: None,
             rom_file: Vec::new(),
+            rom_name: String::new(),
             c8_device: C8::default(),
             cpu_speed: DEFAULT_CPU_SPEED,
             pixel_colors: PixelColors::default(),
             display_scale: DEFAULT_DISPLAY_SCALE,
             file_data: Rc::new(RefCell::new(None)),
+            file_name: Rc::new(RefCell::new(None)),
 
             // Current language
             language: LocaleText::default(),
@@ -168,6 +176,15 @@ impl eframe::App for AppUI {
 
                 // Check if the file data has been updated
                 if let Some(file_data) = self.file_data.take() {
+                    // Update the file name
+                    if let Some(file_name) = self.file_name.take() {
+                        let name = file_name.strip_suffix(".ch8").unwrap_or(&file_name);
+                        self.rom_name = name.to_string();
+
+                        // Reset the file name
+                        self.file_name = Rc::new(RefCell::new(None));
+                    }
+
                     // Load the ROM
                     self.load_rom(file_data);
 
@@ -332,8 +349,15 @@ impl AppUI {
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context) {
-        egui::Window::new(self.language.get_locale_string("display"))
+        let display_title = if self.rom_name.is_empty() {
+            self.language.get_locale_string("display")
+        } else {
+            self.rom_name.clone()
+        };
+
+        egui::Window::new(display_title)
             .resizable(false)
+            .id("display_window".into())
             .show(ctx, |ui| {
                 // Note: This is hacky
                 // TODO: Figure out how to do this without cloning the image
@@ -411,6 +435,7 @@ impl AppUI {
     fn menu_rom_button(&mut self, ui: &mut egui::Ui, rom: &ROM) -> bool {
         if ui.button(rom.get_name()).clicked() {
             self.load_rom(rom.get_data().to_vec());
+            self.rom_name = rom.get_name().to_string();
 
             println!("ROM loaded: {}", rom.get_name());
 
@@ -430,26 +455,29 @@ impl AppUI {
         {
             // Clone the file data reference
             let data_clone = Rc::clone(&self.file_data.clone());
+            let name_clone = Rc::clone(&self.file_name.clone());
 
             #[cfg(not(target_arch = "wasm32"))]
             {
                 use bevy_tasks::futures_lite::future;
 
                 future::block_on(async move {
-                    let file_data = Self::load_file().await;
+                    let (file_data, file_name) = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
+                    *name_clone.borrow_mut() = file_name;
                 });
             }
 
             #[cfg(target_arch = "wasm32")]
             {
                 wasm_bindgen_futures::spawn_local(async move {
-                    let file_data = Self::load_file().await;
+                    let (file_data, file_name) = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
+                    *name_clone.borrow_mut() = file_name;
                 });
             }
         }
@@ -747,7 +775,7 @@ impl AppUI {
         });
     }
 
-    async fn load_file() -> Option<Vec<u8>> {
+    async fn load_file() -> (Option<Vec<u8>>, Option<String>) {
         let file_task = AsyncFileDialog::new()
             .add_filter("Chip8", &["ch8"])
             .set_directory("/")
@@ -758,10 +786,12 @@ impl AppUI {
 
         match file_task {
             Some(file) => {
+                let name = file.file_name();
+
                 let file = file.read().await;
-                Some(file)
+                (Some(file), Some(name))
             }
-            None => None,
+            None => (None, None),
         }
     }
 }
