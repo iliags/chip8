@@ -276,13 +276,14 @@ impl CPU {
                     }
                     0x6 => {
                         // Quirk: Some programs expect Vx to be shifted directly without assigning VY
-                        if quirks.vx_shifted_directly {
-                            self.registers[x] = self.registers[y];
-                        }
+                        let quirk_y = if quirks.vx_shifted_directly {
+                            self.registers[y]
+                        } else {
+                            self.registers[x]
+                        };
 
-                        // Set Vx = Vx SHR 1
-                        self.registers[Register::VF as usize] = self.registers[x] & 0x1;
-                        self.registers[x] >>= 1;
+                        self.registers[x] = quirk_y >> 1;
+                        self.registers[Register::VF as usize] = quirk_y & 0x1;
                     }
                     0x7 => {
                         // Set Vx = Vy - Vx, set VF = NOT borrow
@@ -293,13 +294,14 @@ impl CPU {
                     }
                     0xE => {
                         // Quirk: Some programs expect Vx to be shifted directly without assigning VY
-                        if quirks.vx_shifted_directly {
-                            self.registers[x] = self.registers[y];
-                        }
+                        let quirk_y = if quirks.vx_shifted_directly {
+                            self.registers[y]
+                        } else {
+                            self.registers[x]
+                        };
 
-                        // Set Vx = Vy SHL 1
-                        self.registers[Register::VF as usize] = self.registers[x] >> 7;
-                        self.registers[x] <<= 1;
+                        self.registers[x] = quirk_y << 1;
+                        self.registers[Register::VF as usize] = quirk_y >> 7;
                     }
                     _ => {
                         println!("Unknown 0x8000 opcode: {:#X}", opcode);
