@@ -337,12 +337,14 @@ impl CPU {
                 //let sprite_width = if height == 0 { 16 } else { 8 };
                 //let sprite_height = if height == 0 { 16 } else { height };
 
+                // TODO: Plane support
                 for row in 0..height {
                     let pixel = memory[(self.index_register + row) as usize];
 
                     for col in 0..8 {
                         if (pixel & (0x80 >> col)) != 0
-                            && display.set_pixel(x + col, y + row as i32) == 0
+                            // This must be done after the pixel & operation
+                            && display.set_plane_pixel(0, x + col, y + row as i32) == 0
                         {
                             self.registers[0xF] = 1;
                         }

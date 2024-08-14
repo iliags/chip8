@@ -128,6 +128,7 @@ impl eframe::App for AppUI {
             }
 
             // Update the display image with the current display buffer
+            // TODO: Handle planes
             for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
                 self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
             }

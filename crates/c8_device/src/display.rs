@@ -136,12 +136,6 @@ impl Display {
     }
 
     /// Get if a pixel is on or off at the given x and y coordinates
-    #[deprecated(note = "Use the version with planes instead")]
-    pub fn get_pixel_state(&self, x: i32, y: i32) -> bool {
-        self.get_pixel(x, y) == 1
-    }
-
-    /// Get if a pixel is on or off at the given x and y coordinates
     pub fn get_plane_pixel_state(&self, plane: usize, x: i32, y: i32) -> bool {
         self.get_plane_pixel(plane, x, y) == 1
     }
@@ -177,7 +171,7 @@ impl Display {
     /// Returns the value of the pixel after toggling
     pub fn set_plane_pixel(&mut self, plane: usize, x: i32, y: i32) -> u8 {
         // TODO: If plane is 2, draw to both planes
-        let plane = plane % self.planes.len();
+        let plane = plane.clamp(0, 2);
         let index = self.get_pixel_index(x, y);
 
         // Pixels are XORed on the display
