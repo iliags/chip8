@@ -64,6 +64,7 @@ pub struct Display {
     // The resolution of the display
     resolution: DisplayResolution,
 
+    // Which plane is active for drawing
     active_plane: usize,
 }
 
@@ -121,7 +122,7 @@ impl Display {
     /// Get the pixels container of the display
     #[deprecated(note = "Use the version with planes instead")]
     pub fn get_pixels(&self) -> &Vec<u8> {
-        &self.planes[0].pixels
+        self.get_plane_pixels(0)
     }
 
     /// Get the pixels of a plane
@@ -133,11 +134,7 @@ impl Display {
     /// Get the pixel at the given x and y coordinates
     #[deprecated(note = "Use the version with planes instead")]
     pub fn get_pixel(&self, x: usize, y: usize) -> u8 {
-        // Get the pixel index
-        let index = self.get_pixel_index(x, y);
-
-        // Return the pixel value
-        self.planes[0].pixels[index]
+        self.get_plane_pixel(0, x, y)
     }
 
     /// Get the pixel at the given x and y coordinates for a plane
@@ -167,13 +164,7 @@ impl Display {
     /// Returns the value of the pixel after toggling
     #[deprecated(note = "Use the version with planes instead")]
     pub fn set_pixel(&mut self, x: usize, y: usize) -> u8 {
-        let index = self.get_pixel_index(x, y);
-
-        // Pixels are XORed on the display
-        self.planes[0].pixels[index] ^= 1;
-
-        // Return the pixel value
-        self.planes[0].pixels[index]
+        self.set_plane_pixel(0, x, y)
     }
 
     /// Toggle a pixel at the given x and y coordinates
@@ -193,6 +184,11 @@ impl Display {
 
     /// Set the active plane
     pub(crate) fn set_active_plane(&mut self, plane: usize) {
+        #[cfg(debug_assertions)]
+        {
+            println!("Setting active plane to {}", plane);
+        }
+
         self.active_plane = plane;
     }
 
