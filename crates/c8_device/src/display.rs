@@ -156,7 +156,7 @@ impl Display {
     }
 
     /// Clear the display
-    pub fn clear(&mut self) {
+    pub(crate) fn clear(&mut self) {
         for plane in self.planes.iter_mut() {
             plane.pixels = vec![0; self.resolution.get_resolution_size()];
         }
@@ -179,7 +179,7 @@ impl Display {
     /// Toggle a pixel at the given x and y coordinates
     ///
     /// Returns the value of the pixel after toggling
-    pub fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
+    pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
         // TODO: If plane is 2, draw to both planes
         let plane = plane.clamp(0, 2);
         let index = self.get_pixel_index(x, y);
@@ -192,37 +192,37 @@ impl Display {
     }
 
     /// Set the active plane
-    pub fn set_active_plane(&mut self, plane: usize) {
+    pub(crate) fn set_active_plane(&mut self, plane: usize) {
         self.active_plane = plane;
     }
 
     /// Get the active plane
-    pub fn get_active_plane(&self) -> usize {
+    pub(crate) fn get_active_plane(&self) -> usize {
         self.active_plane
     }
 
     /// Toggle a pixel at the given x and y coordinates for the active plane
-    pub fn set_active_plane_pixel(&mut self, x: usize, y: usize) -> u8 {
+    pub(crate) fn set_active_plane_pixel(&mut self, x: usize, y: usize) -> u8 {
         self.set_plane_pixel(self.active_plane, x, y)
     }
 
     /// Scroll planes left by the given number of pixels, only available in high resolution mode
-    pub fn scroll_left(&mut self, _pixels: u8) {
+    pub(crate) fn scroll_left(&mut self, _pixels: u8) {
         todo!("Implement scrolling left")
     }
 
     /// Scroll planes right by the given number of pixels, only available in high resolution mode
-    pub fn scroll_right(&mut self, _pixels: u8) {
+    pub(crate) fn scroll_right(&mut self, _pixels: u8) {
         todo!("Implement scrolling right")
     }
 
     /// Scroll planes up by the given number of pixels, only available in high resolution mode
-    pub fn scroll_up(&mut self, _pixels: u8) {
+    pub(crate) fn scroll_up(&mut self, _pixels: u8) {
         todo!("Implement scrolling up")
     }
 
     /// Scroll planes down by the given number of pixels, only available in high resolution mode
-    pub fn scroll_down(&mut self, _pixels: u8) {
+    pub(crate) fn scroll_down(&mut self, _pixels: u8) {
         todo!("Implement scrolling down")
     }
 
