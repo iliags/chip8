@@ -122,9 +122,8 @@ impl CPU {
         let nn = (opcode & 0x00FF) as u8;
         let nnn = opcode & 0x0FFF;
 
-        // TODO: Check if nn is used for scrolling
-
         //println!("Executing opcode: {:#X}", opcode);
+        //println!("x: {}, y: {}, n: {}, nn: {}, nnn: {}", x, y, n, nn, nnn);
 
         // Decode the opcode
         match opcode & 0xF000 {
@@ -339,14 +338,28 @@ impl CPU {
                 // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
                 let x = self.registers[x] as i32;
                 let y = self.registers[y] as i32;
-                let height = opcode & 0x000F;
+                let height = n;
+                let mut i = self.index_register as usize;
 
-                // TODO: Apparently there's a quirk in "Hap's test rom" for low-res sprites that force the width to 8
-                //let sprite_width = if height == 0 { 16 } else { 8 };
-                //let sprite_height = if height == 0 { 16 } else { height };
+                let sprite_width = if height == 0 { 16 } else { 8 };
+                let sprite_height = if height == 0 { 16 } else { height };
 
+                let mut collided: u8 = 0;
+
+                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
+                for plane in 0..display.get_plane_count() {
+                    for row in 0..sprite_height {
+                        for column in 0..sprite_width {}
+                    }
+
+                    i += if height == 0 { 32 } else { height as usize };
+                }
+
+                self.registers[Register::VF as usize] = collided;
+
+                /*
                 // TODO: Plane support
-                for row in 0..height {
+                for row in 0..height as u16 {
                     let pixel = memory[(self.index_register + row) as usize];
 
                     for col in 0..8 {
@@ -358,9 +371,7 @@ impl CPU {
                         }
                     }
                 }
-
-                // TODO: Check for collision and store it in VF
-                //self.registers[Register::VF as usize] = 0;
+                 */
             }
             0xE000 => {
                 match opcode & 0xFF {
