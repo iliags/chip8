@@ -72,6 +72,7 @@ pub struct AppUI {
     // Whether the control panel is expanded
     control_panel_expanded: bool,
 
+    // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
 }
 
