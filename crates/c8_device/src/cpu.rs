@@ -118,10 +118,13 @@ impl CPU {
         // Extract the opcode parts
         let x = ((opcode & 0x0F00) >> 8) as usize;
         let y = ((opcode & 0x00F0) >> 4) as usize;
+        let n = (opcode & 0x000F) as u8;
         let nn = (opcode & 0x00FF) as u8;
         let nnn = opcode & 0x0FFF;
 
         // TODO: Check if nn is used for scrolling
+
+        //println!("Executing opcode: {:#X}", opcode);
 
         // Decode the opcode
         match opcode & 0xF000 {
@@ -132,11 +135,11 @@ impl CPU {
                     }
                     0x00C0 => {
                         // Scroll down n lines
-                        display.scroll_down(nn);
+                        display.scroll_down(n);
                     }
                     0x00D0 => {
                         // Scroll up n lines
-                        display.scroll_up(nn);
+                        display.scroll_up(n);
                     }
                     0x00E0 => {
                         // Clear the display
@@ -149,12 +152,12 @@ impl CPU {
                             stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
                     }
                     0x00FB => {
-                        // Scroll right n pixels
-                        display.scroll_right(nn);
+                        // Scroll right 4 pixels
+                        display.scroll_right(4);
                     }
                     0x00FC => {
-                        // Scroll left n pixels
-                        display.scroll_left(nn);
+                        // Scroll left 4 pixels
+                        display.scroll_left(4);
                     }
                     0x00FD => {
                         // Exit

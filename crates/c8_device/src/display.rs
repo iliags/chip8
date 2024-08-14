@@ -1,3 +1,6 @@
+// Temporary
+#![allow(dead_code)]
+
 /// Screen width constant
 pub(crate) const DEFAULT_SCREEN_WIDTH: usize = 64;
 
@@ -202,24 +205,26 @@ impl Display {
         self.set_plane_pixel(self.active_plane, x, y)
     }
 
-    /// Scroll planes left by the given number of pixels, only available in high resolution mode
-    pub(crate) fn scroll_left(&mut self, _pixels: u8) {
-        todo!("Implement scrolling left")
+    /// Scroll planes left by the given number of pixels
+    pub(crate) fn scroll_left(&mut self, pixels: u8) {
+        let pixels = -(pixels as isize);
+        self.scroll_planes(pixels, 0);
     }
 
-    /// Scroll planes right by the given number of pixels, only available in high resolution mode
-    pub(crate) fn scroll_right(&mut self, _pixels: u8) {
-        todo!("Implement scrolling right")
+    /// Scroll planes right by the given number of pixels
+    pub(crate) fn scroll_right(&mut self, pixels: u8) {
+        self.scroll_planes(pixels as isize, 0);
     }
 
-    /// Scroll planes up by the given number of pixels, only available in high resolution mode
-    pub(crate) fn scroll_up(&mut self, _pixels: u8) {
-        todo!("Implement scrolling up")
+    /// Scroll planes up by the given number of pixels
+    pub(crate) fn scroll_up(&mut self, pixels: u8) {
+        self.scroll_planes(0, pixels as isize);
     }
 
-    /// Scroll planes down by the given number of pixels, only available in high resolution mode
-    pub(crate) fn scroll_down(&mut self, _pixels: u8) {
-        todo!("Implement scrolling down")
+    /// Scroll planes down by the given number of pixels
+    pub(crate) fn scroll_down(&mut self, pixels: u8) {
+        let pixels = -(pixels as isize);
+        self.scroll_planes(0, pixels);
     }
 
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
@@ -235,7 +240,40 @@ impl Display {
         // Get the pixel index
         y * width + x
     }
+
+    /// Scroll the planes by the given number of pixels in the x and y directions
+    fn scroll_planes(&mut self, pixels_x: isize, pixels_y: isize) {
+        for i in 0..self.planes.len() {
+            let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
+
+            let (width, height) = self.get_screen_size_xy();
+            for y in 0..height {
+                for x in 0..width {
+                    // Get the pixel index
+                    let index = self.get_pixel_index(x, y);
+
+                    // Calculate the new x and y coordinates
+                    // TODO: Check if wrapping is needed
+                    let new_x = (x as isize + pixels_x) as usize; // % width;
+                    let new_y = (y as isize + pixels_y) as usize; // % height;
+
+                    // Get the new pixel index
+                    let new_index = self.get_pixel_index(new_x, new_y);
+
+                    // Copy the pixel to the new position
+                    new_pixels[new_index] = self.planes[i].pixels[index];
+                }
+            }
+
+            // Update the pixels
+            self.planes[i].pixels = new_pixels;
+        }
+    }
 }
+
+/*
+
+*/
 
 #[cfg(test)]
 mod tests {

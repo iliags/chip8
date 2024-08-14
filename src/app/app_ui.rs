@@ -74,6 +74,8 @@ pub struct AppUI {
 
     // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
+
+    test_loaded: bool,
 }
 
 impl Default for AppUI {
@@ -96,6 +98,7 @@ impl Default for AppUI {
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
+            test_loaded: false,
         }
     }
 }
@@ -137,6 +140,15 @@ impl eframe::App for AppUI {
                 ctx.input(|i| {
                     let current_key = &get_key_mapping(key)
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+
+                    // Temporary debug code
+                    #[cfg(debug_assertions)]
+                    {
+                        if i.key_pressed(egui::Key::Z) {
+                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            self.c8_device.get_memory_mut().data[0x1FF] = 1;
+                        }
+                    }
 
                     self.c8_device
                         .get_keypad_mut()
