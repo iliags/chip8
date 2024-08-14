@@ -8,6 +8,7 @@ use c8_device::{
     device::C8,
     display::{DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_WIDTH},
     fonts::FONT_DATA,
+    message::DeviceMessage,
 };
 use c8_i18n::{
     locale_text::LocaleText,
@@ -110,15 +111,20 @@ impl eframe::App for AppUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Step the emulator
-            self.c8_device.step(self.cpu_speed);
+            let messages = self.c8_device.step(self.cpu_speed);
 
-            // Update the display resolution
-            if self.c8_device.needs_resolution_update() {
-                println!("Updating resolution");
-                let (width, height) = self.c8_device.get_display().get_screen_size_xy();
-                self.display_image =
-                    egui::ColorImage::new([width as usize, height as usize], Color32::BLACK);
-                //self.display_handle = None;
+            // Process messages
+            for message in messages.iter() {
+                match message {
+                    DeviceMessage::ChangeResolution(resolution) => {
+                        println!("Changing resolution to {:?}", resolution);
+                        self.change_resolution(*resolution);
+                    }
+                    DeviceMessage::Exit => {
+                        println!("Exiting device");
+                        self.unload_rom();
+                    }
+                }
             }
 
             // Update the display image with the current display buffer
@@ -246,7 +252,10 @@ impl eframe::App for AppUI {
                                     c8_device::display::DisplayResolution::Low
                                 }
                             };
+
                             self.c8_device.get_display_mut().set_resolution(resolution);
+
+                            self.change_resolution(resolution);
                         }
 
                         ui.label(self.c8_device.get_display().get_resolution_str());
@@ -305,6 +314,20 @@ impl AppUI {
         }
 
         Default::default()
+    }
+
+    fn change_resolution(&mut self, resolution: c8_device::display::DisplayResolution) {
+        println!("Changing resolution function called");
+
+        //self.c8_device.get_display_mut().set_resolution(resolution);
+
+        let (width, height) = resolution.get_resolution_size();
+
+        //let (width, height) = self.c8_device.get_display().get_screen_size_xy();
+        self.display_image =
+            egui::ColorImage::new([width as usize, height as usize], Color32::BLACK);
+
+        //self.display_handle = None;
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context) {

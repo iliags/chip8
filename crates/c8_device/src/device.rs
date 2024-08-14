@@ -1,6 +1,9 @@
 use c8_audio::Beeper;
 
-use crate::{cpu::CPU, display::Display, keypad::Keypad, memory::Memory, quirks::Quirks};
+use crate::{
+    cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
+    quirks::Quirks,
+};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -91,11 +94,6 @@ impl C8 {
         self.is_running
     }
 
-    /// Returns whether the device needs a resolution update
-    pub fn needs_resolution_update(&self) -> bool {
-        self.display.get_resolution() != self.cpu.get_current_resolution()
-    }
-
     /// Resets the device, loads ROM and font data into memory, and starts the device
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();
@@ -117,49 +115,52 @@ impl C8 {
     }
 
     /// Step the device
-    pub fn step(&mut self, cpu_speed: u32) {
-        if self.is_running {
-            // TODO: Implement events for cpu requests
-            // This might get out-of-sync
-            if self.needs_resolution_update() {
-                self.display
-                    .set_resolution(self.cpu.get_current_resolution());
-            }
+    pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
+        if !self.is_running {
+            return Vec::new();
+        }
 
-            // TODO: Move timers to CPU with events
+        let mut messages: Vec<DeviceMessage> = Vec::new();
 
-            // Update timers
-            if self.cpu.delay_timer > 0 {
-                self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
-            }
+        // TODO: Move timers to CPU with events
 
-            if self.cpu.sound_timer > 0 {
-                self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
+        // Update timers
+        if self.cpu.delay_timer > 0 {
+            self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
+        }
 
-                self.beeper.play();
-            } else {
-                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
-                self.beeper.pause();
-            }
+        if self.cpu.sound_timer > 0 {
+            self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-            // Execute instructions
-            for _ in 0..cpu_speed {
-                self.cpu.step(
-                    &mut self.memory.data,
-                    &mut self.display,
-                    &mut self.stack,
-                    &self.quirks,
-                    &self.keypad,
-                );
+            self.beeper.play();
+        } else {
+            // TODO: Make this more ergonomic (i.e. only pause if it's playing)
+            self.beeper.pause();
+        }
 
-                // Check if the CPU is requesting an exit
-                if self.cpu.requesting_exit() {
-                    self.is_running = false;
-                    self.reset_device();
-                    break;
+        // Execute instructions
+        for _ in 0..cpu_speed {
+            messages = self.cpu.step(
+                &mut self.memory.data,
+                &mut self.display,
+                &mut self.stack,
+                &self.quirks,
+                &self.keypad,
+            );
+        }
+
+        for message in messages.iter() {
+            match message {
+                DeviceMessage::ChangeResolution(resolution) => {
+                    self.display.set_resolution(*resolution);
                 }
+                DeviceMessage::Exit => {
+                    self.is_running = false;
+                } //_ => {}
             }
         }
+
+        messages
     }
 }
 

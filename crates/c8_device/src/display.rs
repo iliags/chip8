@@ -22,6 +22,24 @@ pub enum DisplayResolution {
     High,
 }
 
+impl DisplayResolution {
+    /// Get the resolution size
+    pub const fn get_resolution_size(&self) -> (i32, i32) {
+        match self {
+            DisplayResolution::Low => (DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT),
+            DisplayResolution::High => (DEFAULT_SCREEN_WIDTH * 2, DEFAULT_SCREEN_HEIGHT * 2),
+        }
+    }
+
+    /// Get the resolution as a string
+    pub const fn get_resolution_str(&self) -> &str {
+        match self {
+            DisplayResolution::Low => "Low",
+            DisplayResolution::High => "High",
+        }
+    }
+}
+
 /// Struct representing the display of the Chip-8
 #[derive(Debug)]
 pub struct Display {
@@ -63,10 +81,7 @@ impl Display {
 
     /// Get the display resolution as a string
     pub fn get_resolution_str(&self) -> &str {
-        match self.resolution {
-            DisplayResolution::Low => "Low",
-            DisplayResolution::High => "High",
-        }
+        self.resolution.get_resolution_str()
     }
 
     /// Set the display resolution
@@ -77,10 +92,7 @@ impl Display {
 
     /// Get the screen size XY
     pub const fn get_screen_size_xy(&self) -> (i32, i32) {
-        match self.resolution {
-            DisplayResolution::Low => (DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT),
-            DisplayResolution::High => (DEFAULT_SCREEN_WIDTH * 2, DEFAULT_SCREEN_HEIGHT * 2),
-        }
+        self.resolution.get_resolution_size()
     }
 
     /// Get the screen size

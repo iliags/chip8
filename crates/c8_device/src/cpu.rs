@@ -1,4 +1,4 @@
-use crate::{display::DisplayResolution, keypad::Keypad};
+use crate::{display::DisplayResolution, keypad::Keypad, message::DeviceMessage};
 
 use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
@@ -47,10 +47,6 @@ pub struct CPU {
     // TODO: Make private when timers are implemented
     /// Sound timer
     pub(crate) sound_timer: u8,
-
-    requesting_exit: bool,
-
-    current_resolution: DisplayResolution,
 }
 
 impl Default for CPU {
@@ -61,8 +57,6 @@ impl Default for CPU {
             registers: vec![0; 16],
             delay_timer: 0,
             sound_timer: 0,
-            requesting_exit: false,
-            current_resolution: DisplayResolution::Low,
         }
     }
 }
@@ -83,16 +77,6 @@ impl CPU {
         self.registers.clone()
     }
 
-    /// Check if the program is requesting an exit
-    pub fn requesting_exit(&self) -> bool {
-        self.requesting_exit
-    }
-
-    /// Get the current resolution of the display
-    pub fn get_current_resolution(&self) -> DisplayResolution {
-        self.current_resolution
-    }
-
     /// Step the CPU by one instruction
     pub fn step(
         &mut self,
@@ -101,11 +85,7 @@ impl CPU {
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
         keypad: &Keypad,
-    ) {
-        if self.requesting_exit {
-            return;
-        }
-
+    ) -> Vec<DeviceMessage> {
         const SHIFT: u8 = 8;
 
         let pc = self.program_counter as usize;
@@ -121,7 +101,7 @@ impl CPU {
 
         self.program_counter += 2;
 
-        self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
+        self.execute_instruction(opcode, memory, display, stack, quirks, keypad)
     }
 
     fn execute_instruction(
@@ -132,7 +112,9 @@ impl CPU {
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
         keypad: &Keypad,
-    ) {
+    ) -> Vec<DeviceMessage> {
+        let mut messages: Vec<DeviceMessage> = Vec::new();
+
         // Extract the opcode parts
         let x = ((opcode & 0x0F00) >> 8) as usize;
         let y = ((opcode & 0x00F0) >> 4) as usize;
@@ -176,15 +158,15 @@ impl CPU {
                         // Exit
                         // TODO: Implement a more graceful exit
                         self.program_counter -= 2;
-                        self.requesting_exit = true;
+                        messages.push(DeviceMessage::Exit);
                     }
                     0x00FE => {
                         // TODO: Enable low-res
-                        self.current_resolution = DisplayResolution::Low;
+                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
                     }
                     0x00FF => {
                         // TODO: Enable high-res
-                        self.current_resolution = DisplayResolution::High;
+                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -499,5 +481,7 @@ impl CPU {
                 println!("Unknown opcode: {:#X}", opcode);
             }
         }
+
+        messages
     }
 }

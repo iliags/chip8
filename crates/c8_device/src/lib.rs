@@ -21,5 +21,8 @@ pub mod fonts;
 /// Chip-8 Memory
 pub mod memory;
 
+/// System messages
+pub mod message;
+
 /// Program entry point
 pub const PROGRAM_START: u16 = 0x200;
