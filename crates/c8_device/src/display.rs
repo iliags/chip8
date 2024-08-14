@@ -195,6 +195,10 @@ impl Display {
         self.active_plane = plane;
     }
 
+    pub(crate) fn get_plane_count(&self) -> usize {
+        self.planes.len()
+    }
+
     /// Get the active plane
     pub(crate) fn get_active_plane(&self) -> usize {
         self.active_plane
@@ -243,7 +247,7 @@ impl Display {
 
     /// Scroll the planes by the given number of pixels in the x and y directions
     fn scroll_planes(&mut self, pixels_x: isize, pixels_y: isize) {
-        for i in 0..self.planes.len() {
+        for i in 0..self.get_plane_count() {
             let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
 
             let (width, height) = self.get_screen_size_xy();
