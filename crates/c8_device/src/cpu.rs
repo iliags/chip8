@@ -330,26 +330,58 @@ impl CPU {
                 self.registers[x] = rng.gen::<u8>() & nn;
             }
             0xD000 => {
+                // Note: This is one of the more complex instructions
+
                 // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
                 // This may be implemented in the future with a toggle.
 
                 self.registers[Register::VF as usize] = 0;
 
                 // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
-                let x = self.registers[x] as i32;
-                let y = self.registers[y] as i32;
+                let x = self.registers[x] as usize;
+                let y = self.registers[y] as usize;
                 let height = n;
                 let mut i = self.index_register as usize;
 
                 let sprite_width = if height == 0 { 16 } else { 8 };
-                let sprite_height = if height == 0 { 16 } else { height };
+                let sprite_height = if height == 0 { 16 } else { height } as usize;
 
                 let mut collided: u8 = 0;
+
+                println!("Height nibble: {}", height);
 
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 for plane in 0..display.get_plane_count() {
                     for row in 0..sprite_height {
-                        for column in 0..sprite_width {}
+                        // TODO: Check this
+                        let line: u16 = if height == 0 {
+                            // Variation 1
+                            (memory[i] as u16) << 8 | memory[i + 1] as u16
+
+                            // Variation 2
+                            //let read = 2 * sprite_height;
+                            //(memory[read + i] as u16) << 8 | memory[read + i + 1] as u16
+                        } else {
+                            // Variation 1
+                            memory[i] as u16
+
+                            // Variation 2
+                            //memory[i + sprite_height] as u16
+                        };
+
+                        for column in 0..sprite_width {
+                            let bit = if height == 0 { 15 } else { 7 } - column;
+                            let pixel = (line & (1 << bit)) >> bit;
+
+                            if pixel == 0 {
+                                continue;
+                            }
+
+                            // Draw the pixel and check for a collision
+                            if display.set_plane_pixel(plane, x + column, y + row) == 0 {
+                                collided = 1;
+                            }
+                        }
                     }
 
                     i += if height == 0 { 32 } else { height as usize };
