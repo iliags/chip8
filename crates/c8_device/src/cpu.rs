@@ -391,7 +391,7 @@ impl CPU {
                     }
                     0x01 => {
                         // Set active plane from Vx
-                        display.set_active_plane(x as usize)
+                        display.set_active_plane(x)
                     }
                     0x02 => {
                         // Audio control
