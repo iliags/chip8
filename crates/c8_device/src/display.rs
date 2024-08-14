@@ -126,7 +126,7 @@ impl Display {
 
     /// Get the pixels of a plane
     pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        let plane = plane % self.planes.len();
+        let plane = plane.clamp(0, 2);
         &self.planes[plane].pixels
     }
 
@@ -142,7 +142,7 @@ impl Display {
 
     /// Get the pixel at the given x and y coordinates for a plane
     pub fn get_plane_pixel(&self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = plane % self.planes.len();
+        let plane = plane.clamp(0, 2);
         // Get the pixel index
         let index = self.get_pixel_index(x, y);
 
