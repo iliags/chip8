@@ -349,7 +349,7 @@ impl CPU {
                     for col in 0..8 {
                         if (pixel & (0x80 >> col)) != 0
                             // This must be done after the pixel & operation
-                            && display.set_plane_pixel(0, x + col, y + row as i32) == 0
+                            && display.set_plane_pixel(0, (x + col) as usize, (y + row as i32) as usize) == 0
                         {
                             self.registers[0xF] = 1;
                         }

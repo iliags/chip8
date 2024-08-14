@@ -4,12 +4,7 @@ use super::{
     keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::PixelColors,
 };
-use c8_device::{
-    device::C8,
-    display::{DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_WIDTH},
-    fonts::FONT_DATA,
-    message::DeviceMessage,
-};
+use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
 use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
@@ -82,14 +77,9 @@ pub struct AppUI {
 
 impl Default for AppUI {
     fn default() -> Self {
+        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
         Self {
-            display_image: egui::ColorImage::new(
-                [
-                    DEFAULT_SCREEN_WIDTH as usize,
-                    DEFAULT_SCREEN_HEIGHT as usize,
-                ],
-                Color32::BLACK,
-            ),
+            display_image: egui::ColorImage::new([width, height], Color32::BLACK),
             display_handle: None,
             rom_file: Vec::new(),
             rom_name: String::new(),
@@ -339,11 +329,10 @@ impl AppUI {
 
         //self.c8_device.get_display_mut().set_resolution(resolution);
 
-        let (width, height) = resolution.get_resolution_size();
+        let (width, height) = resolution.get_resolution_size_xy();
 
         //let (width, height) = self.c8_device.get_display().get_screen_size_xy();
-        self.display_image =
-            egui::ColorImage::new([width as usize, height as usize], Color32::BLACK);
+        self.display_image = egui::ColorImage::new([width, height], Color32::BLACK);
 
         //self.display_handle = None;
     }
