@@ -347,8 +347,6 @@ impl CPU {
                 let sprite_width = if height == 0 { 16 } else { 8 };
                 let sprite_height = if height == 0 { 16 } else { height } as usize;
 
-                //println!("Height nibble: {}", height);
-
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 for plane in 0..display.get_plane_count() {
                     for row in 0..sprite_height {

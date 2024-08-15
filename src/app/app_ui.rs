@@ -126,6 +126,10 @@ impl eframe::App for AppUI {
                         println!("Exiting device");
                         self.unload_rom();
                     }
+                    DeviceMessage::UnknownOpCode(_opcode) => {
+                        // TODO: Push to a list
+                        //println!("Unknown OpCode: {:#06X}", op_code);
+                    }
                 }
             }
 
@@ -145,9 +149,9 @@ impl eframe::App for AppUI {
                     #[cfg(debug_assertions)]
                     {
                         if i.key_pressed(egui::Key::Z) {
-                            self.load_rom(TEST_ROMS[0].get_data().to_vec());
-                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            //self.c8_device.get_memory_mut().data[0x1FF] = 1;
+                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
+                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            self.c8_device.get_memory_mut().data[0x1FF] = 1;
                         }
                     }
 

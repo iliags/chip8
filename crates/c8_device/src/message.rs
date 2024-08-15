@@ -7,4 +7,6 @@ pub enum DeviceMessage {
     ChangeResolution(DisplayResolution),
     /// Exit the device
     Exit,
+    /// Unknown OpCode
+    UnknownOpCode(u16),
 }
