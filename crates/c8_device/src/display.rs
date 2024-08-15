@@ -123,22 +123,10 @@ impl Display {
         self.resolution.get_resolution_size()
     }
 
-    /// Get the pixels container of the display
-    #[deprecated(note = "Use the version with planes instead")]
-    pub fn get_pixels(&self) -> &Vec<u8> {
-        self.get_plane_pixels(0)
-    }
-
     /// Get the pixels of a plane
     pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
         let plane = plane.clamp(0, 2);
         &self.planes[plane].pixels
-    }
-
-    /// Get the pixel at the given x and y coordinates
-    #[deprecated(note = "Use the version with planes instead")]
-    pub fn get_pixel(&self, x: usize, y: usize) -> u8 {
-        self.get_plane_pixel(0, x, y)
     }
 
     /// Get the pixel at the given x and y coordinates for a plane
@@ -252,10 +240,19 @@ impl Display {
             let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
 
             let (width, height) = self.get_screen_size_xy();
-            for y in 0..height {
-                for x in 0..width {
+            for x in 0..width {
+                for y in 0..height {
+                    //for y in 0..height {
+                    //for x in 0..width {
                     // Get the pixel index
                     let index = self.get_pixel_index(x, y);
+
+                    if index >= 4096 {
+                        println!(
+                            "Out of bounds, i: {}, w: {}, h: {}, x: {}, y: {}, px: {}, py: {}, size: {}, p: {}",
+                            index, width, height, x, y, pixels_x, pixels_y, self.resolution.get_resolution_size(), i
+                        );
+                    }
 
                     // Calculate the new x and y coordinates
                     // TODO: Check if wrapping is needed
@@ -264,10 +261,6 @@ impl Display {
 
                     // Get the new pixel index
                     let new_index = self.get_pixel_index(new_x, new_y);
-
-                    if new_index >= 4096 {
-                        println!("Index out of bounds: {}", new_index);
-                    }
 
                     // Copy the pixel to the new position
                     new_pixels[new_index] = self.planes[i].pixels[index];

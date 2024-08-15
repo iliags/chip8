@@ -147,17 +147,17 @@ impl C8 {
                 &self.quirks,
                 &self.keypad,
             );
-        }
 
-        for message in messages.iter() {
-            match message {
-                DeviceMessage::ChangeResolution(resolution) => {
-                    self.display.set_resolution(*resolution);
+            for message in messages.iter() {
+                match message {
+                    DeviceMessage::ChangeResolution(resolution) => {
+                        self.display.set_resolution(*resolution);
+                    }
+                    DeviceMessage::Exit => {
+                        self.is_running = false;
+                    }
+                    _ => {}
                 }
-                DeviceMessage::Exit => {
-                    self.is_running = false;
-                }
-                _ => {}
             }
         }
 
