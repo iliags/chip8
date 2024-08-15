@@ -275,10 +275,6 @@ impl Display {
     }
 }
 
-/*
-
-*/
-
 #[cfg(test)]
 mod tests {
     use rand::Rng;
