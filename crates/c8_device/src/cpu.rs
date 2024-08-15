@@ -1,7 +1,7 @@
 use crate::{
     display::DisplayResolution,
-    keypad::{Keypad, KEYPAD_KEYS},
-    message::{self, DeviceMessage},
+    keypad::{Keypad, KeypadKey, KEYPAD_KEYS},
+    message::DeviceMessage,
 };
 
 use super::{display, quirks, PROGRAM_START};
@@ -32,6 +32,12 @@ pub enum Register {
     VF,
 }
 
+#[derive(Debug, Clone)]
+struct WaitingForKey {
+    register: usize,
+    key: Option<KeypadKey>,
+}
+
 /// The CPU of the Chip-8
 #[derive(Debug)]
 pub struct CPU {
@@ -52,7 +58,7 @@ pub struct CPU {
     /// Sound timer
     pub(crate) sound_timer: u8,
 
-    waiting_for_key: Option<usize>,
+    waiting_for_key: Option<WaitingForKey>,
 }
 
 impl Default for CPU {
@@ -93,19 +99,32 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
+        // Note: This feels very hacky and should be refactored
         if self.waiting_for_key.is_some() {
-            for key in KEYPAD_KEYS.iter() {
-                if keypad.is_key_pressed(key) {
-                    self.registers[self.waiting_for_key.unwrap()] = key.get_key_index() as u8;
-                    //println!("Key pressed: {:#X}", key.get_key_index());
-                    self.waiting_for_key = None;
-                    break;
+            let task = self.waiting_for_key.as_mut().unwrap();
+
+            if task.key.is_none() {
+                for key in KEYPAD_KEYS.iter() {
+                    if keypad.is_key_pressed(key) {
+                        task.key = Some(*key);
+                        break;
+                    }
+                }
+            } else {
+                match task.key {
+                    Some(key) => {
+                        if !keypad.is_key_pressed(&key) {
+                            self.registers[task.register] = key.get_key_index() as u8;
+                            self.waiting_for_key = None;
+                        }
+                    }
+                    None => {
+                        unreachable!("Key not set");
+                    }
                 }
             }
 
-            if self.waiting_for_key.is_some() {
-                return Vec::new();
-            }
+            return Vec::new();
         }
 
         const SHIFT: u8 = 8;
@@ -126,7 +145,16 @@ impl CPU {
         let messages = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
         for message in messages.iter() {
             match message {
-                DeviceMessage::WaitingForKey(register) => self.waiting_for_key = register.clone(),
+                DeviceMessage::WaitingForKey(register) => {
+                    self.waiting_for_key = Some(WaitingForKey {
+                        register: register.unwrap_or_else(|| {
+                            // TODO: Shift to user facing error
+                            eprintln!("Register not set");
+                            0
+                        }),
+                        key: None,
+                    });
+                }
                 _ => {}
             }
         }
