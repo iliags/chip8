@@ -227,12 +227,16 @@ impl CPU {
                         messages.push(DeviceMessage::Exit);
                     }
                     0x00FE => {
-                        // TODO: Enable low-res
+                        // Enable low-res
+                        println!("Low-res");
                         messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
+                        //display.set_resolution(DisplayResolution::Low);
                     }
                     0x00FF => {
-                        // TODO: Enable high-res
+                        // Enable high-res
+                        println!("High-res");
                         messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
+                        //display.set_resolution(DisplayResolution::High);
                     }
                     _ => {
                         println!("Unknown 0x0000 opcode: {:#X}", opcode);
@@ -268,15 +272,12 @@ impl CPU {
             }
             0x5002 => {
                 // Save vx through vy
-                //todo!("Save vx through vy")
-
                 for i in x..=y {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
                 }
             }
             0x5003 => {
                 // Load vx through vy from i
-                //todo!("Load vx through vy")
 
                 for i in x..=y {
                     self.registers[i] = memory.data[(self.index_register + i as u16) as usize];

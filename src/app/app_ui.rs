@@ -152,6 +152,7 @@ impl eframe::App for AppUI {
                     let current_key = &get_key_mapping(key)
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
+                    /*
                     // Temporary debug code
                     #[cfg(debug_assertions)]
                     {
@@ -161,6 +162,7 @@ impl eframe::App for AppUI {
                             //self.c8_device.get_memory_mut().data[0x1FF] = 1;
                         }
                     }
+                     */
 
                     self.c8_device
                         .get_keypad_mut()

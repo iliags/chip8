@@ -110,6 +110,7 @@ impl Display {
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
         self.clear();
+        println!("Display resolution size {}", self.get_screen_size());
     }
 
     /// Get the screen size XY
