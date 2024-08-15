@@ -130,6 +130,7 @@ impl eframe::App for AppUI {
                         // TODO: Push to a list
                         //println!("Unknown OpCode: {:#06X}", op_code);
                     }
+                    _ => {}
                 }
             }
 

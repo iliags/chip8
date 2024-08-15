@@ -9,4 +9,7 @@ pub enum DeviceMessage {
     Exit,
     /// Unknown OpCode
     UnknownOpCode(u16),
+
+    /// Waiting for a key to be pressed
+    WaitingForKey(Option<usize>),
 }

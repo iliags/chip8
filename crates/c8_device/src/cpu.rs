@@ -1,4 +1,8 @@
-use crate::{display::DisplayResolution, keypad::Keypad, message::DeviceMessage};
+use crate::{
+    display::DisplayResolution,
+    keypad::{Keypad, KEYPAD_KEYS},
+    message::{self, DeviceMessage},
+};
 
 use super::{display, quirks, PROGRAM_START};
 use rand::prelude::*;
@@ -47,6 +51,8 @@ pub struct CPU {
     // TODO: Make private when timers are implemented
     /// Sound timer
     pub(crate) sound_timer: u8,
+
+    waiting_for_key: Option<usize>,
 }
 
 impl Default for CPU {
@@ -57,6 +63,7 @@ impl Default for CPU {
             registers: vec![0; 16],
             delay_timer: 0,
             sound_timer: 0,
+            waiting_for_key: None,
         }
     }
 }
@@ -86,6 +93,21 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
+        if self.waiting_for_key.is_some() {
+            for key in KEYPAD_KEYS.iter() {
+                if keypad.is_key_pressed(key) {
+                    self.registers[self.waiting_for_key.unwrap()] = key.get_key_index() as u8;
+                    //println!("Key pressed: {:#X}", key.get_key_index());
+                    self.waiting_for_key = None;
+                    break;
+                }
+            }
+
+            if self.waiting_for_key.is_some() {
+                return Vec::new();
+            }
+        }
+
         const SHIFT: u8 = 8;
 
         let pc = self.program_counter as usize;
@@ -101,7 +123,15 @@ impl CPU {
 
         self.program_counter += 2;
 
-        self.execute_instruction(opcode, memory, display, stack, quirks, keypad)
+        let messages = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
+        for message in messages.iter() {
+            match message {
+                DeviceMessage::WaitingForKey(register) => self.waiting_for_key = register.clone(),
+                _ => {}
+            }
+        }
+
+        messages
     }
 
     fn execute_instruction(
@@ -423,21 +453,8 @@ impl CPU {
                         self.registers[x] = self.delay_timer;
                     }
                     0x0A => {
-                        // Note: This doesn't feel right
-
-                        let mut key_pressed = false;
-
-                        for (i, key) in keypad.get_keys().iter().enumerate() {
-                            if *key != 0 {
-                                key_pressed = true;
-                                self.registers[x] = i as u8;
-                                break;
-                            }
-                        }
-
-                        if !key_pressed {
-                            self.program_counter -= 2;
-                        }
+                        // Wait for a key press and store the result in Vx
+                        messages.push(DeviceMessage::WaitingForKey(Some(x)));
                     }
                     0x15 => {
                         // Set the delay timer to Vx
@@ -489,11 +506,12 @@ impl CPU {
                     }
                     0x75 => {
                         // TODO: Save flags
-                        todo!("Save flags to file")
+                        // Flags are saved to a file in some implementations
+                        todo!("Save flags to temp storage")
                     }
                     0x85 => {
                         // TODO: Load flags
-                        todo!("Load flags from file")
+                        todo!("Load flags from temp storage")
                     }
                     _ => {
                         println!("Unknown 0xF000 opcode: {:#X}", opcode);
