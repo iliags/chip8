@@ -141,7 +141,7 @@ impl C8 {
         // Execute instructions
         for _ in 0..cpu_speed {
             messages = self.cpu.step(
-                &mut self.memory.data,
+                &mut self.memory,
                 &mut self.display,
                 &mut self.stack,
                 &self.quirks,

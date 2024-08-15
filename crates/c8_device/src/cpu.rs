@@ -1,6 +1,8 @@
 use crate::{
     display::DisplayResolution,
+    fonts::FONT_DATA,
     keypad::{Keypad, KeypadKey, KEYPAD_KEYS},
+    memory::Memory,
     message::DeviceMessage,
 };
 
@@ -59,6 +61,9 @@ pub struct CPU {
     pub(crate) sound_timer: u8,
 
     waiting_for_key: Option<WaitingForKey>,
+
+    // Flags are saved to a file or external storage in some implementations
+    saved_registers: Vec<u8>,
 }
 
 impl Default for CPU {
@@ -70,6 +75,7 @@ impl Default for CPU {
             delay_timer: 0,
             sound_timer: 0,
             waiting_for_key: None,
+            saved_registers: vec![0; 16],
         }
     }
 }
@@ -93,7 +99,7 @@ impl CPU {
     /// Step the CPU by one instruction
     pub fn step(
         &mut self,
-        memory: &mut [u8],
+        memory: &mut Memory,
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
@@ -130,7 +136,7 @@ impl CPU {
         const SHIFT: u8 = 8;
 
         let pc = self.program_counter as usize;
-        let opcode = (memory[pc] as u16) << SHIFT | memory[pc + 1] as u16;
+        let opcode = (memory.data[pc] as u16) << SHIFT | memory.data[pc + 1] as u16;
 
         // TODO: Move to a UI window
         /* println!(
@@ -162,7 +168,7 @@ impl CPU {
     fn execute_instruction(
         &mut self,
         opcode: u16,
-        memory: &mut [u8],
+        memory: &mut Memory,
         display: &mut display::Display,
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
@@ -265,7 +271,7 @@ impl CPU {
                 //todo!("Save vx through vy")
 
                 for i in x..=y {
-                    memory[(self.index_register + i as u16) as usize] = self.registers[i];
+                    memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
                 }
             }
             0x5003 => {
@@ -273,7 +279,7 @@ impl CPU {
                 //todo!("Load vx through vy")
 
                 for i in x..=y {
-                    self.registers[i] = memory[(self.index_register + i as u16) as usize];
+                    self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
                 }
             }
             0x6000 => {
@@ -407,9 +413,9 @@ impl CPU {
                     for row in 0..sprite_height {
                         let line: u16 = if height == 0 {
                             let read = 2 * row;
-                            (memory[read + i] as u16) << 8 | memory[read + i + 1] as u16
+                            (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
                         } else {
-                            memory[i + row] as u16
+                            memory.data[i + row] as u16
                         };
 
                         for column in 0..sprite_width {
@@ -459,7 +465,8 @@ impl CPU {
                         // TODO: Load I extended
                         const SHIFT: u8 = 8;
                         let pc = self.program_counter as usize;
-                        let address = (memory[pc] as u16) << SHIFT | (memory[pc + 1] as u16);
+                        let address =
+                            (memory.data[pc] as u16) << SHIFT | (memory.data[pc + 1] as u16);
 
                         self.index_register = address;
                         self.program_counter += 2;
@@ -496,21 +503,28 @@ impl CPU {
                     0x29 => {
                         // Set I to the location of the sprite for the character in Vx
                         self.index_register = (self.registers[x] * 5) as u16;
+                        // TODO: Check if this is correct
+                        //self.index_register = ((self.registers[x] & 0xF) * 5) as u16;
                     }
                     0x30 => {
-                        // TODO: Load I with big sprite
-                        todo!("Load I with big sprite")
+                        // Load I with big sprite
+                        let block = (self.registers[x] & 0xF) * 10;
+                        let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
+                        self.index_register = (block + *font_size as u8) as u16;
                     }
                     0x33 => {
                         // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
-                        memory[self.index_register as usize] = self.registers[x] / 100;
-                        memory[(self.index_register + 1) as usize] = (self.registers[x] / 10) % 10;
-                        memory[(self.index_register + 2) as usize] = (self.registers[x] % 100) % 10;
+                        memory.data[self.index_register as usize] = self.registers[x] / 100;
+                        memory.data[(self.index_register + 1) as usize] =
+                            (self.registers[x] / 10) % 10;
+                        memory.data[(self.index_register + 2) as usize] =
+                            (self.registers[x] % 100) % 10;
                     }
                     0x55 => {
                         // Store V0 to Vx in memory starting at address I
                         for i in 0..x + 1 {
-                            memory[(self.index_register + i as u16) as usize] = self.registers[i];
+                            memory.data[(self.index_register + i as u16) as usize] =
+                                self.registers[i];
                         }
 
                         // Quirk: Some programs expect I to be incremented
@@ -521,7 +535,8 @@ impl CPU {
                     0x65 => {
                         // Read V0 to Vx from memory starting at address I
                         for i in 0..x + 1 {
-                            self.registers[i] = memory[(self.index_register + i as u16) as usize];
+                            self.registers[i] =
+                                memory.data[(self.index_register + i as u16) as usize];
                         }
 
                         // Quirk: Some programs expect I to be incremented
@@ -530,13 +545,12 @@ impl CPU {
                         }
                     }
                     0x75 => {
-                        // TODO: Save flags
-                        // Flags are saved to a file in some implementations
-                        todo!("Save flags to temp storage")
+                        // Save registers
+                        self.saved_registers = self.registers.clone();
                     }
                     0x85 => {
-                        // TODO: Load flags
-                        todo!("Load flags from temp storage")
+                        // Load registers
+                        self.registers = self.saved_registers.clone();
                     }
                     _ => {
                         println!("Unknown 0xF000 opcode: {:#X}", opcode);
