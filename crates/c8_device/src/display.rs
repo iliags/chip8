@@ -223,13 +223,13 @@ impl Display {
 
     /// Scroll planes up by the given number of pixels
     pub(crate) fn scroll_up(&mut self, pixels: u8) {
-        self.scroll_planes(0, pixels as isize);
+        let pixels = -(pixels as isize);
+        self.scroll_planes(0, pixels);
     }
 
     /// Scroll planes down by the given number of pixels
     pub(crate) fn scroll_down(&mut self, pixels: u8) {
-        let pixels = -(pixels as isize);
-        self.scroll_planes(0, pixels);
+        self.scroll_planes(0, pixels as isize);
     }
 
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
