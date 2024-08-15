@@ -133,10 +133,8 @@ impl CPU {
             return Vec::new();
         }
 
-        const SHIFT: u8 = 8;
-
         let pc = self.program_counter as usize;
-        let opcode = (memory.data[pc] as u16) << SHIFT | memory.data[pc + 1] as u16;
+        let opcode = (memory.data[pc] as u16) << 8 | memory.data[pc + 1] as u16;
 
         // TODO: Move to a UI window
         /* println!(
@@ -186,383 +184,400 @@ impl CPU {
         //println!("Executing opcode: {:#X}", opcode);
         //println!("x: {}, y: {}, n: {}, nn: {}, nnn: {}", x, y, n, nn, nnn);
 
-        // Decode the opcode
-        match opcode & 0xF000 {
-            0x0000 => {
-                match opcode {
-                    0x0000 => {
-                        // NOP
-                    }
-                    0x00C0 => {
-                        // Scroll down n lines
-                        display.scroll_down(n);
-                    }
-                    0x00D0 => {
-                        // Scroll up n lines
-                        display.scroll_up(n);
-                    }
-                    0x00E0 => {
-                        // Clear the display
-                        display.clear();
-                    }
-                    0x00EE => {
-                        // Return from a subroutine
-                        // TODO: Make this more graceful
-                        self.program_counter =
-                            stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
-                    }
-                    0x00FB => {
-                        // Scroll right 4 pixels
-                        display.scroll_right(4);
-                    }
-                    0x00FC => {
-                        // Scroll left 4 pixels
-                        display.scroll_left(4);
-                    }
-                    0x00FD => {
-                        // Exit
-                        // Note: The program counter is decremented by 2 to prevent the program from advancing
-
-                        self.program_counter -= 2;
-                        messages.push(DeviceMessage::Exit);
-                    }
-                    0x00FE => {
-                        // Enable low-res
-                        println!("Low-res");
-                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
-                        //display.set_resolution(DisplayResolution::Low);
-                    }
-                    0x00FF => {
-                        // Enable high-res
-                        println!("High-res");
-                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
-                        //display.set_resolution(DisplayResolution::High);
-                    }
-                    _ => {
-                        println!("Unknown 0x0000 opcode: {:#X}", opcode);
-                    }
-                }
-            }
-            0x1000 => {
-                // Jump to address nnn
-                self.program_counter = nnn;
-            }
-            0x2000 => {
-                // Call subroutine at nnn
-                stack.push(self.program_counter);
-                self.program_counter = nnn;
-            }
-            0x3000 => {
-                // Skip next instruction if Vx == nn
-                if self.registers[x] == nn {
-                    self.program_counter += 2;
-                }
-            }
-            0x4000 => {
-                // Skip next instruction if Vx != nn
-                if self.registers[x] != nn {
-                    self.program_counter += 2;
-                }
-            }
-            0x5000 => {
-                // Skip next instruction if Vx == Vy
-                if self.registers[x] == self.registers[y] {
-                    self.program_counter += 2;
-                }
-            }
-            0x5002 => {
-                // Save vx through vy
-                for i in x..=y {
-                    memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
-                }
-            }
-            0x5003 => {
-                // Load vx through vy from i
-
-                for i in x..=y {
-                    self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
-                }
-            }
-            0x6000 => {
-                // Set Vx = nn
-                self.registers[x] = nn;
-            }
-            0x7000 => {
-                // Set Vx = Vx + nn
-                self.registers[x] = self.registers[x].wrapping_add(nn);
-            }
-            0x8000 => {
-                match opcode & 0xF {
-                    0x0 => {
-                        // Set Vx = Vy
-                        self.registers[x] = self.registers[y];
-                    }
-                    0x1 => {
-                        // Set Vx = Vx OR Vy
-                        self.registers[x] |= self.registers[y];
-
-                        // Quirk: Some programs expect VF to be 0
-                        if quirks.vf_zero {
-                            self.registers[Register::VF as usize] = 0;
-                        }
-                    }
-                    0x2 => {
-                        // Set Vx = Vx AND Vy
-                        self.registers[x] &= self.registers[y];
-
-                        // Quirk: Some programs expect VF to be 0
-                        if quirks.vf_zero {
-                            self.registers[Register::VF as usize] = 0;
-                        }
-                    }
-                    0x3 => {
-                        // Set Vx = Vx XOR Vy
-                        self.registers[x] ^= self.registers[y];
-
-                        // Quirk: Some programs expect VF to be 0
-                        if quirks.vf_zero {
-                            self.registers[Register::VF as usize] = 0;
-                        }
-                    }
-                    0x4 => {
-                        // Set Vx = Vx + Vy, set VF = carry
-                        let (result, overflow) =
-                            self.registers[x].overflowing_add(self.registers[y]);
-                        self.registers[x] = result;
-                        self.registers[Register::VF as usize] = overflow as u8;
-                    }
-                    0x5 => {
-                        // Set Vx = Vx - Vy, set VF = NOT borrow
-                        let (result, overflow) =
-                            self.registers[x].overflowing_sub(self.registers[y]);
-                        self.registers[x] = result;
-                        self.registers[Register::VF as usize] = !overflow as u8;
-                    }
-                    0x6 => {
-                        // Quirk: Some programs expect Vx to be shifted directly without assigning VY
-                        let quirk_y = if quirks.vx_shifted_directly {
-                            self.registers[y]
-                        } else {
-                            self.registers[x]
-                        };
-
-                        self.registers[x] = quirk_y >> 1;
-                        self.registers[Register::VF as usize] = quirk_y & 0x1;
-                    }
-                    0x7 => {
-                        // Set Vx = Vy - Vx, set VF = NOT borrow
-                        let (result, overflow) =
-                            self.registers[y].overflowing_sub(self.registers[x]);
-                        self.registers[x] = result;
-                        self.registers[Register::VF as usize] = !overflow as u8;
-                    }
-                    0xE => {
-                        // Quirk: Some programs expect Vx to be shifted directly without assigning VY
-                        let quirk_y = if quirks.vx_shifted_directly {
-                            self.registers[y]
-                        } else {
-                            self.registers[x]
-                        };
-
-                        self.registers[x] = quirk_y << 1;
-                        self.registers[Register::VF as usize] = quirk_y >> 7;
-                    }
-                    _ => {
-                        println!("Unknown 0x8000 opcode: {:#X}", opcode);
-                    }
-                }
-            }
-            0x9000 => {
-                // Skip next instruction if Vx != Vy
-                if self.registers[x] != self.registers[y] {
-                    self.program_counter += 2;
-                }
-            }
-            0xA000 => {
-                // Set I = nnn
-                self.index_register = nnn;
-            }
-            0xB000 => {
-                // Jump to location nnn + V0
-                self.program_counter = nnn + self.registers[Register::V0 as usize] as u16;
-            }
-            0xC000 => {
-                // Set Vx = random byte AND nn
-                let mut rng = rand::thread_rng();
-                self.registers[x] = rng.gen::<u8>() & nn;
-            }
-            0xD000 => {
-                // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
-
-                // Note: This is one of the more complex instructions
-
-                // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
-                // This may be implemented in the future with a toggle.
-
-                self.registers[Register::VF as usize] = 0;
-
-                let x = self.registers[x] as usize;
-                let y = self.registers[y] as usize;
-                let height = n;
-                let mut i = self.index_register as usize;
-
-                let sprite_width = if height == 0 { 16 } else { 8 };
-                let sprite_height = if height == 0 { 16 } else { height } as usize;
-
-                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
-                for plane in 0..display.get_plane_count() {
-                    for row in 0..sprite_height {
-                        let line: u16 = if height == 0 {
-                            let read = 2 * row;
-                            (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
-                        } else {
-                            memory.data[i + row] as u16
-                        };
-
-                        for column in 0..sprite_width {
-                            let bit = if height == 0 { 15 - column } else { 7 - column };
-                            let pixel = (line & (1 << bit)) >> bit;
-
-                            if pixel == 0 {
-                                continue;
-                            }
-
-                            // Draw the pixel and check for a collision
-                            if display.set_plane_pixel(plane, x + column, y + row) == 0 {
-                                self.registers[Register::VF as usize] = 1;
-                            }
-                        }
-                    }
-
-                    i += if height == 0 { 32 } else { height as usize };
-                }
-            }
-            0xE000 => {
-                match opcode & 0xFF {
-                    0x9E => {
-                        // Skip next instruction if key with the value of Vx is pressed
-                        let key = self.registers[x] as usize;
-
-                        if keypad.get_key(&key.into()) != 0 {
-                            self.program_counter += 2;
-                        }
-                    }
-                    0xA1 => {
-                        // Skip next instruction if key with the value of Vx is not pressed
-                        let key = self.registers[x] as usize;
-
-                        if keypad.get_key(&key.into()) == 0 {
-                            self.program_counter += 2;
-                        }
-                    }
-                    _ => {
-                        println!("Unknown 0xE000 opcode: {:#X}", opcode);
-                    }
-                }
-            }
-            0xF000 => {
-                match opcode & 0xFF {
-                    0x00 => {
-                        // TODO: Load I extended
-                        const SHIFT: u8 = 8;
-                        let pc = self.program_counter as usize;
-                        let address =
-                            (memory.data[pc] as u16) << SHIFT | (memory.data[pc + 1] as u16);
-
-                        self.index_register = address;
-                        self.program_counter += 2;
-                    }
-                    0x01 => {
-                        // Set active plane from Vx
-                        display.set_active_plane(x)
-                    }
-                    0x02 => {
-                        // Audio control
-                        // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
-                        todo!("Audio control")
-                    }
-                    0x07 => {
-                        // Set Vx to the value of the delay timer
-                        self.registers[x] = self.delay_timer;
-                    }
-                    0x0A => {
-                        // Wait for a key press and store the result in Vx
-                        messages.push(DeviceMessage::WaitingForKey(Some(x)));
-                    }
-                    0x15 => {
-                        // Set the delay timer to Vx
-                        self.delay_timer = self.registers[x];
-                    }
-                    0x18 => {
-                        // Set the sound timer to Vx
-                        self.sound_timer = self.registers[x];
-                    }
-                    0x1E => {
-                        // Add Vx to the index register
-                        self.index_register += self.registers[x] as u16;
-                    }
-                    0x29 => {
-                        // Set I to the location of the sprite for the character in Vx
-                        self.index_register = (self.registers[x] * 5) as u16;
-                        // TODO: Check if this is correct
-                        //self.index_register = ((self.registers[x] & 0xF) * 5) as u16;
-                    }
-                    0x30 => {
-                        // Load I with big sprite
-                        let block = (self.registers[x] & 0xF) * 10;
-                        let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
-                        self.index_register = (block + *font_size as u8) as u16;
-                    }
-                    0x33 => {
-                        // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
-                        memory.data[self.index_register as usize] = self.registers[x] / 100;
-                        memory.data[(self.index_register + 1) as usize] =
-                            (self.registers[x] / 10) % 10;
-                        memory.data[(self.index_register + 2) as usize] =
-                            (self.registers[x] % 100) % 10;
-                    }
-                    0x55 => {
-                        // Store V0 to Vx in memory starting at address I
-                        for i in 0..x + 1 {
-                            memory.data[(self.index_register + i as u16) as usize] =
-                                self.registers[i];
-                        }
-
-                        // Quirk: Some programs expect I to be incremented
-                        if quirks.i_incremented {
-                            self.index_register += 1;
-                        }
-                    }
-                    0x65 => {
-                        // Read V0 to Vx from memory starting at address I
-                        for i in 0..x + 1 {
-                            self.registers[i] =
-                                memory.data[(self.index_register + i as u16) as usize];
-                        }
-
-                        // Quirk: Some programs expect I to be incremented
-                        if quirks.i_incremented {
-                            self.index_register += 1;
-                        }
-                    }
-                    0x75 => {
-                        // Save registers
-                        self.saved_registers = self.registers.clone();
-                    }
-                    0x85 => {
-                        // Load registers
-                        self.registers = self.saved_registers.clone();
-                    }
-                    _ => {
-                        println!("Unknown 0xF000 opcode: {:#X}", opcode);
-                    }
-                }
-            }
+        match opcode {
             _ => {
                 println!("Unknown opcode: {:#X}", opcode);
             }
         }
 
+        /*
+               // Decode the opcode
+               match opcode & 0xF000 {
+                   0x0000 => {
+                       match opcode {
+                           0x0000 => {
+                               // NOP
+                           }
+                           0x00C0 => {
+                               // Scroll down n lines
+                               display.scroll_down(n);
+                           }
+                           0x00D0 => {
+                               // Scroll up n lines
+                               display.scroll_up(n);
+                           }
+                           0x00E0 => {
+                               // Clear the display
+                               display.clear();
+                           }
+                           0x00EE => {
+                               // Return from a subroutine
+                               // TODO: Make this more graceful
+                               self.program_counter =
+                                   stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
+                           }
+                           0x00FB => {
+                               // Scroll right 4 pixels
+                               display.scroll_right(4);
+                           }
+                           0x00FC => {
+                               // Scroll left 4 pixels
+                               display.scroll_left(4);
+                           }
+                           0x00FD => {
+                               // Exit
+                               // Note: The program counter is decremented by 2 to prevent the program from advancing
+
+                               self.program_counter -= 2;
+                               messages.push(DeviceMessage::Exit);
+                           }
+                           0x00FE => {
+                               // Enable low-res
+                               //println!("Low-res");
+                               //display.set_resolution(DisplayResolution::Low);
+                               messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
+                           }
+                           0x00FF => {
+                               // Enable high-res
+                               //println!("High-res");
+                               //display.set_resolution(DisplayResolution::High);
+                               messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
+                           }
+                           0xC6 => {
+                               // TODO: Check if this is a bug in the emulator or the ROM
+                               display.scroll_up(n);
+                           }
+                           _ => {
+                               println!("Unknown 0x0000 opcode: {:#X}", opcode);
+                           }
+                       }
+                   }
+                   0x1000 => {
+                       // Jump to address nnn
+                       self.program_counter = nnn;
+                   }
+                   0x2000 => {
+                       // Call subroutine at nnn
+                       stack.push(self.program_counter);
+                       self.program_counter = nnn;
+                   }
+                   0x3000 => {
+                       // Skip next instruction if Vx == nn
+                       if self.registers[x] == nn {
+                           self.program_counter += 2;
+                       }
+                   }
+                   0x4000 => {
+                       // Skip next instruction if Vx != nn
+                       if self.registers[x] != nn {
+                           self.program_counter += 2;
+                       }
+                   }
+                   0x5000 => {
+                       // Skip next instruction if Vx == Vy
+                       if self.registers[x] == self.registers[y] {
+                           self.program_counter += 2;
+                       }
+                   }
+                   0x5002 => {
+                       // Save vx through vy
+                       for i in x..=y {
+                           memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
+                       }
+                   }
+                   0x5003 => {
+                       // Load vx through vy from i
+
+                       for i in x..=y {
+                           self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
+                       }
+                   }
+                   0x6000 => {
+                       // Set Vx = nn
+                       self.registers[x] = nn;
+                   }
+                   0x7000 => {
+                       // Set Vx = Vx + nn
+                       self.registers[x] = self.registers[x].wrapping_add(nn);
+                   }
+                   0x8000 => {
+                       match opcode & 0xF {
+                           0x0 => {
+                               // Set Vx = Vy
+                               self.registers[x] = self.registers[y];
+                           }
+                           0x1 => {
+                               // Set Vx = Vx OR Vy
+                               self.registers[x] |= self.registers[y];
+
+                               // Quirk: Some programs expect VF to be 0
+                               if quirks.vf_zero {
+                                   self.registers[Register::VF as usize] = 0;
+                               }
+                           }
+                           0x2 => {
+                               // Set Vx = Vx AND Vy
+                               self.registers[x] &= self.registers[y];
+
+                               // Quirk: Some programs expect VF to be 0
+                               if quirks.vf_zero {
+                                   self.registers[Register::VF as usize] = 0;
+                               }
+                           }
+                           0x3 => {
+                               // Set Vx = Vx XOR Vy
+                               self.registers[x] ^= self.registers[y];
+
+                               // Quirk: Some programs expect VF to be 0
+                               if quirks.vf_zero {
+                                   self.registers[Register::VF as usize] = 0;
+                               }
+                           }
+                           0x4 => {
+                               // Set Vx = Vx + Vy, set VF = carry
+                               let (result, overflow) =
+                                   self.registers[x].overflowing_add(self.registers[y]);
+                               self.registers[x] = result;
+                               self.registers[Register::VF as usize] = overflow as u8;
+                           }
+                           0x5 => {
+                               // Set Vx = Vx - Vy, set VF = NOT borrow
+                               let (result, overflow) =
+                                   self.registers[x].overflowing_sub(self.registers[y]);
+                               self.registers[x] = result;
+                               self.registers[Register::VF as usize] = !overflow as u8;
+                           }
+                           0x6 => {
+                               // Quirk: Some programs expect Vx to be shifted directly without assigning VY
+                               let quirk_y = if quirks.vx_shifted_directly {
+                                   self.registers[y]
+                               } else {
+                                   self.registers[x]
+                               };
+
+                               self.registers[x] = quirk_y >> 1;
+                               self.registers[Register::VF as usize] = quirk_y & 0x1;
+                           }
+                           0x7 => {
+                               // Set Vx = Vy - Vx, set VF = NOT borrow
+                               let (result, overflow) =
+                                   self.registers[y].overflowing_sub(self.registers[x]);
+                               self.registers[x] = result;
+                               self.registers[Register::VF as usize] = !overflow as u8;
+                           }
+                           0xE => {
+                               // Quirk: Some programs expect Vx to be shifted directly without assigning VY
+                               let quirk_y = if quirks.vx_shifted_directly {
+                                   self.registers[y]
+                               } else {
+                                   self.registers[x]
+                               };
+
+                               self.registers[x] = quirk_y << 1;
+                               self.registers[Register::VF as usize] = quirk_y >> 7;
+                           }
+                           _ => {
+                               println!("Unknown 0x8000 opcode: {:#X}", opcode);
+                           }
+                       }
+                   }
+                   0x9000 => {
+                       // Skip next instruction if Vx != Vy
+                       if self.registers[x] != self.registers[y] {
+                           self.program_counter += 2;
+                       }
+                   }
+                   0xA000 => {
+                       // Set I = nnn
+                       self.index_register = nnn;
+                   }
+                   0xB000 => {
+                       // Jump to location nnn + V0
+                       self.program_counter = nnn + self.registers[Register::V0 as usize] as u16;
+                   }
+                   0xC000 => {
+                       // Set Vx = random byte AND nn
+                       let mut rng = rand::thread_rng();
+                       self.registers[x] = rng.gen::<u8>() & nn;
+                   }
+                   0xD000 => {
+                       // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
+
+                       // Note: This is one of the more complex instructions
+
+                       // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
+                       // This may be implemented in the future with a toggle.
+
+                       self.registers[Register::VF as usize] = 0;
+
+                       let x = self.registers[x] as usize;
+                       let y = self.registers[y] as usize;
+                       let height = n;
+                       let mut i = self.index_register as usize;
+
+                       let sprite_width = if height == 0 { 16 } else { 8 };
+                       let sprite_height = if height == 0 { 16 } else { height } as usize;
+
+                       let mut collided = 0;
+
+                       // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
+                       for plane in 0..display.get_plane_count() {
+                           for row in 0..sprite_height {
+                               let line: u16 = if height == 0 {
+                                   let read = 2 * row;
+                                   (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
+                               } else {
+                                   memory.data[i + row] as u16
+                               };
+
+                               for column in 0..sprite_width {
+                                   let bit = if height == 0 { 15 - column } else { 7 - column };
+                                   let pixel = (line & (1 << bit)) >> bit;
+
+                                   if pixel == 0 {
+                                       continue;
+                                   }
+
+                                   let current_pixel = display.get_plane_pixel(plane, x + column, y + row);
+                                   let new_pixel = display.set_plane_pixel(plane, x + column, y + row);
+
+                                   // Draw the pixel and check for a collision
+                                   if current_pixel == 1 && new_pixel == 0 {
+                                       collided = 1;
+                                   }
+                               }
+                           }
+
+                           i += if height == 0 { 32 } else { height as usize };
+                       }
+
+                       self.registers[Register::VF as usize] = collided;
+                   }
+                   0xE000 => {
+                       match opcode & 0xFF {
+                           0x9E => {
+                               // Skip next instruction if key with the value of Vx is pressed
+                               let key = self.registers[x] as usize;
+
+                               if keypad.get_key(&key.into()) != 0 {
+                                   self.program_counter += 2;
+                               }
+                           }
+                           0xA1 => {
+                               // Skip next instruction if key with the value of Vx is not pressed
+                               let key = self.registers[x] as usize;
+
+                               if keypad.get_key(&key.into()) == 0 {
+                                   self.program_counter += 2;
+                               }
+                           }
+                           _ => {
+                               println!("Unknown 0xE000 opcode: {:#X}", opcode);
+                           }
+                       }
+                   }
+                   0xF000 => {
+                       match opcode & 0xFF {
+                           0x00 => {
+                               // Load I extended
+                               // TODO: Check if this is correct
+                               let pc = self.program_counter as usize;
+                               let address = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
+
+                               self.index_register = address;
+                               self.program_counter += 2;
+                           }
+                           0x01 => {
+                               // Set active plane from Vx
+                               display.set_active_plane(x)
+                           }
+                           0x02 => {
+                               // Audio control
+                               // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
+                               todo!("Audio control")
+                           }
+                           0x07 => {
+                               // Set Vx to the value of the delay timer
+                               self.registers[x] = self.delay_timer;
+                           }
+                           0x0A => {
+                               // Wait for a key press and store the result in Vx
+                               messages.push(DeviceMessage::WaitingForKey(Some(x)));
+                           }
+                           0x15 => {
+                               // Set the delay timer to Vx
+                               self.delay_timer = self.registers[x];
+                           }
+                           0x18 => {
+                               // Set the sound timer to Vx
+                               self.sound_timer = self.registers[x];
+                           }
+                           0x1E => {
+                               // Add Vx to the index register
+                               self.index_register += self.registers[x] as u16;
+                           }
+                           0x29 => {
+                               // Set I to the location of the sprite for the character in Vx
+                               self.index_register = (self.registers[x] * 5) as u16;
+                               // TODO: Check if this is correct
+                               //self.index_register = ((self.registers[x] & 0xF) * 5) as u16;
+                           }
+                           0x30 => {
+                               // Load I with big sprite
+                               let block = (self.registers[x] & 0xF) * 10;
+                               let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
+                               self.index_register = (block + *font_size as u8) as u16;
+                           }
+                           0x33 => {
+                               // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
+                               memory.data[self.index_register as usize] = self.registers[x] / 100;
+                               memory.data[(self.index_register + 1) as usize] =
+                                   (self.registers[x] / 10) % 10;
+                               memory.data[(self.index_register + 2) as usize] =
+                                   (self.registers[x] % 100) % 10;
+                           }
+                           0x55 => {
+                               // Store V0 to Vx in memory starting at address I
+                               for i in 0..x + 1 {
+                                   memory.data[(self.index_register + i as u16) as usize] =
+                                       self.registers[i];
+                               }
+
+                               // Quirk: Some programs expect I to be incremented
+                               if quirks.i_incremented {
+                                   self.index_register += 1;
+                               }
+                           }
+                           0x65 => {
+                               // Read V0 to Vx from memory starting at address I
+                               for i in 0..x + 1 {
+                                   self.registers[i] =
+                                       memory.data[(self.index_register + i as u16) as usize];
+                               }
+
+                               // Quirk: Some programs expect I to be incremented
+                               if quirks.i_incremented {
+                                   self.index_register += 1;
+                               }
+                           }
+                           0x75 => {
+                               // Save registers
+                               self.saved_registers = self.registers.clone();
+                           }
+                           0x85 => {
+                               // Load registers
+                               self.registers = self.saved_registers.clone();
+                           }
+                           _ => {
+                               println!("Unknown 0xF000 opcode: {:#X}", opcode);
+                           }
+                       }
+                   }
+                   _ => {
+                       println!("Unknown opcode: {:#X}", opcode);
+                   }
+               }
+        */
         messages
     }
 }

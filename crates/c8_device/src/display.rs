@@ -110,7 +110,7 @@ impl Display {
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
         self.clear();
-        println!("Display resolution size {}", self.get_screen_size());
+        //println!("Display resolution size {}", self.get_screen_size());
     }
 
     /// Get the screen size XY
@@ -264,6 +264,10 @@ impl Display {
 
                     // Get the new pixel index
                     let new_index = self.get_pixel_index(new_x, new_y);
+
+                    if new_index >= 4096 {
+                        println!("Index out of bounds: {}", new_index);
+                    }
 
                     // Copy the pixel to the new position
                     new_pixels[new_index] = self.planes[i].pixels[index];
