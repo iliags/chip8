@@ -144,18 +144,15 @@ impl CPU {
 
         let messages = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
         for message in messages.iter() {
-            match message {
-                DeviceMessage::WaitingForKey(register) => {
-                    self.waiting_for_key = Some(WaitingForKey {
-                        register: register.unwrap_or_else(|| {
-                            // TODO: Shift to user facing error
-                            eprintln!("Register not set");
-                            0
-                        }),
-                        key: None,
-                    });
-                }
-                _ => {}
+            if let DeviceMessage::WaitingForKey(register) = message {
+                self.waiting_for_key = Some(WaitingForKey {
+                    register: register.unwrap_or_else(|| {
+                        // TODO: Shift to user facing error
+                        eprintln!("Register not set");
+                        0
+                    }),
+                    key: None,
+                });
             }
         }
 
