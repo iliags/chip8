@@ -148,10 +148,10 @@ impl eframe::App for AppUI {
                     // Temporary debug code
                     #[cfg(debug_assertions)]
                     {
-                        if i.key_pressed(egui::Key::Z) {
-                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
-                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            self.c8_device.get_memory_mut().data[0x1FF] = 1;
+                        if i.key_pressed(egui::Key::Space) {
+                            self.load_rom(TEST_ROMS[6].get_data().to_vec());
+                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            //self.c8_device.get_memory_mut().data[0x1FF] = 1;
                         }
                     }
 
