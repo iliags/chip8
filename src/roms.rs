@@ -62,4 +62,8 @@ pub const GAME_ROMS: &[ROM] = &[
         name: "Glitch Ghost",
         data: include_bytes!("../assets/games/glitch-ghost/glitch-ghost.ch8"),
     },
+    ROM {
+        name: "Cave Explorer",
+        data: include_bytes!("../assets/games/cave-explorer/cave-explorer.ch8"),
+    },
 ];
