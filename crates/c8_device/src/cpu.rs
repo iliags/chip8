@@ -187,9 +187,6 @@ impl CPU {
         let op_3 = (opcode & 0x00F0) >> 4;
         let op_4 = opcode & 0x000F;
 
-        //println!("Executing opcode: {:#X}", opcode);
-        //println!("x: {}, y: {}, n: {}, nn: {}, nnn: {}", x, y, n, nn, nnn);
-
         match (op_1, op_2, op_3, op_4) {
             //NOP
             (0, 0, 0, 0) => {}
@@ -411,12 +408,10 @@ impl CPU {
                 // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
                 // This may be implemented in the future with a toggle.
 
-                //self.registers[Register::VF as usize] = 0;
+                self.registers[Register::VF as usize] = 0;
 
-                let (display_width, display_height) = display.get_screen_size_xy();
-
-                let x = self.registers[x] as usize % display_width;
-                let y = self.registers[y] as usize % display_height;
+                let x = self.registers[x] as usize;
+                let y = self.registers[y] as usize;
 
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 let height = n;
@@ -425,12 +420,14 @@ impl CPU {
 
                 let sprite_width = if height == 0 { 16 } else { 8 };
                 let sprite_height = if height == 0 { 16 } else { height } as usize;
+                let mut collision = 0;
 
-                for plane in 0..1 {
-                    //display.get_plane_count() {
-                    // Note: In Octo, the layers
+                for plane in 0..display.get_plane_count() {
+                    if plane == 1 {
+                        // Note: In Octo, the layers are 1 to 0, but in this emulator they are 0 to 1
+                        continue;
+                    }
 
-                    let mut collision = 0;
                     for row in 0..sprite_height {
                         let line: u16 = if height == 0 {
                             let read = 2 * row;
@@ -454,13 +451,11 @@ impl CPU {
                                 collision = 1;
                             }
                         }
-
-                        //self.registers[Register::VF as usize] = collision;
                     }
 
                     i += if height == 0 { 32 } else { height as usize };
-                    self.registers[Register::VF as usize] = collision;
                 }
+                self.registers[Register::VF as usize] = collision;
             }
 
             // Skip next instruction if key with the value of Vx is pressed
