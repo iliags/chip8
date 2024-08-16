@@ -135,19 +135,6 @@ impl eframe::App for AppUI {
 
             // Update the display image with the current display buffer
             // TODO: Handle planes and colors
-            // TODO: Benchmark the for loop vs map
-            /*
-            for (i, pixel) in self
-                .c8_device
-                .get_display()
-                .get_plane_pixels(0)
-                .iter()
-                .enumerate()
-            {
-                self.display_image.pixels[i] = *self.pixel_colors.get_color(*pixel);
-            }
-             */
-
             self.display_image.pixels = self
                 .c8_device
                 .get_display()
@@ -163,13 +150,17 @@ impl eframe::App for AppUI {
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
                     // Temporary debug code
+                    /*
                     #[cfg(debug_assertions)]
                     {
+
                         if i.key_pressed(egui::Key::Space) {
                             self.load_rom(TEST_ROMS[7].get_data().to_vec());
                             self.c8_device.get_memory_mut().data[0x1FF] = 3;
                         }
+
                     }
+                    */
 
                     self.c8_device
                         .get_keypad_mut()
