@@ -2,7 +2,7 @@
 
 [Live version here](https://iliags.github.io/chip8/)
 
-![Screenshot](./art/screenshots/screenshot_v0.1.12.png)
+![Screenshot](./art/screenshots/screenshot_v0.1.15.png)
 
 ## Emulator Info
 
