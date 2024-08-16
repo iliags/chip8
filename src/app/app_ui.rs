@@ -17,7 +17,7 @@ use std::{cell::RefCell, rc::Rc};
 use unic_langid::LanguageIdentifier;
 
 // 60 seems to be a good default, Octo uses 20
-const DEFAULT_CPU_SPEED: u32 = 60;
+const DEFAULT_CPU_SPEED: u32 = 20;
 
 const DEFAULT_DISPLAY_SIZE: Vec2 = Vec2::new(512.0, 256.0);
 
