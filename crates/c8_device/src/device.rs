@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Chip-8 Device
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct C8 {
     /// The RAM (4kb)
     memory: Memory,
@@ -31,6 +31,21 @@ pub struct C8 {
 
     /// Audio
     pub beeper: Beeper,
+}
+
+impl Default for C8 {
+    fn default() -> Self {
+        Self {
+            memory: Memory::default(),
+            display: Display::default(),
+            cpu: CPU::default(),
+            stack: vec![],
+            is_running: false,
+            keypad: Keypad::default(),
+            quirks: Quirks::default(),
+            beeper: Beeper::new(),
+        }
+    }
 }
 
 impl C8 {
@@ -115,8 +130,13 @@ impl C8 {
         if self.cpu.sound_timer > 0 {
             self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-            self.beeper.play();
+            // TODO: Enable when WASM audio is supported
+            #[cfg(debug_assertions)]
+            {
+                self.beeper.play();
+            }
         } else {
+            // TODO: Make this more ergonomic (i.e. only pause if it's playing)
             self.beeper.pause();
         }
 
