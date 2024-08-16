@@ -37,6 +37,10 @@ serde = { version = "1", features = ["derive"] }
 # Audio
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
 
+# Web
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+
 [dependencies]
 egui = "0.28"
 eframe = { version = "0.28", default-features = false, features = [
@@ -75,7 +79,7 @@ bevy_tasks = "0.14"
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
+wasm-bindgen-futures = { workspace = true }
 getrandom = { version = "0.2", features = ["js"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
