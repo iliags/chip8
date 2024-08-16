@@ -235,15 +235,11 @@ impl CPU {
 
             // Enable low-res
             (0, 0, 0xF, 0xE) => {
-                //println!("Low-res");
-                //display.set_resolution(DisplayResolution::Low);
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
             }
 
             // Enable high-res
             (0, 0, 0xF, 0xF) => {
-                //println!("High-res");
-                //display.set_resolution(DisplayResolution::High);
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
             }
 

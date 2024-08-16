@@ -11,7 +11,7 @@ pub(crate) const DEFAULT_SCREEN_HEIGHT: usize = 32;
 pub(crate) const SCREEN_SIZE_LOW: usize = DEFAULT_SCREEN_WIDTH * DEFAULT_SCREEN_HEIGHT;
 
 /// High resolution screen size constant
-pub(crate) const SCREEN_SIZE_HIGH: usize = SCREEN_SIZE_LOW * 2;
+pub(crate) const SCREEN_SIZE_HIGH: usize = (DEFAULT_SCREEN_WIDTH * 2) * (DEFAULT_SCREEN_HEIGHT * 2);
 
 /// Low resolution screen size XY constant
 pub(crate) const SCREEN_SIZE_LOW_XY: (usize, usize) = (DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT);
@@ -110,7 +110,6 @@ impl Display {
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
         self.clear();
-        //println!("Display resolution size {}", self.get_screen_size());
     }
 
     /// Get the screen size XY
@@ -149,14 +148,6 @@ impl Display {
         for plane in self.planes.iter_mut() {
             plane.pixels = vec![0; self.resolution.get_resolution_size()];
         }
-    }
-
-    /// Toggle a pixel at the given x and y coordinates
-    ///
-    /// Returns the value of the pixel after toggling
-    #[deprecated(note = "Use the version with planes instead")]
-    pub fn set_pixel(&mut self, x: usize, y: usize) -> u8 {
-        self.set_plane_pixel(0, x, y)
     }
 
     /// Toggle a pixel at the given x and y coordinates
@@ -231,7 +222,7 @@ impl Display {
         let y = y % height;
 
         // Get the pixel index
-        (y * width + x) % self.resolution.get_resolution_size()
+        y * width + x
     }
 
     /// Scroll the planes by the given number of pixels in the x and y directions
@@ -246,19 +237,9 @@ impl Display {
                     // Get the pixel index
                     let index = self.get_pixel_index(x, y);
 
-                    /*
-                    if index >= 4096 {
-                        println!(
-                            "Out of bounds, i: {}, w: {}, h: {}, x: {}, y: {}, px: {}, py: {}, size: {}, p: {}",
-                            index, width, height, x, y, pixels_x, pixels_y, self.resolution.get_resolution_size(), i
-                        );
-                    }
-                     */
-
                     // Calculate the new x and y coordinates
-                    // TODO: Check if wrapping is needed
-                    let new_x = (x as isize + pixels_x) as usize; // % width;
-                    let new_y = (y as isize + pixels_y) as usize; // % height;
+                    let new_x = (x as isize + pixels_x) as usize;
+                    let new_y = (y as isize + pixels_y) as usize;
 
                     // Get the new pixel index
                     let new_index = self.get_pixel_index(new_x, new_y);

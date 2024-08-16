@@ -134,11 +134,27 @@ impl eframe::App for AppUI {
             }
 
             // Update the display image with the current display buffer
-            // TODO: Handle planes
-            let pixels = self.c8_device.get_display().get_plane_pixels(0);
-            for i in 0..pixels.len() {
-                self.display_image.pixels[i] = *self.pixel_colors.get_color(pixels[i]);
+            // TODO: Handle planes and colors
+            // TODO: Benchmark the for loop vs map
+            /*
+            for (i, pixel) in self
+                .c8_device
+                .get_display()
+                .get_plane_pixels(0)
+                .iter()
+                .enumerate()
+            {
+                self.display_image.pixels[i] = *self.pixel_colors.get_color(*pixel);
             }
+             */
+
+            self.display_image.pixels = self
+                .c8_device
+                .get_display()
+                .get_plane_pixels(0)
+                .iter()
+                .map(|&pixel| *self.pixel_colors.get_color(pixel))
+                .collect();
 
             // Process input
             for key in KEYBOARD {

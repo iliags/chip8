@@ -154,7 +154,8 @@ impl C8 {
                         self.display.set_resolution(*resolution);
                     }
                     DeviceMessage::Exit => {
-                        self.is_running = false;
+                        //self.is_running = false;
+                        self.reset_device();
                     }
                     _ => {}
                 }
