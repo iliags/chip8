@@ -147,6 +147,7 @@ impl CPU {
         self.program_counter += 2;
 
         let messages = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
+
         for message in messages.iter() {
             if let DeviceMessage::WaitingForKey(register) = message {
                 self.waiting_for_key = Some(WaitingForKey {
@@ -424,8 +425,6 @@ impl CPU {
                 let sprite_width = if height == 0 { 16 } else { 8 };
                 let sprite_height = if height == 0 { 16 } else { height } as usize;
 
-                let mut collided = 0;
-
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 for plane in 0..display.get_plane_count() {
                     for row in 0..sprite_height {
@@ -449,15 +448,13 @@ impl CPU {
 
                             // Draw the pixel and check for a collision
                             if current_pixel == 1 && new_pixel == 0 {
-                                collided = 1;
+                                self.registers[Register::VF as usize] = 1;
                             }
                         }
                     }
 
                     i += if height == 0 { 32 } else { height as usize };
                 }
-
-                self.registers[Register::VF as usize] = collided;
             }
 
             // Skip next instruction if key with the value of Vx is pressed

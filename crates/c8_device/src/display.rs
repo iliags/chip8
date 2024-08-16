@@ -231,7 +231,7 @@ impl Display {
         let y = y % height;
 
         // Get the pixel index
-        y * width + x
+        (y * width + x) % self.resolution.get_resolution_size()
     }
 
     /// Scroll the planes by the given number of pixels in the x and y directions
@@ -240,19 +240,20 @@ impl Display {
             let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
 
             let (width, height) = self.get_screen_size_xy();
-            for x in 0..width {
-                for y in 0..height {
-                    //for y in 0..height {
-                    //for x in 0..width {
+
+            for y in 0..height {
+                for x in 0..width {
                     // Get the pixel index
                     let index = self.get_pixel_index(x, y);
 
+                    /*
                     if index >= 4096 {
                         println!(
                             "Out of bounds, i: {}, w: {}, h: {}, x: {}, y: {}, px: {}, py: {}, size: {}, p: {}",
                             index, width, height, x, y, pixels_x, pixels_y, self.resolution.get_resolution_size(), i
                         );
                     }
+                     */
 
                     // Calculate the new x and y coordinates
                     // TODO: Check if wrapping is needed

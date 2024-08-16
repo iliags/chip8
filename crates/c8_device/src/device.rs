@@ -120,8 +120,6 @@ impl C8 {
             return Vec::new();
         }
 
-        let mut messages: Vec<DeviceMessage> = Vec::new();
-
         // TODO: Move timers to CPU with events
 
         // Update timers
@@ -138,9 +136,11 @@ impl C8 {
             self.beeper.pause();
         }
 
+        let mut messages: Vec<DeviceMessage> = Vec::new();
+
         // Execute instructions
         for _ in 0..cpu_speed {
-            messages = self.cpu.step(
+            let mut new_messages = self.cpu.step(
                 &mut self.memory,
                 &mut self.display,
                 &mut self.stack,
@@ -148,7 +148,7 @@ impl C8 {
                 &self.keypad,
             );
 
-            for message in messages.iter() {
+            for message in new_messages.iter().clone() {
                 match message {
                     DeviceMessage::ChangeResolution(resolution) => {
                         self.display.set_resolution(*resolution);
@@ -159,6 +159,8 @@ impl C8 {
                     _ => {}
                 }
             }
+
+            messages.append(new_messages.as_mut());
         }
 
         messages

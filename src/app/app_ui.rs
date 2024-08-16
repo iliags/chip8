@@ -118,9 +118,8 @@ impl eframe::App for AppUI {
             // Process messages
             for message in messages.iter() {
                 match message {
-                    DeviceMessage::ChangeResolution(resolution) => {
-                        println!("Changing resolution to {:?}", resolution);
-                        self.change_resolution(*resolution);
+                    DeviceMessage::ChangeResolution(_) => {
+                        self.update_resolution();
                     }
                     DeviceMessage::Exit => {
                         println!("Exiting device");
@@ -136,14 +135,9 @@ impl eframe::App for AppUI {
 
             // Update the display image with the current display buffer
             // TODO: Handle planes
-            for (i, &pixel) in self
-                .c8_device
-                .get_display()
-                .get_plane_pixels(0)
-                .iter()
-                .enumerate()
-            {
-                self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
+            let pixels = self.c8_device.get_display().get_plane_pixels(0);
+            for i in 0..pixels.len() {
+                self.display_image.pixels[i] = *self.pixel_colors.get_color(pixels[i]);
             }
 
             // Process input
@@ -275,37 +269,24 @@ impl eframe::App for AppUI {
 
                     #[cfg(debug_assertions)]
                     {
-                        if ui.button("Resolution").clicked() {
-                            let resolution = match self.c8_device.get_display().get_resolution() {
-                                c8_device::display::DisplayResolution::Low => {
-                                    c8_device::display::DisplayResolution::High
-                                }
-                                c8_device::display::DisplayResolution::High => {
-                                    c8_device::display::DisplayResolution::Low
-                                }
+                        egui::CollapsingHeader::new("Resolution").show(ui, |ui| {
+                            ui.label(self.c8_device.get_display().get_resolution_str());
+
+                            let (width, height) = self.c8_device.get_display().get_screen_size_xy();
+                            ui.label(format!("Device: {}x{}", width, height));
+
+                            let handle_size = match self.display_handle.clone() {
+                                Some(handle) => handle.size_vec2(),
+                                None => Vec2::ZERO,
                             };
 
-                            self.c8_device.get_display_mut().set_resolution(resolution);
+                            ui.label(format!("Handle: {}x{}", handle_size.x, handle_size.y));
 
-                            self.change_resolution(resolution);
-                        }
+                            let (width, height) =
+                                (self.display_image.width(), self.display_image.height());
 
-                        ui.label(self.c8_device.get_display().get_resolution_str());
-
-                        let (width, height) = self.c8_device.get_display().get_screen_size_xy();
-                        ui.label(format!("Device: {}x{}", width, height));
-
-                        let handle_size = match self.display_handle.clone() {
-                            Some(handle) => handle.size_vec2(),
-                            None => Vec2::ZERO,
-                        };
-
-                        ui.label(format!("Handle: {}x{}", handle_size.x, handle_size.y));
-
-                        let (width, height) =
-                            (self.display_image.width(), self.display_image.height());
-
-                        ui.label(format!("Image: {}x{}", width, height));
+                            ui.label(format!("Image: {}x{}", width, height));
+                        });
                     }
                 });
             },
@@ -348,17 +329,13 @@ impl AppUI {
         Default::default()
     }
 
-    fn change_resolution(&mut self, resolution: c8_device::display::DisplayResolution) {
-        println!("Changing resolution function called");
-
-        //self.c8_device.get_display_mut().set_resolution(resolution);
-
-        let (width, height) = resolution.get_resolution_size_xy();
-
-        //let (width, height) = self.c8_device.get_display().get_screen_size_xy();
+    fn update_resolution(&mut self) {
+        let (width, height) = self
+            .c8_device
+            .get_display()
+            .get_resolution()
+            .get_resolution_size_xy();
         self.display_image = egui::ColorImage::new([width, height], Color32::BLACK);
-
-        //self.display_handle = None;
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context) {
