@@ -75,7 +75,7 @@ pub struct AppUI {
     // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
 
-    test_loaded: bool,
+    temp_enable_audio: bool,
 }
 
 impl Default for AppUI {
@@ -98,7 +98,8 @@ impl Default for AppUI {
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
-            test_loaded: false,
+
+            temp_enable_audio: true,
         }
     }
 }
@@ -665,16 +666,17 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
             ui,
             |ui| {
-                //#[cfg(target_arch = "wasm32")]
-                //ui.label(self.language.get_locale_string("under_construction"));
-
-                #[cfg(not(debug_assertions))]
                 ui.label(self.language.get_locale_string("under_construction"));
 
-                // Disable for now
-                //#[cfg(not(target_arch = "wasm32"))]
+                ui.separator();
+
+                ui.checkbox(&mut self.temp_enable_audio, "Enable Audio");
+                self.c8_device.temp_enable_audio = self.temp_enable_audio;
+
                 #[cfg(debug_assertions)]
                 {
+                    ui.separator();
+
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
                             self.c8_device.beeper.play();
@@ -691,34 +693,39 @@ impl AppUI {
                          */
                     });
 
-                    ui.vertical(|ui| {
-                        ui.add(
-                            egui::Slider::new(
-                                &mut self.c8_device.beeper.settings.volume,
-                                0.0..=1.0,
-                            )
-                            .text(self.language.get_locale_string("volume")),
-                        )
-                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                    #[cfg(debug_assertions)]
+                    {
+                        ui.separator();
 
-                        ui.add(
-                            egui::Slider::new(
-                                &mut self.c8_device.beeper.settings.pitch,
-                                20.0..=20000.0,
+                        ui.vertical(|ui| {
+                            ui.add(
+                                egui::Slider::new(
+                                    &mut self.c8_device.beeper.settings.volume,
+                                    0.0..=1.0,
+                                )
+                                .text(self.language.get_locale_string("volume")),
                             )
-                            .text(self.language.get_locale_string("pitch")),
-                        )
-                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                            .on_hover_text(self.language.get_locale_string("not_implemented"));
 
-                        ui.add(
-                            egui::Slider::new(
-                                &mut self.c8_device.beeper.settings.octave,
-                                1.0..=4.0,
+                            ui.add(
+                                egui::Slider::new(
+                                    &mut self.c8_device.beeper.settings.pitch,
+                                    20.0..=20000.0,
+                                )
+                                .text(self.language.get_locale_string("pitch")),
                             )
-                            .text(self.language.get_locale_string("octave")),
-                        )
-                        .on_hover_text(self.language.get_locale_string("not_implemented"));
-                    });
+                            .on_hover_text(self.language.get_locale_string("not_implemented"));
+
+                            ui.add(
+                                egui::Slider::new(
+                                    &mut self.c8_device.beeper.settings.octave,
+                                    1.0..=4.0,
+                                )
+                                .text(self.language.get_locale_string("octave")),
+                            )
+                            .on_hover_text(self.language.get_locale_string("not_implemented"));
+                        });
+                    }
                 }
             },
         );

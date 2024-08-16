@@ -31,6 +31,9 @@ pub struct C8 {
 
     /// Audio
     pub beeper: Beeper,
+
+    /// Temporary enable/disable audio flag while controls are being implemented
+    pub temp_enable_audio: bool,
 }
 
 impl Default for C8 {
@@ -44,6 +47,7 @@ impl Default for C8 {
             keypad: Keypad::default(),
             quirks: Quirks::default(),
             beeper: Beeper::new(),
+            temp_enable_audio: true,
         }
     }
 }
@@ -130,10 +134,11 @@ impl C8 {
         if self.cpu.sound_timer > 0 {
             self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-            // TODO: Enable when WASM audio is supported
-            #[cfg(debug_assertions)]
-            {
+            // Make very sure the audio doesn't play if audio is disabled while running ROMs
+            if self.temp_enable_audio {
                 self.beeper.play();
+            } else {
+                self.beeper.pause();
             }
         } else {
             // TODO: Make this more ergonomic (i.e. only pause if it's playing)
