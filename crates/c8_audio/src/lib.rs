@@ -2,18 +2,12 @@
 
 #![allow(dead_code)]
 
-// TODO: WASM audio has popping when pausing then playing the audio.
-
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     BackendSpecificError, BuildStreamError, FromSample, Sample, SizedSample, Stream,
 };
 
-use std::{
-    cell::OnceCell,
-    rc::Rc,
-    sync::mpsc::{Receiver, Sender},
-};
+use std::sync::mpsc::{Receiver, Sender};
 
 /// Beeper settings
 #[derive(Debug, Clone, Copy)]
@@ -57,8 +51,7 @@ pub struct Beeper {
     /// Sender used on non-wasm32 targets
     sender: Option<Sender<Message>>,
 
-    /// Stream cell used on wasm32 targets
-    stream_cell: Rc<OnceCell<Option<Stream>>>,
+    stream: Option<Stream>,
 
     // TODO: Make thread safe
     /// Beeper settings
@@ -76,49 +69,7 @@ impl Beeper {
     pub fn new() -> Self {
         #[cfg(target_arch = "wasm32")]
         {
-            use wasm_bindgen::prelude::*;
-            use web_sys::{window, HtmlElement};
-
-            use web_sys::console;
-
-            let beeper = Beeper::default();
-
-            let stream = beeper.stream_cell.clone();
-
-            {
-                let closure = Closure::<dyn FnMut(_)>::new(move |_event: web_sys::MouseEvent| {
-                    let device = Self::create_stream_device();
-                    match device {
-                        Ok(device) => {
-                            match stream.set(Some(device)) {
-                                Ok(_) => {
-                                    console::log_1(&"Stream set".into());
-                                }
-                                Err(_) => {
-                                    // Trying to set the stream again will always fail because of OnceCell
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            let error = format!("Error creating stream device: {:?}", e);
-                            console::log_1(&error.into());
-                        }
-                    }
-                });
-
-                if let Some(window) = window() {
-                    if let Some(document) = window.document() {
-                        if let Some(body) = document.body() {
-                            let body: HtmlElement = body.into();
-                            body.set_onclick(Some(closure.as_ref().unchecked_ref()));
-                        }
-                    }
-                }
-
-                closure.forget();
-            }
-
-            beeper
+            Beeper::default()
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -143,7 +94,7 @@ impl Beeper {
     }
 
     /// Play the audio
-    pub fn play(&self) {
+    pub fn play(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Play),
@@ -151,20 +102,20 @@ impl Beeper {
         };
 
         #[cfg(target_arch = "wasm32")]
-        match self.stream_cell.get() {
-            Some(stream) => match stream {
-                Some(ref _stream) => {
-                    // Disable audio for now
-                    //let _ = stream.play();
-                }
-                None => {}
-            },
-            None => {}
+        match self.stream {
+            Some(_) => {
+                // Note: Calling play repeatedly on the stream causes popping on WASM
+                //let _ = stream.play();
+            }
+            None => {
+                self.stream = Some(Self::create_stream_device().unwrap());
+                let _ = self.stream.as_ref().unwrap().play();
+            }
         }
     }
 
     /// Pause the audio
-    pub fn pause(&self) {
+    pub fn pause(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Pause),
@@ -172,20 +123,16 @@ impl Beeper {
         };
 
         #[cfg(target_arch = "wasm32")]
-        match self.stream_cell.get() {
-            Some(stream) => match stream {
-                Some(ref _stream) => {
-                    // Disable audio for now
-                    //let _ = stream.pause();
-                }
-                None => {}
-            },
+        match self.stream.take() {
+            Some(ref stream) => {
+                let _ = stream.pause();
+            }
             None => {}
         }
     }
 
     /// Stop the audio
-    pub fn stop(&self) {
+    pub fn stop(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         let _ = match self.sender {
             Some(ref sender) => sender.send(Message::Stop),
@@ -193,13 +140,10 @@ impl Beeper {
         };
 
         #[cfg(target_arch = "wasm32")]
-        match self.stream_cell.get() {
-            Some(stream) => match stream {
-                Some(ref stream) => {
-                    let _ = stream.pause();
-                }
-                None => {}
-            },
+        match self.stream.take() {
+            Some(ref stream) => {
+                let _ = stream.pause();
+            }
             None => {}
         }
     }
@@ -238,10 +182,6 @@ impl Beeper {
     fn stream_audio(receiver: Receiver<Message>, stream: Result<Stream, BuildStreamError>) {
         match stream {
             Ok(stream) => {
-                let _ = stream.pause();
-
-                // TODO: Implement message passing.
-
                 loop {
                     match receiver.recv() {
                         Ok(Message::Play) => {
@@ -257,7 +197,7 @@ impl Beeper {
                         Ok(Message::Update) => {
                             // TODO: Implement update stream with change detection
                             let _ = stream.pause();
-                            return;
+                            //return;
                         }
                         Err(e) => {
                             eprintln!("Receive error: {}", e);
@@ -333,8 +273,9 @@ mod tests {
 
     #[test]
     #[ignore]
+    #[cfg(not(target_arch = "wasm32"))]
     fn test_beeper() {
-        let beeper = Beeper::new();
+        let mut beeper = Beeper::new();
 
         beeper.play();
         std::thread::sleep(std::time::Duration::from_secs(1));

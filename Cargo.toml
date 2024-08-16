@@ -1,6 +1,6 @@
 [package]
 name = "chip8"
-version = "0.1.13"
+version = "0.1.14"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
@@ -37,6 +37,11 @@ serde = { version = "1", features = ["derive"] }
 # Audio
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
 
+# Web
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+futures = "0.3"
+
 [dependencies]
 egui = "0.28"
 eframe = { version = "0.28", default-features = false, features = [
@@ -56,6 +61,8 @@ c8_audio = { workspace = true }
 c8_device = { workspace = true }
 c8_i18n = { workspace = true }
 
+futures = { workspace = true }
+
 
 [build-dependencies]
 embed-resource = { version = "2.4" }
@@ -71,11 +78,11 @@ harness = false
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
-bevy_tasks = "0.14"
+
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
+wasm-bindgen-futures = { workspace = true }
 getrandom = { version = "0.2", features = ["js"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-sys]
