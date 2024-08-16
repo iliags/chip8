@@ -1,13 +1,13 @@
 [package]
 name = "chip8"
-version = "0.1.12"
+version = "0.1.13"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
 exclude = [
-    # Exclude source art assets from the binary
-    "art/*",
+    # Exclude source art assets
+    "art/**/*",
 ]
 
 [workspace]
