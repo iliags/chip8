@@ -25,7 +25,7 @@ Some ROMs have been included for users to get familiar with the emulator.
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
   - Extremely useful for testing functionality during development
 - [Sample from Octo](https://github.com/JohnEarnest/Octo)
-  - The Simple example the emulator starts with
+  - The simple example the emulator starts with
 - [Chip 8 Archive](https://johnearnest.github.io/chip8Archive/)
   - Cave Explorer (Chip 8)
   - Flight Runner (Chip 8)
