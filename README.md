@@ -6,7 +6,7 @@
 
 ## Emulator Info
 
-Chip-8 and Super Chip 8 are mostly compatible, XO Chip 8 is still being worked on.
+Chip-8 and Super Chip 8 are mostly supported, XO-Chip is still work-in-progress. It passes most of the tests available in [Timendus' test suite](https://github.com/Timendus/chip8-test-suite), with the failing tests being non-issue quirks which might be implemented at a later date.
 
 ### Input Mapping
 
@@ -88,8 +88,6 @@ Stuff that might be added later.
 - System visualizer
 - Save states
 - Bind actions to keys instead of hardcoding input
-- Chip-8 extensions
-  - Super-Chip
-  - XO-Chip
+- XO-Chip extension
 - Octo `options.json` compatibility
 - Runtime error messages rather than panicking.
