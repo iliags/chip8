@@ -411,18 +411,26 @@ impl CPU {
                 // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
                 // This may be implemented in the future with a toggle.
 
-                self.registers[Register::VF as usize] = 0;
+                //self.registers[Register::VF as usize] = 0;
 
-                let x = self.registers[x] as usize;
-                let y = self.registers[y] as usize;
+                let (display_width, display_height) = display.get_screen_size_xy();
+
+                let x = self.registers[x] as usize % display_width;
+                let y = self.registers[y] as usize % display_height;
+
+                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 let height = n;
+
                 let mut i = self.index_register as usize;
 
                 let sprite_width = if height == 0 { 16 } else { 8 };
                 let sprite_height = if height == 0 { 16 } else { height } as usize;
 
-                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
-                for plane in 0..display.get_plane_count() {
+                for plane in 0..1 {
+                    //display.get_plane_count() {
+                    // Note: In Octo, the layers
+
+                    let mut collision = 0;
                     for row in 0..sprite_height {
                         let line: u16 = if height == 0 {
                             let read = 2 * row;
@@ -439,17 +447,19 @@ impl CPU {
                                 continue;
                             }
 
-                            let current_pixel = display.get_plane_pixel(plane, x + column, y + row);
-                            let new_pixel = display.set_plane_pixel(plane, x + column, y + row);
+                            let pos_x = x + column;
+                            let pos_y = y + row;
 
-                            // Draw the pixel and check for a collision
-                            if current_pixel == 1 && new_pixel == 0 {
-                                self.registers[Register::VF as usize] = 1;
+                            if display.set_plane_pixel(plane, pos_x, pos_y) == 1 {
+                                collision = 1;
                             }
                         }
+
+                        //self.registers[Register::VF as usize] = collision;
                     }
 
                     i += if height == 0 { 32 } else { height as usize };
+                    self.registers[Register::VF as usize] = collision;
                 }
             }
 

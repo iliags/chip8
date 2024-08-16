@@ -152,17 +152,26 @@ impl Display {
 
     /// Toggle a pixel at the given x and y coordinates
     ///
-    /// Returns the value of the pixel after toggling
+    /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
         // TODO: If plane is 2, draw to both planes
+        // TODO: Implement colors
         let plane = plane.clamp(0, 2);
         let index = self.get_pixel_index(x, y);
 
         // Pixels are XORed on the display
-        self.planes[plane].pixels[index] ^= 1;
+        //self.planes[plane].pixels[index] ^= 1;
+        let mut result = false;
 
-        // Return the pixel value
-        self.planes[plane].pixels[index]
+        if self.planes[plane].pixels[index] == 0 {
+            self.planes[plane].pixels[index] = 1;
+        } else {
+            self.planes[plane].pixels[index] = 0;
+            result = true;
+        }
+
+        // Return if a collision occurred
+        result as u8
     }
 
     /// Set the active plane
