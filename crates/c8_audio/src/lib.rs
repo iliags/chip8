@@ -182,10 +182,6 @@ impl Beeper {
     fn stream_audio(receiver: Receiver<Message>, stream: Result<Stream, BuildStreamError>) {
         match stream {
             Ok(stream) => {
-                let _ = stream.pause();
-
-                // TODO: Implement message passing.
-
                 loop {
                     match receiver.recv() {
                         Ok(Message::Play) => {
@@ -201,7 +197,7 @@ impl Beeper {
                         Ok(Message::Update) => {
                             // TODO: Implement update stream with change detection
                             let _ = stream.pause();
-                            return;
+                            //return;
                         }
                         Err(e) => {
                             eprintln!("Receive error: {}", e);
