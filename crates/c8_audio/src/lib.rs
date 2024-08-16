@@ -153,9 +153,8 @@ impl Beeper {
         #[cfg(target_arch = "wasm32")]
         match self.stream_cell.get() {
             Some(stream) => match stream {
-                Some(ref _stream) => {
-                    // Disable audio for now
-                    //let _ = stream.play();
+                Some(ref stream) => {
+                    let _ = stream.play();
                 }
                 None => {}
             },
@@ -174,9 +173,8 @@ impl Beeper {
         #[cfg(target_arch = "wasm32")]
         match self.stream_cell.get() {
             Some(stream) => match stream {
-                Some(ref _stream) => {
-                    // Disable audio for now
-                    //let _ = stream.pause();
+                Some(ref stream) => {
+                    let _ = stream.pause();
                 }
                 None => {}
             },
