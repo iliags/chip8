@@ -434,9 +434,7 @@ impl AppUI {
 
             #[cfg(not(target_arch = "wasm32"))]
             {
-                use bevy_tasks::futures_lite::future;
-
-                future::block_on(async move {
+                futures::executor::block_on(async move {
                     let (file_data, file_name) = Self::load_file().await;
 
                     // Update the shared state
