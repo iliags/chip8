@@ -1,12 +1,12 @@
 # Chip 8
 
-A Chip-8 emulator for practice.
-
 [Live version here](https://iliags.github.io/chip8/)
 
 ![Screenshot](./art/screenshots/screenshot_v0.1.12.png)
 
 ## Emulator Info
+
+Chip-8 and Super Chip 8 are mostly compatible, XO Chip 8 is still being worked on.
 
 ### Input Mapping
 
@@ -24,10 +24,14 @@ Some ROMs have been included for users to get familiar with the emulator.
 
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
   - Extremely useful for testing functionality during development
-- [Samples from Octo](https://github.com/JohnEarnest/Octo)
-  - Simple game example
-- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
-  - Requires full Octo support, tests more advanced features
+- [Sample from Octo](https://github.com/JohnEarnest/Octo)
+  - The Simple example the emulator starts with
+- [Chip 8 Archive](https://johnearnest.github.io/chip8Archive/)
+  - Cave Explorer (Chip 8)
+  - Flight Runner (Chip 8)
+  - [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost) (Chip 8)
+  - Octo Rancher (Chip 8)
+  - Rockto (Super Chip 8)
 
 ### Localization
 
