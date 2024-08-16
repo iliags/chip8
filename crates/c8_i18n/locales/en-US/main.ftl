@@ -70,6 +70,7 @@ audio_controls = Audio Controls
 pitch = Pitch
 octave = Octave
 volume = Volume
+enable_audio = Enable Audio
 
 ## Visualizer
 memory = Memory
