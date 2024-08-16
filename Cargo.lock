@@ -528,10 +528,8 @@ name = "c8_audio"
 version = "0.1.0"
 dependencies = [
  "cpal",
- "futures",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]
