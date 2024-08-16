@@ -273,28 +273,6 @@ impl eframe::App for AppUI {
                     ui.separator();
 
                     self.controls_audio(ui);
-
-                    #[cfg(debug_assertions)]
-                    {
-                        egui::CollapsingHeader::new("Resolution").show(ui, |ui| {
-                            ui.label(self.c8_device.get_display().get_resolution_str());
-
-                            let (width, height) = self.c8_device.get_display().get_screen_size_xy();
-                            ui.label(format!("Device: {}x{}", width, height));
-
-                            let handle_size = match self.display_handle.clone() {
-                                Some(handle) => handle.size_vec2(),
-                                None => Vec2::ZERO,
-                            };
-
-                            ui.label(format!("Handle: {}x{}", handle_size.x, handle_size.y));
-
-                            let (width, height) =
-                                (self.display_image.width(), self.display_image.height());
-
-                            ui.label(format!("Image: {}x{}", width, height));
-                        });
-                    }
                 });
             },
         );
@@ -689,11 +667,15 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
             ui,
             |ui| {
-                #[cfg(target_arch = "wasm32")]
+                //#[cfg(target_arch = "wasm32")]
+                //ui.label(self.language.get_locale_string("under_construction"));
+
+                #[cfg(not(debug_assertions))]
                 ui.label(self.language.get_locale_string("under_construction"));
 
-                // Disable on WASM for now
-                #[cfg(not(target_arch = "wasm32"))]
+                // Disable for now
+                //#[cfg(not(target_arch = "wasm32"))]
+                #[cfg(debug_assertions)]
                 {
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
