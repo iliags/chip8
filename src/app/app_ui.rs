@@ -670,7 +670,10 @@ impl AppUI {
 
                 ui.separator();
 
-                ui.checkbox(&mut self.temp_enable_audio, "Enable Audio");
+                ui.checkbox(
+                    &mut self.temp_enable_audio,
+                    self.language.get_locale_string("enable_audio"),
+                );
                 self.c8_device.temp_enable_audio = self.temp_enable_audio;
 
                 #[cfg(debug_assertions)]
