@@ -3,14 +3,19 @@ app_name = Chip 8
 
 # Menu bar
 open_rom = Open ROM
-reload_rom = Reload ROM
 control_panel = Control Panel
 visualizer_panel = Visualizer Panel
 
 ## ROM
+
+### Included ROMs
 included_roms = Included ROMs
 test_roms = Test ROMs
 game_roms = Games
+
+### Rom Controls
+reload_rom = Reload ROM
+unload_rom = Unload ROM
 
 # Controls
 

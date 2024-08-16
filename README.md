@@ -4,7 +4,7 @@ A Chip-8 emulator for practice.
 
 [Live version here](https://iliags.github.io/chip8/)
 
-![Screenshot](./assets/screenshot.png)
+![Screenshot](./art/screenshots/screenshot_v0.1.12.png)
 
 ## Emulator Info
 
@@ -20,9 +20,14 @@ ZXCV
 
 ### Included ROMs
 
+Some ROMs have been included for users to get familiar with the emulator.
+
 - [Chip8 Test Suite by Timendus](https://github.com/Timendus/chip8-test-suite)
-- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
+  - Extremely useful for testing functionality during development
 - [Samples from Octo](https://github.com/JohnEarnest/Octo)
+  - Simple game example
+- [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost)
+  - Requires full Octo support, tests more advanced features
 
 ### Localization
 
@@ -37,7 +42,9 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 
 #### Linux
 
-`libasound2-dev` is required for the `cpal` crate, it can be installed with `sudo apt-get install -y libasound2-dev`.
+`libasound2-dev` is required for the `cpal` crate on linux, it can be installed with `sudo apt-get install -y libasound2-dev`.
+
+In some cases, linux may also require `sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev`
 
 ### WASM
 
@@ -72,7 +79,7 @@ See [miri repository](https://github.com/rust-lang/miri).
 
 Stuff that might be added later.
 
-- Disassembler
+- Assembler/Disassembler
 - Debugger
 - System visualizer
 - Save states
@@ -81,3 +88,4 @@ Stuff that might be added later.
   - Super-Chip
   - XO-Chip
 - Octo `options.json` compatibility
+- Runtime error messages rather than panicking.

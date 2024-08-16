@@ -4,11 +4,7 @@ use super::{
     keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::PixelColors,
 };
-use c8_device::{
-    device::C8,
-    display::{SCREEN_HEIGHT, SCREEN_WIDTH},
-    fonts::FONT_DATA,
-};
+use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
 use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
@@ -47,9 +43,15 @@ pub struct AppUI {
     #[serde(skip)]
     file_data: Rc<RefCell<Option<Vec<u8>>>>,
 
+    #[serde(skip)]
+    file_name: Rc<RefCell<Option<String>>>,
+
     // The ROM file
     #[serde(skip)]
     rom_file: Vec<u8>,
+
+    #[serde(skip)]
+    rom_name: String,
 
     // The Chip8 device
     #[serde(skip)]
@@ -70,29 +72,33 @@ pub struct AppUI {
     // Whether the control panel is expanded
     control_panel_expanded: bool,
 
+    // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
+
+    test_loaded: bool,
 }
 
 impl Default for AppUI {
     fn default() -> Self {
+        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
         Self {
-            display_image: egui::ColorImage::new(
-                [SCREEN_WIDTH as usize, SCREEN_HEIGHT as usize],
-                Color32::BLACK,
-            ),
+            display_image: egui::ColorImage::new([width, height], Color32::BLACK),
             display_handle: None,
             rom_file: Vec::new(),
+            rom_name: String::new(),
             c8_device: C8::default(),
             cpu_speed: DEFAULT_CPU_SPEED,
             pixel_colors: PixelColors::default(),
             display_scale: DEFAULT_DISPLAY_SCALE,
             file_data: Rc::new(RefCell::new(None)),
+            file_name: Rc::new(RefCell::new(None)),
 
             // Current language
             language: LocaleText::default(),
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
+            test_loaded: false,
         }
     }
 }
@@ -107,18 +113,54 @@ impl eframe::App for AppUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Step the emulator
-            self.c8_device.step(self.cpu_speed);
+            let messages = self.c8_device.step(self.cpu_speed);
+
+            // Process messages
+            for message in messages.iter() {
+                match message {
+                    DeviceMessage::ChangeResolution(_) => {
+                        self.update_resolution();
+                    }
+                    DeviceMessage::Exit => {
+                        println!("Exiting device");
+                        self.unload_rom();
+                    }
+                    DeviceMessage::UnknownOpCode(_opcode) => {
+                        // TODO: Push to a list
+                        //println!("Unknown OpCode: {:#06X}", op_code);
+                    }
+                    _ => {}
+                }
+            }
 
             // Update the display image with the current display buffer
-            for (i, &pixel) in self.c8_device.get_display().get_pixels().iter().enumerate() {
-                self.display_image.pixels[i] = *self.pixel_colors.get_color(pixel);
-            }
+            // TODO: Handle planes and colors
+            self.display_image.pixels = self
+                .c8_device
+                .get_display()
+                .get_plane_pixels(0)
+                .iter()
+                .map(|&pixel| *self.pixel_colors.get_color(pixel))
+                .collect();
 
             // Process input
             for key in KEYBOARD {
                 ctx.input(|i| {
                     let current_key = &get_key_mapping(key)
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+
+                    // Temporary debug code
+                    /*
+                    #[cfg(debug_assertions)]
+                    {
+
+                        if i.key_pressed(egui::Key::Space) {
+                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            self.c8_device.get_memory_mut().data[0x1FF] = 3;
+                        }
+
+                    }
+                    */
 
                     self.c8_device
                         .get_keypad_mut()
@@ -149,14 +191,21 @@ impl eframe::App for AppUI {
 
                 // Check if the file data has been updated
                 if let Some(file_data) = self.file_data.take() {
+                    // Update the file name
+                    if let Some(file_name) = self.file_name.take() {
+                        let name = file_name.strip_suffix(".ch8").unwrap_or(&file_name);
+                        self.rom_name = name.to_string();
+
+                        // Reset the file name
+                        self.file_name = Rc::new(RefCell::new(None));
+                    }
+
                     // Load the ROM
                     self.load_rom(file_data);
 
                     // Reset the file data
                     self.file_data = Rc::new(RefCell::new(None));
                 }
-
-                ui.separator();
 
                 if ui
                     .add_enabled(
@@ -166,6 +215,16 @@ impl eframe::App for AppUI {
                     .clicked()
                 {
                     self.reload_rom();
+                }
+
+                if ui
+                    .add_enabled(
+                        self.c8_device.get_is_running(),
+                        egui::Button::new(self.language.get_locale_string("unload_rom")),
+                    )
+                    .clicked()
+                {
+                    self.unload_rom();
                 }
 
                 ui.separator();
@@ -255,9 +314,25 @@ impl AppUI {
         Default::default()
     }
 
+    fn update_resolution(&mut self) {
+        let (width, height) = self
+            .c8_device
+            .get_display()
+            .get_resolution()
+            .get_resolution_size_xy();
+        self.display_image = egui::ColorImage::new([width, height], Color32::BLACK);
+    }
+
     fn update_display_window(&mut self, ctx: &egui::Context) {
-        egui::Window::new(self.language.get_locale_string("display"))
+        let display_title = if self.rom_name.is_empty() {
+            self.language.get_locale_string("display")
+        } else {
+            self.rom_name.clone()
+        };
+
+        egui::Window::new(display_title)
             .resizable(false)
+            .id("display_window".into())
             .show(ctx, |ui| {
                 // Note: This is hacky
                 // TODO: Figure out how to do this without cloning the image
@@ -306,6 +381,10 @@ impl AppUI {
         self.c8_device.load_rom(self.rom_file.clone());
     }
 
+    fn unload_rom(&mut self) {
+        self.c8_device.reset_device();
+    }
+
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
         ui.menu_button(self.language.get_locale_string("included_roms"), |ui| {
             // Test rom menu
@@ -331,6 +410,7 @@ impl AppUI {
     fn menu_rom_button(&mut self, ui: &mut egui::Ui, rom: &ROM) -> bool {
         if ui.button(rom.get_name()).clicked() {
             self.load_rom(rom.get_data().to_vec());
+            self.rom_name = rom.get_name().to_string();
 
             println!("ROM loaded: {}", rom.get_name());
 
@@ -350,26 +430,29 @@ impl AppUI {
         {
             // Clone the file data reference
             let data_clone = Rc::clone(&self.file_data.clone());
+            let name_clone = Rc::clone(&self.file_name.clone());
 
             #[cfg(not(target_arch = "wasm32"))]
             {
                 use bevy_tasks::futures_lite::future;
 
                 future::block_on(async move {
-                    let file_data = Self::load_file().await;
+                    let (file_data, file_name) = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
+                    *name_clone.borrow_mut() = file_name;
                 });
             }
 
             #[cfg(target_arch = "wasm32")]
             {
                 wasm_bindgen_futures::spawn_local(async move {
-                    let file_data = Self::load_file().await;
+                    let (file_data, file_name) = Self::load_file().await;
 
                     // Update the shared state
                     *data_clone.borrow_mut() = file_data;
+                    *name_clone.borrow_mut() = file_name;
                 });
             }
         }
@@ -424,7 +507,7 @@ impl AppUI {
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut self.display_scale, 0.5..=2.0)
+                egui::Slider::new(&mut self.display_scale, 0.5..=3.0)
                     .text(self.language.get_locale_string("scale")),
             );
 
@@ -553,7 +636,7 @@ impl AppUI {
 
             // Emulator font
             // TODO: Move this to emulator settings
-            let current_font_name: String = self.c8_device.get_memory().1.into();
+            let current_font_name: String = self.c8_device.get_memory().system_font.into();
             egui::ComboBox::from_label(self.language.get_locale_string("font_small"))
                 .selected_text(current_font_name)
                 .show_ui(ui, |ui| {
@@ -565,7 +648,7 @@ impl AppUI {
                         let font_string: String = font.name.into();
 
                         ui.selectable_label(
-                            self.c8_device.get_memory_mut().1 == font.name,
+                            self.c8_device.get_memory_mut().system_font == font.name,
                             font_string,
                         )
                         .on_hover_text(self.language.get_locale_string("font_hover"))
@@ -584,11 +667,15 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
             ui,
             |ui| {
-                #[cfg(target_arch = "wasm32")]
+                //#[cfg(target_arch = "wasm32")]
+                //ui.label(self.language.get_locale_string("under_construction"));
+
+                #[cfg(not(debug_assertions))]
                 ui.label(self.language.get_locale_string("under_construction"));
 
-                // Disable on WASM for now
-                #[cfg(not(target_arch = "wasm32"))]
+                // Disable for now
+                //#[cfg(not(target_arch = "wasm32"))]
+                #[cfg(debug_assertions)]
                 {
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
@@ -667,7 +754,7 @@ impl AppUI {
         });
     }
 
-    async fn load_file() -> Option<Vec<u8>> {
+    async fn load_file() -> (Option<Vec<u8>>, Option<String>) {
         let file_task = AsyncFileDialog::new()
             .add_filter("Chip8", &["ch8"])
             .set_directory("/")
@@ -678,10 +765,12 @@ impl AppUI {
 
         match file_task {
             Some(file) => {
+                let name = file.file_name();
+
                 let file = file.read().await;
-                Some(file)
+                (Some(file), Some(name))
             }
-            None => None,
+            None => (None, None),
         }
     }
 }

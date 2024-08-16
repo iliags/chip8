@@ -6,12 +6,12 @@ pub struct ROM {
 
 impl ROM {
     /// Get the name of the ROM
-    pub fn get_name(&self) -> &'static str {
-        self.name
+    pub fn get_name(&self) -> &str {
+        self.name.strip_suffix(".ch8").unwrap_or(self.name)
     }
 
     /// Get the data of the ROM
-    pub fn get_data(&self) -> &'static [u8] {
+    pub fn get_data(&self) -> &[u8] {
         self.data
     }
 }
@@ -47,13 +47,23 @@ pub const TEST_ROMS: &[ROM] = &[
         data: include_bytes!("../assets/test_roms/7-beep.ch8"),
     },
     // Requires Super Chip-8 support
-    //ROM {
-    //    name: "scrolling.ch8",
-    //    data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
-    //},
+    ROM {
+        name: "scrolling.ch8",
+        data: include_bytes!("../assets/test_roms/8-scrolling.ch8"),
+    },
 ];
 
-pub const GAME_ROMS: &[ROM] = &[ROM {
-    name: "Octo Sample",
-    data: include_bytes!("../assets/games/octo-sample/octo-sample.ch8"),
-}];
+pub const GAME_ROMS: &[ROM] = &[
+    ROM {
+        name: "Octo Sample",
+        data: include_bytes!("../assets/games/octo-sample/octo-sample.ch8"),
+    },
+    ROM {
+        name: "Glitch Ghost",
+        data: include_bytes!("../assets/games/glitch-ghost/glitch-ghost.ch8"),
+    },
+    ROM {
+        name: "Cave Explorer",
+        data: include_bytes!("../assets/games/cave-explorer/cave-explorer.ch8"),
+    },
+];

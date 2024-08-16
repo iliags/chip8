@@ -1,6 +1,9 @@
 use c8_audio::Beeper;
 
-use crate::{cpu::CPU, display::Display, keypad::Keypad, memory::Memory, quirks::Quirks};
+use crate::{
+    cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
+    quirks::Quirks,
+};
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -71,6 +74,11 @@ impl C8 {
         &self.display
     }
 
+    /// Get the display of the device (mutable)
+    pub fn get_display_mut(&mut self) -> &mut Display {
+        &mut self.display
+    }
+
     /// Get the keypad of the device
     pub fn get_keypad(&self) -> &Keypad {
         &self.keypad
@@ -96,9 +104,9 @@ impl C8 {
     }
 
     /// Resets the device
-    fn reset_device(&mut self) {
+    pub fn reset_device(&mut self) {
         self.beeper.stop();
-        let current_font = self.memory.1;
+        let current_font = self.memory.system_font;
         *self = Self::default();
 
         // Reload font data
@@ -107,35 +115,60 @@ impl C8 {
     }
 
     /// Step the device
-    pub fn step(&mut self, cpu_speed: u32) {
-        if self.is_running {
-            // TODO: Move timers to CPU with events
-
-            // Update timers
-            if self.cpu.delay_timer > 0 {
-                self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
-            }
-
-            if self.cpu.sound_timer > 0 {
-                self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
-
-                self.beeper.play();
-            } else {
-                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
-                self.beeper.pause();
-            }
-
-            // Execute instructions
-            for _ in 0..cpu_speed {
-                self.cpu.step(
-                    &mut self.memory.0,
-                    &mut self.display,
-                    &mut self.stack,
-                    &self.quirks,
-                    &self.keypad,
-                );
-            }
+    pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
+        if !self.is_running {
+            return Vec::new();
         }
+
+        // TODO: Move timers to CPU with events
+
+        // Update timers
+        if self.cpu.delay_timer > 0 {
+            self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
+        }
+
+        if self.cpu.sound_timer > 0 {
+            self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
+
+            // TODO: Enable when WASM audio is supported
+            #[cfg(debug_assertions)]
+            {
+                self.beeper.play();
+            }
+        } else {
+            // TODO: Make this more ergonomic (i.e. only pause if it's playing)
+            self.beeper.pause();
+        }
+
+        let mut messages: Vec<DeviceMessage> = Vec::new();
+
+        // Execute instructions
+        for _ in 0..cpu_speed {
+            let mut new_messages = self.cpu.step(
+                &mut self.memory,
+                &mut self.display,
+                &mut self.stack,
+                &self.quirks,
+                &self.keypad,
+            );
+
+            for message in new_messages.iter().clone() {
+                match message {
+                    DeviceMessage::ChangeResolution(resolution) => {
+                        self.display.set_resolution(*resolution);
+                    }
+                    DeviceMessage::Exit => {
+                        //self.is_running = false;
+                        self.reset_device();
+                    }
+                    _ => {}
+                }
+            }
+
+            messages.append(new_messages.as_mut());
+        }
+
+        messages
     }
 }
 
@@ -149,24 +182,24 @@ mod tests {
     fn test_load_rom() {
         let mut c8 = C8::default();
         c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
-        assert_eq!(c8.memory.0[0x200], 0x00);
-        assert_eq!(c8.memory.0[0x201], 0xE0);
-        assert_eq!(c8.memory.0[0x202], 0x00);
-        assert_eq!(c8.memory.0[0x203], 0xEE);
+        assert_eq!(c8.memory.data[0x200], 0x00);
+        assert_eq!(c8.memory.data[0x201], 0xE0);
+        assert_eq!(c8.memory.data[0x202], 0x00);
+        assert_eq!(c8.memory.data[0x203], 0xEE);
     }
 
     #[test]
     fn test_reset_device() {
         let mut c8 = C8::default();
-        c8.memory.0[0x200] = 0x01;
-        c8.memory.0[0x201] = 0x02;
-        c8.memory.0[0x202] = 0x03;
-        c8.memory.0[0x203] = 0x04;
+        c8.memory.data[0x200] = 0x01;
+        c8.memory.data[0x201] = 0x02;
+        c8.memory.data[0x202] = 0x03;
+        c8.memory.data[0x203] = 0x04;
         c8.reset_device();
-        assert_eq!(c8.memory.0[0x200], 0x00);
-        assert_eq!(c8.memory.0[0x201], 0x00);
-        assert_eq!(c8.memory.0[0x202], 0x00);
-        assert_eq!(c8.memory.0[0x203], 0x00);
+        assert_eq!(c8.memory.data[0x200], 0x00);
+        assert_eq!(c8.memory.data[0x201], 0x00);
+        assert_eq!(c8.memory.data[0x202], 0x00);
+        assert_eq!(c8.memory.data[0x203], 0x00);
     }
 
     #[test]
