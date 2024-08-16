@@ -54,6 +54,10 @@ pub const TEST_ROMS: &[ROM] = &[
 
 pub const GAME_ROMS: &[ROM] = &[
     ROM {
+        name: "Cave Explorer",
+        data: include_bytes!("../assets/games/cave-explorer/cave-explorer.ch8"),
+    },
+    ROM {
         name: "Flight Runner",
         data: include_bytes!("../assets/games/flightrunner.ch8"),
     },
