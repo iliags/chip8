@@ -180,6 +180,9 @@ impl CPU {
         let op_3 = (opcode & 0x00F0) >> 4;
         let op_4 = opcode & 0x000F;
 
+        // TODO: Skyward has issues with some deaths and flying enemies don't move
+        // TODO: Audio buffer is not implemented
+
         match (op_1, op_2, op_3, op_4) {
             //NOP
             // 0x0000
@@ -536,7 +539,7 @@ impl CPU {
             // 0xFX02
             (0xF, _, 0, 2) => {
                 // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
-                println!("Audio control not implemented");
+                //println!("Audio control not implemented");
                 //todo!("Audio control")
             }
 
