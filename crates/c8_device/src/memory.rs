@@ -92,12 +92,12 @@ impl Memory {
     }
 
     /// Get memory data
-    pub fn get_memory(&self) -> &Vec<u8> {
+    pub fn get_data(&self) -> &Vec<u8> {
         &self.data
     }
 
     /// Get mutable memory data
-    pub fn get_memory_mut(&mut self) -> &mut Vec<u8> {
+    pub fn get_data_mut(&mut self) -> &mut Vec<u8> {
         &mut self.data
     }
 

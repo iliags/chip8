@@ -54,6 +54,10 @@ pub const TEST_ROMS: &[ROM] = &[
 
 pub const GAME_ROMS: &[ROM] = &[
     ROM {
+        name: "An Evening to Die For",
+        data: include_bytes!("../assets/games/anEveningToDieFor.ch8"),
+    },
+    ROM {
         name: "Cave Explorer",
         data: include_bytes!("../assets/games/cave-explorer/cave-explorer.ch8"),
     },
@@ -64,6 +68,10 @@ pub const GAME_ROMS: &[ROM] = &[
     ROM {
         name: "Glitch Ghost",
         data: include_bytes!("../assets/games/glitch-ghost/glitch-ghost.ch8"),
+    },
+    ROM {
+        name: "Octoma",
+        data: include_bytes!("../assets/games/octoma.ch8"),
     },
     ROM {
         name: "Octo Rancher",
@@ -77,15 +85,8 @@ pub const GAME_ROMS: &[ROM] = &[
         name: "Rockto",
         data: include_bytes!("../assets/games/rockto.ch8"),
     },
-    // XO Chip-8 support required
-    #[cfg(debug_assertions)]
     ROM {
         name: "Skyward",
         data: include_bytes!("../assets/games/skyward/skyward.ch8"),
-    },
-    #[cfg(debug_assertions)]
-    ROM {
-        name: "An Evening to Die For",
-        data: include_bytes!("../assets/games/anEveningToDieFor.ch8"),
     },
 ];

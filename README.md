@@ -6,16 +6,22 @@
 
 ## Emulator Info
 
-Chip-8 and Super Chip 8 are mostly supported, XO-Chip is still work-in-progress. It passes most of the tests available in [Timendus' test suite](https://github.com/Timendus/chip8-test-suite), with the failing tests being non-issue quirks which might be implemented at a later date.
+Chip-8, Super Chip-8, and XO Chip-8 are mostly supported; audio features are lagging behind (it beeps, no buffers). It passes most of the tests available in [Timendus' test suite](https://github.com/Timendus/chip8-test-suite), with the failing tests being quirks which might be implemented at a later date.
 
 ### Input Mapping
 
-|   |   |   |   |
-|---|---|---|---|
-| 1 | 2 | 3 | 4 |
-| Q | W | E | R |
-| A | S | D | F |
-| Z | X | C | V |
+``` None
+    Keyboard                     CHIP-8
+┌───┬───┬───┬───┐           ┌───┬───┬───┬───┐
+│ 1 │ 2 │ 3 │ 4 │           │ 1 │ 2 │ 3 │ C │
+├───┼───┼───┼───┤           ├───┼───┼───┼───┤
+│ Q │ W │ E │ R │           │ 4 │ 5 │ 6 │ D │
+├───┼───┼───┼───┤     →     ├───┼───┼───┼───┤
+│ A │ S │ D │ F │           │ 7 │ 8 │ 9 │ E │
+├───┼───┼───┼───┤           ├───┼───┼───┼───┤
+│ Z │ X │ C │ V │           │ A │ 0 │ B │ F │
+└───┴───┴───┴───┘           └───┴───┴───┴───┘
+```
 
 ### Included ROMs
 
@@ -26,11 +32,14 @@ Some ROMs have been included for users to get familiar with the emulator.
 - [Sample from Octo](https://github.com/JohnEarnest/Octo)
   - The simple example the emulator starts with
 - [Chip 8 Archive](https://johnearnest.github.io/chip8Archive/)
+  - An Evening to Die For (XO Chip 8)
   - Cave Explorer (Chip 8)
   - Flight Runner (Chip 8)
   - [Glitch Ghost](https://github.com/jackiekircher/glitch-ghost) (Chip 8)
+  - Octoma (XO Chip 8)
   - Octo Rancher (Chip 8)
   - Rockto (Super Chip 8)
+  - Skyward (XO Chip 8)
 
 ### Localization
 
@@ -94,6 +103,5 @@ Stuff that might be added later.
 - System visualizer
 - Save states
 - Bind actions to keys instead of hardcoding input
-- XO-Chip extension
 - Octo `options.json` compatibility
 - Runtime error messages rather than panicking.

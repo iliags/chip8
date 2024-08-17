@@ -1,4 +1,4 @@
-use c8_audio::Beeper;
+use c8_audio::beeper::Beeper;
 
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
@@ -120,57 +120,55 @@ impl C8 {
 
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
-        if !self.is_running {
-            return Vec::new();
-        }
-
-        // TODO: Move timers to CPU with events
-
-        // Update timers
-        if self.cpu.delay_timer > 0 {
-            self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
-        }
-
-        if self.cpu.sound_timer > 0 {
-            self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
-
-            // Make very sure the audio doesn't play if audio is disabled while running ROMs
-            if self.temp_enable_audio {
-                self.beeper.play();
-            } else {
-                self.beeper.pause();
-            }
-        } else {
-            // TODO: Make this more ergonomic (i.e. only pause if it's playing)
-            self.beeper.pause();
-        }
-
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
-        // Execute instructions
-        for _ in 0..cpu_speed {
-            let mut new_messages = self.cpu.step(
-                &mut self.memory,
-                &mut self.display,
-                &mut self.stack,
-                &self.quirks,
-                &self.keypad,
-            );
+        if self.is_running {
+            // TODO: Move timers to CPU with events
 
-            for message in new_messages.iter().clone() {
-                match message {
-                    DeviceMessage::ChangeResolution(resolution) => {
-                        self.display.set_resolution(*resolution);
-                    }
-                    DeviceMessage::Exit => {
-                        //self.is_running = false;
-                        self.reset_device();
-                    }
-                    _ => {}
-                }
+            // Update timers
+            if self.cpu.delay_timer > 0 {
+                self.cpu.delay_timer = self.cpu.delay_timer.saturating_sub(1);
             }
 
-            messages.append(new_messages.as_mut());
+            if self.cpu.sound_timer > 0 {
+                self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
+
+                // Make very sure the audio doesn't play if audio is disabled while running ROMs
+                if self.temp_enable_audio {
+                    self.beeper.play();
+                } else {
+                    self.beeper.pause();
+                }
+            } else {
+                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
+                self.beeper.pause();
+            }
+
+            // Execute instructions
+            for _ in 0..cpu_speed {
+                let mut new_messages = self.cpu.step(
+                    &mut self.memory,
+                    &mut self.display,
+                    &mut self.stack,
+                    &self.quirks,
+                    &self.keypad,
+                );
+
+                for message in new_messages.iter().clone() {
+                    match message {
+                        DeviceMessage::ChangeResolution(resolution) => {
+                            self.display.set_resolution(*resolution);
+                        }
+                        DeviceMessage::Exit => {
+                            //self.is_running = false;
+                            self.reset_device();
+                        }
+                        _ => {}
+                    }
+                }
+
+                messages.append(new_messages.as_mut());
+            }
         }
 
         messages

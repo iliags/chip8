@@ -2,14 +2,14 @@ use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
     keyboard::{get_key_mapping, KEYBOARD},
-    pixel_color::PixelColors,
+    pixel_color::{PixelColors, PALETTES},
 };
 use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
 use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
 };
-use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
+use egui::{Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
@@ -148,14 +148,18 @@ impl eframe::App for AppUI {
             }
 
             // Update the display image with the current display buffer
-            // TODO: Handle planes and colors
-            self.display_image.pixels = self
-                .c8_device
-                .get_display()
-                .get_plane_pixels(0)
-                .iter()
-                .map(|&pixel| *self.settings.pixel_colors.get_color(pixel))
-                .collect();
+            // TODO: There is some minor color blending issues with the display, probably needs a buffer
+            if self.c8_device.get_is_running() {
+                self.display_image.pixels = self
+                    .c8_device
+                    .get_display()
+                    .get_zipped_iterator()
+                    .map(|(&p0, &p1)| {
+                        let result = (p0 << 1) | p1;
+                        *self.settings.pixel_colors.get_pixel_color(result.into())
+                    })
+                    .collect();
+            }
 
             // Process input
             for key in KEYBOARD {
@@ -163,16 +167,16 @@ impl eframe::App for AppUI {
                     let current_key = &get_key_mapping(key)
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
-                    // Temporary debug code
                     /*
+                    // Fast load ROM for testing
                     #[cfg(debug_assertions)]
                     {
-
                         if i.key_pressed(egui::Key::Space) {
-                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            self.c8_device.get_memory_mut().data[0x1FF] = 3;
+                            self.load_rom(GAME_ROMS[6].get_data().to_vec());
+                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
+                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                         }
-
                     }
                     */
 
@@ -287,6 +291,11 @@ impl eframe::App for AppUI {
                     ui.separator();
 
                     self.controls_audio(ui);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        //ui.separator();
+                    }
                 });
             },
         );
@@ -503,16 +512,24 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
                 egui::Slider::new(&mut self.settings.cpu_speed, 1..=240)
+                    .clamp_to_range(false)
                     .text(self.language.get_locale_string("speed")),
             )
             .on_hover_text(self.language.get_locale_string("speed_hover"));
 
-            if ui
-                .button(self.language.get_locale_string("default_speed"))
-                .clicked()
-            {
-                self.settings.cpu_speed = DEFAULT_CPU_SPEED;
-            }
+            ui.horizontal(|ui| {
+                if ui
+                    .button(self.language.get_locale_string("default"))
+                    .clicked()
+                {
+                    self.settings.cpu_speed = DEFAULT_CPU_SPEED;
+                }
+                for speed in (500..=1500).step_by(500) {
+                    if ui.button(speed.to_string()).clicked() {
+                        self.settings.cpu_speed = speed;
+                    }
+                }
+            });
         });
     }
 
@@ -524,7 +541,7 @@ impl AppUI {
             );
 
             if ui
-                .button(self.language.get_locale_string("default_scale"))
+                .button(self.language.get_locale_string("default"))
                 .clicked()
             {
                 self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
@@ -537,13 +554,28 @@ impl AppUI {
             ui,
             |ui| {
                 // TODO: Make this look nicer
+                /*
                 if ui
-                    .button(self.language.get_locale_string("default_colors"))
+                    .button(self.language.get_locale_string("default"))
                     .clicked()
                 {
                     self.settings.pixel_colors = PixelColors::default();
                 }
+                 */
 
+                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
+                    .selected_text(self.settings.pixel_colors.get_name())
+                    .show_ui(ui, |ui| {
+                        for palette in PALETTES.iter() {
+                            ui.selectable_value(
+                                &mut self.settings.pixel_colors,
+                                *palette,
+                                palette.get_name(),
+                            );
+                        }
+                    });
+
+                /* TODO: Custom color palette
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
                     ui,
                     |ui| {
@@ -567,6 +599,7 @@ impl AppUI {
                         );
                     },
                 );
+                 */
             },
         );
     }
