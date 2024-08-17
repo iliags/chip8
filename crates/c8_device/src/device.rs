@@ -1,4 +1,4 @@
-use c8_audio::Beeper;
+use c8_audio::beeper::Beeper;
 
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
