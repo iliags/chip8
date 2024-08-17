@@ -531,7 +531,8 @@ impl CPU {
             // 0xFX000
             (0xF, _, 0, 0) => {
                 // TODO: Check if this is correct
-                let pc = self.program_counter as usize;
+                // The program counter has already been incremented by 2
+                let pc: usize = self.program_counter as usize;
                 //let address = (memory.data[pc + 2] as u16) << 8 | (memory.data[pc + 3] as u16);
                 let address = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
 
