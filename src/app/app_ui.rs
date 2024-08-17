@@ -57,25 +57,9 @@ pub struct AppUI {
     #[serde(skip)]
     c8_device: C8,
 
-    // The CPU speed
-    cpu_speed: u32,
-
-    // The pixel colors
-    pixel_colors: PixelColors,
-
-    // The display scale
-    display_scale: f32,
-
-    // The current language the app is using
     language: LocaleText,
 
-    // Whether the control panel is expanded
-    control_panel_expanded: bool,
-
-    // Whether the visualizer panel is expanded
-    visualizer_panel_expanded: bool,
-
-    temp_enable_audio: bool,
+    settings: Settings,
 }
 
 impl Default for AppUI {
@@ -87,14 +71,43 @@ impl Default for AppUI {
             rom_file: Vec::new(),
             rom_name: String::new(),
             c8_device: C8::default(),
-            cpu_speed: DEFAULT_CPU_SPEED,
-            pixel_colors: PixelColors::default(),
-            display_scale: DEFAULT_DISPLAY_SCALE,
+
             file_data: Rc::new(RefCell::new(None)),
             file_name: Rc::new(RefCell::new(None)),
 
-            // Current language
             language: LocaleText::default(),
+            settings: Settings::default(),
+        }
+    }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
+struct Settings {
+    // The CPU speed
+    cpu_speed: u32,
+
+    // The pixel colors
+    pixel_colors: PixelColors,
+
+    // The display scale
+    display_scale: f32,
+
+    // Whether the control panel is expanded
+    control_panel_expanded: bool,
+
+    // Whether the visualizer panel is expanded
+    visualizer_panel_expanded: bool,
+
+    temp_enable_audio: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            cpu_speed: DEFAULT_CPU_SPEED,
+            pixel_colors: PixelColors::default(),
+            display_scale: DEFAULT_DISPLAY_SCALE,
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
@@ -114,7 +127,7 @@ impl eframe::App for AppUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Step the emulator
-            let messages = self.c8_device.step(self.cpu_speed);
+            let messages = self.c8_device.step(self.settings.cpu_speed);
 
             // Process messages
             for message in messages.iter() {
@@ -141,7 +154,7 @@ impl eframe::App for AppUI {
                 .get_display()
                 .get_plane_pixels(0)
                 .iter()
-                .map(|&pixel| *self.pixel_colors.get_color(pixel))
+                .map(|&pixel| *self.settings.pixel_colors.get_color(pixel))
                 .collect();
 
             // Process input
@@ -172,12 +185,12 @@ impl eframe::App for AppUI {
             // Menu bar
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
-                    &mut self.control_panel_expanded,
+                    &mut self.settings.control_panel_expanded,
                     self.language.get_locale_string("control_panel"),
                 );
 
                 ui.toggle_value(
-                    &mut self.visualizer_panel_expanded,
+                    &mut self.settings.visualizer_panel_expanded,
                     self.language.get_locale_string("visualizer_panel"),
                 );
 
@@ -244,7 +257,7 @@ impl eframe::App for AppUI {
         // Control panel
         egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
             ctx,
-            self.control_panel_expanded,
+            self.settings.control_panel_expanded,
             |ui| {
                 ui.add_space(5.0);
 
@@ -285,7 +298,7 @@ impl eframe::App for AppUI {
 
         egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
             ctx,
-            self.visualizer_panel_expanded,
+            self.settings.visualizer_panel_expanded,
             |ui| {
                 self.visualizer_memory(ui);
                 self.visualizer_registers(ui);
@@ -362,7 +375,7 @@ impl AppUI {
                     }
                 };
 
-                ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.display_scale));
+                ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale));
             });
     }
 
@@ -489,7 +502,7 @@ impl AppUI {
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut self.cpu_speed, 1..=240)
+                egui::Slider::new(&mut self.settings.cpu_speed, 1..=240)
                     .text(self.language.get_locale_string("speed")),
             )
             .on_hover_text(self.language.get_locale_string("speed_hover"));
@@ -498,7 +511,7 @@ impl AppUI {
                 .button(self.language.get_locale_string("default_speed"))
                 .clicked()
             {
-                self.cpu_speed = DEFAULT_CPU_SPEED;
+                self.settings.cpu_speed = DEFAULT_CPU_SPEED;
             }
         });
     }
@@ -506,7 +519,7 @@ impl AppUI {
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut self.display_scale, 0.5..=3.0)
+                egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
                     .text(self.language.get_locale_string("scale")),
             );
 
@@ -514,7 +527,7 @@ impl AppUI {
                 .button(self.language.get_locale_string("default_scale"))
                 .clicked()
             {
-                self.display_scale = DEFAULT_DISPLAY_SCALE;
+                self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
             }
         });
     }
@@ -528,16 +541,15 @@ impl AppUI {
                     .button(self.language.get_locale_string("default_colors"))
                     .clicked()
                 {
-                    self.pixel_colors = PixelColors::default();
+                    self.settings.pixel_colors = PixelColors::default();
                 }
 
-                //ui.label(self.language.get_locale_string( "pixel_on"));
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
                     ui,
                     |ui| {
                         color_picker_color32(
                             ui,
-                            self.pixel_colors.get_on_color_mut(),
+                            self.settings.pixel_colors.get_on_color_mut(),
                             egui::color_picker::Alpha::Opaque,
                         );
                     },
@@ -545,14 +557,12 @@ impl AppUI {
 
                 ui.separator();
 
-                //ui.label(self.language.get_locale_string( "pixel_off"));
-
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_off")).show(
                     ui,
                     |ui| {
                         color_picker_color32(
                             ui,
-                            self.pixel_colors.get_off_color_mut(),
+                            self.settings.pixel_colors.get_off_color_mut(),
                             egui::color_picker::Alpha::Opaque,
                         );
                     },
@@ -671,10 +681,10 @@ impl AppUI {
                 ui.separator();
 
                 ui.checkbox(
-                    &mut self.temp_enable_audio,
+                    &mut self.settings.temp_enable_audio,
                     self.language.get_locale_string("enable_audio"),
                 );
-                self.c8_device.temp_enable_audio = self.temp_enable_audio;
+                self.c8_device.temp_enable_audio = self.settings.temp_enable_audio;
 
                 #[cfg(debug_assertions)]
                 {
