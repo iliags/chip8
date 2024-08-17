@@ -43,7 +43,7 @@ pub struct PixelColors {
 
 impl default::Default for PixelColors {
     fn default() -> Self {
-        Self::from(PALETTE_DEFAULT)
+        PALETTE_DEFAULT
     }
 }
 
