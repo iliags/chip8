@@ -679,6 +679,7 @@ dependencies = [
  "log",
  "rand",
  "rfd",
+ "ron",
  "serde",
  "unic-langid",
  "wasm-bindgen-futures",
