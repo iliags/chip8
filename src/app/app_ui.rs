@@ -167,17 +167,14 @@ impl eframe::App for AppUI {
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
                     // Temporary debug code
-                    /*
+
                     #[cfg(debug_assertions)]
                     {
-
                         if i.key_pressed(egui::Key::Space) {
                             self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            self.c8_device.get_memory_mut().data[0x1FF] = 3;
+                            self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 3;
                         }
-
                     }
-                    */
 
                     self.c8_device
                         .get_keypad_mut()
