@@ -33,8 +33,7 @@ scale = Scale
 
 ## Pixel
 pixel_colors = Pixel Colors
-pixel_on = Pixel on
-pixel_off = Pixel off
+color_palette = Color Palette
 
 ## Input
 keyboard = Keyboard

@@ -9,7 +9,7 @@ use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
 };
-use egui::{color_picker::color_picker_color32, Color32, TextureOptions, Vec2};
+use egui::{Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::sync::Arc;
@@ -563,13 +563,13 @@ impl AppUI {
                 }
                  */
 
-                egui::ComboBox::from_label(self.language.get_locale_string("pixel_colors"))
+                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
                     .selected_text(self.settings.pixel_colors.get_name())
                     .show_ui(ui, |ui| {
                         for palette in PALETTES.iter() {
                             ui.selectable_value(
                                 &mut self.settings.pixel_colors,
-                                palette.clone(),
+                                *palette,
                                 palette.get_name(),
                             );
                         }
