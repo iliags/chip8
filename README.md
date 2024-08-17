@@ -10,13 +10,12 @@ Chip-8 and Super Chip 8 are mostly supported, XO-Chip is still work-in-progress.
 
 ### Input Mapping
 
-1234
-
-QWER
-
-ASDF
-
-ZXCV
+|   |   |   |   |
+|---|---|---|---|
+| 1 | 2 | 3 | 4 |
+| Q | W | E | R |
+| A | S | D | F |
+| Z | X | C | V |
 
 ### Included ROMs
 
@@ -39,10 +38,13 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 
 ## Building
 
-### PC
+### Desktop
 
-```cargo build --release```
-```cargo run --release```
+- Install [rust](https://www.rust-lang.org/tools/install)
+- Open a terminal in the repository location
+  - Most operating systems have an option to open a terminal in the current folder when right clicking in the file browser.
+- Enter ```cargo build --release``` to build but not execute, ```cargo run --release``` to build and execute
+  - The ```--release``` flag can be removed to build the debug version
 
 #### Linux
 
@@ -52,17 +54,16 @@ In some cases, linux may also require `sudo apt-get install -y libclang-dev libg
 
 ### WASM
 
+- Install [rust](https://www.rust-lang.org/tools/install)
 - Install trunk using ```cargo install trunk```
   - This may take a while
-- Build using ```trunk serve --release```
+- Open a terminal in the repository location:
+  - Build ```trunk build --release```
+  - Build and start a local web server ```trunk serve --release```
 
 ### Documentation
 
 ```cargo doc --workspace --no-deps```
-
-### Build Warnings
-
-If ```wasm-bindgen-cli``` was installed separately, but not updated, it may print a tool mismatch warning.
 
 ## Testing
 
@@ -70,10 +71,15 @@ If ```wasm-bindgen-cli``` was installed separately, but not updated, it may prin
 
 ```cargo test --workspace```
 
+### Benchmarks
+
+Benchmarks are used for testing specific code during development and are not consistently implemented. They can be executed with ```cargo bench```.
+
 ### MIRI
 
 See [miri repository](https://github.com/rust-lang/miri).
 
+- Install the nightly toolchain with ```rustup toolchain install nightly```
 - Install miri component on rust nightly: ```rustup +nightly component add miri```
 - Run tests with miri: ```cargo +nightly miri test --workspace```
 - Run application with miri: ```cargo +nightly miri run```
