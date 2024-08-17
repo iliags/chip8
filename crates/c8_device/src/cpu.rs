@@ -189,40 +189,48 @@ impl CPU {
 
         match (op_1, op_2, op_3, op_4) {
             //NOP
+            // 0x0000
             (0, 0, 0, 0) => {}
 
             // Scroll down n lines
+            // 0x00CN
             (0, 0, 0xC, _) => {
                 display.scroll_down(n);
             }
 
             // Scroll up n lines
+            // 0x00DN
             (0, 0, 0xD, _) => {
                 display.scroll_up(n);
             }
 
             // Clear the display
+            // 0x00E0
             (0, 0, 0xE, 0) => {
                 display.clear();
             }
 
             // Return from a subroutine
+            // 0x00EE
             (0, 0, 0xE, 0xE) => {
                 // TODO: Make this more graceful
                 self.program_counter = stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
             }
 
             // Scroll right 4 pixels
+            // 0x00FB
             (0, 0, 0xF, 0xB) => {
                 display.scroll_right(4);
             }
 
             // Scroll left 4 pixels
+            // 0x00FC
             (0, 0, 0xF, 0xC) => {
                 display.scroll_left(4);
             }
 
             // Exit
+            // 0x00FD
             (0, 0, 0xF, 0xD) => {
                 // Note: The program counter is decremented by 2 to prevent the program from advancing
 
@@ -231,27 +239,32 @@ impl CPU {
             }
 
             // Enable low-res
+            // 0x00FE
             (0, 0, 0xF, 0xE) => {
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
             }
 
             // Enable high-res
+            // 0x00FF
             (0, 0, 0xF, 0xF) => {
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
             }
 
             // Jump to address nnn
+            // 0x1NNN
             (1, _, _, _) => {
                 self.program_counter = nnn;
             }
 
             // Call subroutine at nnn
+            // 0x2NNN
             (2, _, _, _) => {
                 stack.push(self.program_counter);
                 self.program_counter = nnn;
             }
 
             // Skip next instruction if Vx == nn
+            // 0x3XNN
             (3, _, _, _) => {
                 if self.registers[x] == nn {
                     self.program_counter += 2;
@@ -259,6 +272,7 @@ impl CPU {
             }
 
             // Skip next instruction if Vx != nn
+            // 0x4XNN
             (4, _, _, _) => {
                 if self.registers[x] != nn {
                     self.program_counter += 2;
@@ -266,6 +280,7 @@ impl CPU {
             }
 
             // Skip next instruction if Vx == Vy
+            // 0x5XY0
             (5, _, _, 0) => {
                 if self.registers[x] == self.registers[y] {
                     self.program_counter += 2;
@@ -273,6 +288,7 @@ impl CPU {
             }
 
             // Save vx through vy
+            // 0x5XY2
             (5, _, _, 2) => {
                 for i in x..=y {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
@@ -280,6 +296,7 @@ impl CPU {
             }
 
             // Load vx through vy from i
+            // 0x5XY3
             (5, _, _, 3) => {
                 for i in x..=y {
                     self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
@@ -287,21 +304,25 @@ impl CPU {
             }
 
             // Set Vx = nn
+            // 0x6XNN
             (6, _, _, _) => {
                 self.registers[x] = nn;
             }
 
             // Set Vx = Vx + nn
+            // 0x7XNN
             (7, _, _, _) => {
                 self.registers[x] = self.registers[x].wrapping_add(nn);
             }
 
             // Set Vx = Vy
+            // 0x8XY0
             (8, _, _, 0) => {
                 self.registers[x] = self.registers[y];
             }
 
             // Set Vx = Vx OR Vy
+            // 0x8XY1
             (8, _, _, 1) => {
                 self.registers[x] |= self.registers[y];
 
@@ -312,6 +333,7 @@ impl CPU {
             }
 
             // Set Vx = Vx AND Vy
+            // 0x8XY2
             (8, _, _, 2) => {
                 self.registers[x] &= self.registers[y];
 
@@ -322,6 +344,7 @@ impl CPU {
             }
 
             // Set Vx = Vx XOR Vy
+            // 0x8XY3
             (8, _, _, 3) => {
                 self.registers[x] ^= self.registers[y];
 
@@ -332,6 +355,7 @@ impl CPU {
             }
 
             // Set Vx = Vx + Vy, set VF = carry
+            // 0x8XY4
             (8, _, _, 4) => {
                 let (result, overflow) = self.registers[x].overflowing_add(self.registers[y]);
                 self.registers[x] = result;
@@ -339,6 +363,7 @@ impl CPU {
             }
 
             // Set Vx = Vx - Vy, set VF = NOT borrow
+            // 0x8XY5
             (8, _, _, 5) => {
                 let (result, overflow) = self.registers[x].overflowing_sub(self.registers[y]);
                 self.registers[x] = result;
@@ -346,6 +371,7 @@ impl CPU {
             }
 
             // Vx >>= 1
+            // 0x8XY6
             (8, _, _, 6) => {
                 // Quirk: Some programs expect Vx to be shifted directly without assigning VY
                 let quirk_y = if quirks.vx_shifted_directly {
@@ -359,6 +385,7 @@ impl CPU {
             }
 
             // Set Vx = Vy - Vx, set VF = NOT borrow
+            // 0x8XY7
             (8, _, _, 7) => {
                 let (result, overflow) = self.registers[y].overflowing_sub(self.registers[x]);
                 self.registers[x] = result;
@@ -366,6 +393,7 @@ impl CPU {
             }
 
             // Vx <<= 1
+            // 0x8XYE
             (8, _, _, 0xE) => {
                 // Quirk: Some programs expect Vx to be shifted directly without assigning VY
                 let quirk_y = if quirks.vx_shifted_directly {
@@ -379,6 +407,7 @@ impl CPU {
             }
 
             // Skip next instruction if Vx != Vy
+            // 0x9XY0
             (9, _, _, 0) => {
                 if self.registers[x] != self.registers[y] {
                     self.program_counter += 2;
@@ -386,22 +415,26 @@ impl CPU {
             }
 
             // Set I = nnn
+            // 0xANNN
             (0xA, _, _, _) => {
                 self.index_register = nnn;
             }
 
             // Jump to location nnn + V0
+            // 0xBNNN
             (0xB, _, _, _) => {
                 self.program_counter = nnn + self.registers[Register::V0 as usize] as u16;
             }
 
             // Set Vx = random byte AND nn
+            // 0xCXNN
             (0xC, _, _, _) => {
                 let mut rng = rand::thread_rng();
                 self.registers[x] = rng.gen::<u8>() & nn;
             }
 
             // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
+            // 0xDXYN
             (0xD, _, _, _) => {
                 // Note: This is one of the more complex instructions
 
@@ -459,6 +492,7 @@ impl CPU {
             }
 
             // Skip next instruction if key with the value of Vx is pressed
+            // 0xEX9E
             (0xE, _, 9, 0xE) => {
                 let key = self.registers[x] as usize;
 
@@ -468,6 +502,7 @@ impl CPU {
             }
 
             // Skip next instruction if key with the value of Vx is not pressed
+            // 0xEXA1
             (0xE, _, 0xA, 1) => {
                 let key = self.registers[x] as usize;
 
@@ -477,6 +512,7 @@ impl CPU {
             }
 
             // Load I extended
+            // 0xFX00
             (0xF, _, 0, 0) => {
                 // TODO: Check if this is correct
                 let pc = self.program_counter as usize;
@@ -487,40 +523,48 @@ impl CPU {
             }
 
             // Set active plane from Vx
+            // 0xFX01
             (0xF, _, 0, 1) => display.set_active_plane(x),
 
             // Audio control
+            // 0xFX02
             (0xF, _, 0, 2) => {
                 // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
                 todo!("Audio control")
             }
 
             // Set Vx to the value of the delay timer
+            // 0xFX07
             (0xF, _, 0, 7) => {
                 self.registers[x] = self.delay_timer;
             }
 
             // Wait for a key press and store the result in Vx
+            // 0xFX0A
             (0xF, _, 0, 0xA) => {
                 messages.push(DeviceMessage::WaitingForKey(Some(x)));
             }
 
             // Set the delay timer to Vx
+            // 0xFX15
             (0xF, _, 1, 5) => {
                 self.delay_timer = self.registers[x];
             }
 
             // Set the sound timer to Vx
+            // 0xFX18
             (0xF, _, 1, 8) => {
                 self.sound_timer = self.registers[x];
             }
 
             // Add Vx to the index register
+            // 0xFX1E
             (0xF, _, 1, 0xE) => {
                 self.index_register += self.registers[x] as u16;
             }
 
             // Set I to the location of the sprite for the character in Vx
+            // 0xFX29
             (0xF, _, 2, 9) => {
                 self.index_register = (self.registers[x] * 5) as u16;
                 // TODO: Check if this is correct
@@ -528,6 +572,7 @@ impl CPU {
             }
 
             // Load I with big sprite
+            // 0xFX30
             (0xF, _, 3, 0) => {
                 let block = (self.registers[x] & 0xF) * 10;
                 let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
@@ -535,6 +580,7 @@ impl CPU {
             }
 
             // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
+            // 0xFX33
             (0xF, _, 3, 3) => {
                 memory.data[self.index_register as usize] = self.registers[x] / 100;
                 memory.data[(self.index_register + 1) as usize] = (self.registers[x] / 10) % 10;
@@ -542,6 +588,7 @@ impl CPU {
             }
 
             // Store V0 to Vx in memory starting at address I
+            // 0xFX55
             (0xF, _, 5, 5) => {
                 for i in 0..x + 1 {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
@@ -554,6 +601,7 @@ impl CPU {
             }
 
             // Read V0 to Vx from memory starting at address I
+            // 0xFX65
             (0xF, _, 6, 5) => {
                 for i in 0..x + 1 {
                     self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
@@ -566,11 +614,13 @@ impl CPU {
             }
 
             // Save registers
+            // 0xFX75
             (0xF, _, 7, 5) => {
                 self.saved_registers = self.registers.clone();
             }
 
             // Load registers
+            // 0xFX85
             (0xF, _, 8, 5) => {
                 self.registers = self.saved_registers.clone();
             }
