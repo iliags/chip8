@@ -698,6 +698,11 @@ impl CPU {
                     (self.registers[reg_x] % 100) % 10;
             }
 
+            // Buzz pitch
+            (0xF, _, 3, 0xA) => {
+                // TODO: Buzz pitch not implemented
+            }
+
             // Store V0 to Vx in memory starting at address I
             // 0xFX55
             (0xF, _, 5, 5) => {
