@@ -1,6 +1,3 @@
-// Temporary
-#![allow(dead_code)]
-
 /// Screen width constant
 pub(crate) const DEFAULT_SCREEN_WIDTH: usize = 64;
 
@@ -124,13 +121,13 @@ impl Display {
 
     /// Get the pixels of a plane
     pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        let plane = plane & 0x3;
+        let plane = self.clamp_plane_value(plane);
         &self.planes[plane].pixels
     }
 
     /// Get the pixel at the given x and y coordinates for a plane
     pub fn get_plane_pixel(&self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = plane & 0x3;
+        let plane = self.clamp_plane_value(plane);
         // Get the pixel index
         let index = self.get_pixel_index(x, y);
 
@@ -160,12 +157,13 @@ impl Display {
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
         // TODO: If plane is 2, draw to both planes
         // TODO: Implement colors
-        let plane = plane & 0x3;
+
+        let plane = self.clamp_plane_value(plane);
         let index = self.get_pixel_index(x, y);
 
-        // Pixels are XORed on the display
-        //self.planes[plane].pixels[index] ^= 1;
         let mut result = false;
+
+        // Pixels are XORed on the display
 
         if self.planes[plane].pixels[index] == 0 {
             self.planes[plane].pixels[index] = 1;
@@ -180,12 +178,12 @@ impl Display {
 
     /// Set the active plane
     pub(crate) fn set_active_plane(&mut self, plane: usize) {
-        #[cfg(debug_assertions)]
-        {
-            println!("Setting active plane to {}", plane);
-        }
-
+        let plane = self.clamp_plane_value(plane);
         self.active_plane = plane;
+    }
+
+    const fn clamp_plane_value(&self, value: usize) -> usize {
+        value & 0x3
     }
 
     pub(crate) fn get_plane_count(&self) -> usize {
@@ -197,31 +195,89 @@ impl Display {
         self.active_plane
     }
 
-    /// Toggle a pixel at the given x and y coordinates for the active plane
-    pub(crate) fn set_active_plane_pixel(&mut self, x: usize, y: usize) -> u8 {
-        self.set_plane_pixel(self.active_plane, x, y)
-    }
-
     /// Scroll planes left by the given number of pixels
     pub(crate) fn scroll_left(&mut self, pixels: u8) {
-        let pixels = -(pixels as isize);
-        self.scroll_planes(pixels, 0);
+        let row_size = self.get_screen_size_xy().0;
+
+        for layer in 0..self.get_plane_count() {
+            if self.get_active_plane() & (layer + 1) == 0 {
+                continue;
+            }
+
+            for a in (0..self.planes[layer].pixels.len()).step_by(row_size) {
+                for b in 0..row_size {
+                    let index = a + b;
+                    self.planes[layer].pixels[index] = if b < row_size - pixels as usize {
+                        self.planes[layer].pixels[index + pixels as usize]
+                    } else {
+                        0
+                    };
+                }
+            }
+        }
     }
 
     /// Scroll planes right by the given number of pixels
     pub(crate) fn scroll_right(&mut self, pixels: u8) {
-        self.scroll_planes(pixels as isize, 0);
+        let row_size = self.get_screen_size_xy().0;
+
+        for layer in 0..self.get_plane_count() {
+            if self.get_active_plane() & (layer + 1) == 0 {
+                continue;
+            }
+
+            for a in (0..self.planes[layer].pixels.len()).step_by(row_size) {
+                for b in (0..row_size).rev() {
+                    let index = a + b;
+                    self.planes[layer].pixels[index] = if b >= pixels as usize {
+                        self.planes[layer].pixels[index - pixels as usize]
+                    } else {
+                        0
+                    };
+                }
+            }
+        }
     }
 
     /// Scroll planes up by the given number of pixels
     pub(crate) fn scroll_up(&mut self, pixels: u8) {
-        let pixels = -(pixels as isize);
-        self.scroll_planes(0, pixels);
+        let row_size = self.get_screen_size_xy().0;
+        let buffer_size = self.get_screen_size();
+
+        for layer in 0..self.get_plane_count() {
+            if self.get_active_plane() & (layer + 1) == 0 {
+                continue;
+            }
+
+            for z in 0..buffer_size {
+                let condition = z < (buffer_size - row_size * pixels as usize);
+                self.planes[layer].pixels[z] = if condition {
+                    self.planes[layer].pixels[z + (row_size * pixels as usize)]
+                } else {
+                    0
+                };
+            }
+        }
     }
 
     /// Scroll planes down by the given number of pixels
     pub(crate) fn scroll_down(&mut self, pixels: u8) {
-        self.scroll_planes(0, pixels as isize);
+        let row_size = self.get_screen_size_xy().0;
+
+        for layer in 0..self.get_plane_count() {
+            if self.get_active_plane() & (layer + 1) == 0 {
+                continue;
+            }
+
+            for z in (0..self.planes[layer].pixels.len()).rev() {
+                let condition = z >= row_size * pixels as usize;
+                self.planes[layer].pixels[z] = if condition {
+                    self.planes[layer].pixels[z - (row_size * pixels as usize)]
+                } else {
+                    0
+                };
+            }
+        }
     }
 
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
@@ -236,39 +292,6 @@ impl Display {
 
         // Get the pixel index
         y * width + x
-    }
-
-    /// Scroll the planes by the given number of pixels in the x and y directions
-    fn scroll_planes(&mut self, pixels_x: isize, pixels_y: isize) {
-        for i in 0..self.get_plane_count() {
-            if self.get_active_plane() & (i + 1) == 0 {
-                continue;
-            }
-
-            let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
-
-            let (width, height) = self.get_screen_size_xy();
-
-            for y in 0..height {
-                for x in 0..width {
-                    // Get the pixel index
-                    let index = self.get_pixel_index(x, y);
-
-                    // Calculate the new x and y coordinates
-                    let new_x = (x as isize + pixels_x) as usize;
-                    let new_y = (y as isize + pixels_y) as usize;
-
-                    // Get the new pixel index
-                    let new_index = self.get_pixel_index(new_x, new_y);
-
-                    // Copy the pixel to the new position
-                    new_pixels[new_index] = self.planes[i].pixels[index];
-                }
-            }
-
-            // Update the pixels
-            self.planes[i].pixels = new_pixels;
-        }
     }
 }
 

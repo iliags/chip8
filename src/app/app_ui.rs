@@ -171,8 +171,10 @@ impl eframe::App for AppUI {
                     #[cfg(debug_assertions)]
                     {
                         if i.key_pressed(egui::Key::Space) {
-                            self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 3;
+                            self.load_rom(GAME_ROMS[6].get_data().to_vec());
+                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
+                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                            //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                         }
                     }
 
@@ -503,6 +505,7 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
                 egui::Slider::new(&mut self.settings.cpu_speed, 1..=240)
+                    .clamp_to_range(false)
                     .text(self.language.get_locale_string("speed")),
             )
             .on_hover_text(self.language.get_locale_string("speed_hover"));

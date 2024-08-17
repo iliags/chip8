@@ -285,19 +285,28 @@ impl CPU {
                 }
             }
 
-            // Save vx through vy
+            // Save range
             // 0x5XY2
             (5, _, _, 2) => {
-                for i in x..=y {
-                    memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
+                let distance = x.abs_diff(y);
+                for i in 0..=distance {
+                    let index = (self.index_register + i as u16) as usize;
+                    memory.data[index] = if x < y {
+                        self.registers[x + i]
+                    } else {
+                        self.registers[x - i]
+                    };
                 }
             }
 
-            // Load vx through vy from i
+            // Load range
             // 0x5XY3
             (5, _, _, 3) => {
-                for i in x..=y {
-                    self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
+                let distance = x.abs_diff(y);
+
+                for i in 0..=distance {
+                    let index = if x < y { x + i } else { x - i };
+                    self.registers[index] = memory.data[(self.index_register + i as u16) as usize];
                 }
             }
 
@@ -521,13 +530,14 @@ impl CPU {
 
             // Set active plane from Vx
             // 0xFX01
-            (0xF, _, 0, 1) => display.set_active_plane(x & 0x3),
+            (0xF, _, 0, 1) => display.set_active_plane(x),
 
             // Audio control
             // 0xFX02
             (0xF, _, 0, 2) => {
                 // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
-                todo!("Audio control")
+                println!("Audio control not implemented");
+                //todo!("Audio control")
             }
 
             // Set Vx to the value of the delay timer
@@ -613,13 +623,18 @@ impl CPU {
             // Save registers
             // 0xFX75
             (0xF, _, 7, 5) => {
-                self.saved_registers = self.registers.clone();
+                for i in 0..=x {
+                    self.saved_registers[i] = self.registers[i];
+                }
             }
 
             // Load registers
             // 0xFX85
             (0xF, _, 8, 5) => {
-                self.registers = self.saved_registers.clone();
+                // Do not clear saved registers after loading
+                for i in 0..=x {
+                    self.registers[i] = self.saved_registers[i];
+                }
             }
 
             // Unknown opcode
