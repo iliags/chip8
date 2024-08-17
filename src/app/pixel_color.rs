@@ -124,8 +124,8 @@ pub const PALETTES: &[PixelColors] = &[PALETTE_DEFAULT, PALETTE_OCTO, PALETTE_LC
 const PALETTE_DEFAULT: PixelColors = PixelColors {
     background: Color32::BLACK,
     foreground1: Color32::WHITE,
-    foreground2: Color32::LIGHT_RED,
-    blended: Color32::DARK_RED,
+    foreground2: Color32::LIGHT_GREEN,
+    blended: Color32::DARK_GREEN,
     buzzer: Color32::BLACK,
     silence: Color32::BLACK,
 };
