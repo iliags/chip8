@@ -18,7 +18,7 @@ pub(crate) const SCREEN_SIZE_HIGH_XY: (usize, usize) =
     (DEFAULT_SCREEN_WIDTH * 2, DEFAULT_SCREEN_HEIGHT * 2);
 
 // Note: There are two planes, plane 0 and 1; drawing to plane 2 (i.e. plane 3) draws to both planes.
-// When retrieving pixels, plane 0 is superimposed on plane 0, allowing for more colors. Plane 1 is
+// When retrieving pixels, plane 1 is superimposed on plane 0, allowing for more colors. Plane 1 is
 // used for regular monochrome displays (default chip-8 behavior).
 
 /// Display resolution
