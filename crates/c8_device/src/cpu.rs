@@ -180,8 +180,9 @@ impl CPU {
         let op_3 = (opcode & 0x00F0) >> 4;
         let op_4 = opcode & 0x000F;
 
-        // TODO: Skyward has issues with some deaths and flying enemies don't move
         // TODO: Audio buffer is not implemented
+        // TODO: Skyward has issues with some deaths and flying enemies don't move
+        // TODO: An evening to die for is unplayable past the menu screen
 
         match (op_1, op_2, op_3, op_4) {
             //NOP
