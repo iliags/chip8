@@ -57,9 +57,6 @@ pub struct AppUI {
     #[serde(skip)]
     c8_device: C8,
 
-    #[serde(skip)]
-    default_plane: usize,
-
     language: LocaleText,
 
     settings: Settings,
@@ -77,8 +74,6 @@ impl Default for AppUI {
 
             file_data: Rc::new(RefCell::new(None)),
             file_name: Rc::new(RefCell::new(None)),
-
-            default_plane: 0,
 
             language: LocaleText::default(),
             settings: Settings::default(),
@@ -298,15 +293,7 @@ impl eframe::App for AppUI {
 
                     #[cfg(debug_assertions)]
                     {
-                        ui.separator();
-
-                        egui::CollapsingHeader::new("Plane").show(ui, |ui| {
-                            ui.add(
-                                egui::Slider::new(&mut self.default_plane, 0..=1)
-                                    .clamp_to_range(false)
-                                    .text("Plane"),
-                            );
-                        });
+                        //ui.separator();
                     }
                 });
             },
