@@ -269,7 +269,8 @@ impl CPU {
             // 0x3XNN
             (3, _, _, _) => {
                 if self.registers[x] == nn {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
@@ -277,7 +278,8 @@ impl CPU {
             // 0x4XNN
             (4, _, _, _) => {
                 if self.registers[x] != nn {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
@@ -285,7 +287,8 @@ impl CPU {
             // 0x5XY0
             (5, _, _, 0) => {
                 if self.registers[x] == self.registers[y] {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
@@ -421,7 +424,8 @@ impl CPU {
             // 0x9XY0
             (9, _, _, 0) => {
                 if self.registers[x] != self.registers[y] {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
@@ -507,7 +511,8 @@ impl CPU {
                 let key = self.registers[x] as usize;
 
                 if keypad.get_key(&key.into()) != 0 {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
@@ -517,15 +522,17 @@ impl CPU {
                 let key = self.registers[x] as usize;
 
                 if keypad.get_key(&key.into()) == 0 {
-                    self.program_counter += 2;
+                    //self.program_counter += 2;
+                    self.skip_next_instruction(memory);
                 }
             }
 
             // Load I extended
-            // 0xFX00
+            // 0xFX000
             (0xF, _, 0, 0) => {
                 // TODO: Check if this is correct
                 let pc = self.program_counter as usize;
+                //let address = (memory.data[pc + 2] as u16) << 8 | (memory.data[pc + 3] as u16);
                 let address = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
 
                 self.index_register = address;
@@ -577,17 +584,21 @@ impl CPU {
             // Set I to the location of the sprite for the character in Vx
             // 0xFX29
             (0xF, _, 2, 9) => {
-                self.index_register = (self.registers[x] * 5) as u16;
                 // TODO: Check if this is correct
+                self.index_register = (self.registers[x] * 5) as u16;
                 //self.index_register = ((self.registers[x] & 0xF) * 5) as u16;
             }
 
             // Load I with big sprite
             // 0xFX30
             (0xF, _, 3, 0) => {
+                // TODO: Check if this is correct
                 let block = (self.registers[x] & 0xF) * 10;
                 let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
                 self.index_register = (block + *font_size as u8) as u16;
+
+                // Alternate
+                //self.index_register = 0x50 + (self.registers[x] * 10) as u16;
             }
 
             // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
@@ -601,9 +612,16 @@ impl CPU {
             // Store V0 to Vx in memory starting at address I
             // 0xFX55
             (0xF, _, 5, 5) => {
+                // TODO: Check if this is correct
                 for i in 0..x + 1 {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
                 }
+
+                /* Alternate
+                let start = self.index_register as usize;
+                let end = (self.index_register + x as u16) as usize;
+                memory.data[start..=end].copy_from_slice(&self.registers[0..=x]);
+                 */
 
                 // Quirk: Some programs expect I to be incremented
                 if quirks.i_incremented {
@@ -614,9 +632,16 @@ impl CPU {
             // Read V0 to Vx from memory starting at address I
             // 0xFX65
             (0xF, _, 6, 5) => {
+                // TODO: Check if this is correct
                 for i in 0..x + 1 {
                     self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
                 }
+
+                /* Alternate
+                let start = self.index_register as usize;
+                let end = (self.index_register + x as u16) as usize;
+                self.registers[start..=end].copy_from_slice(&memory.data[0..=x]);
+                */
 
                 // Quirk: Some programs expect I to be incremented
                 if quirks.i_incremented {
@@ -649,5 +674,16 @@ impl CPU {
         }
 
         messages
+    }
+
+    #[inline]
+    fn skip_next_instruction(&mut self, memory: &Memory) {
+        let pc = self.program_counter as usize;
+        let next_op = (memory.data[pc] as u16) << 8 | memory.data[pc + 1] as u16;
+
+        // Check if the next instruction is an XO instruction
+        let result = if next_op == 0xF000 { 4 } else { 2 };
+
+        self.program_counter += result;
     }
 }
