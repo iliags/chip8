@@ -26,7 +26,7 @@ c8_i18n = { path = "crates/c8_i18n" }
 
 # Accessibility
 fluent = "0.16"
-fluent-templates = "0.9"
+fluent-templates = "0.10"
 unic-langid = "0.9"
 
 # Random number generator
@@ -35,9 +35,6 @@ rand = { version = "0.8" }
 # Serialization
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
-
-# Audio
-cpal = { version = "0.15", features = ["wasm-bindgen"] }
 
 # Web
 wasm-bindgen-futures = "0.4"
