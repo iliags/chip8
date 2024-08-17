@@ -106,30 +106,23 @@ impl CPU {
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
         // Note: This feels very hacky and should be refactored
-        if self.waiting_for_key.is_some() {
-            let task = self.waiting_for_key.as_mut().unwrap();
-
-            if task.key.is_none() {
-                for key in KEYPAD_KEYS.iter() {
-                    if keypad.is_key_pressed(key) {
-                        task.key = Some(*key);
-                        break;
+        if let Some(task) = self.waiting_for_key.as_mut() {
+            match task.key {
+                Some(key) => {
+                    if !keypad.is_key_pressed(&key) {
+                        self.registers[task.register] = key.get_key_index() as u8;
+                        self.waiting_for_key = None;
                     }
                 }
-            } else {
-                match task.key {
-                    Some(key) => {
-                        if !keypad.is_key_pressed(&key) {
-                            self.registers[task.register] = key.get_key_index() as u8;
-                            self.waiting_for_key = None;
+                None => {
+                    for key in KEYPAD_KEYS.iter() {
+                        if keypad.is_key_pressed(key) {
+                            task.key = Some(*key);
+                            break;
                         }
-                    }
-                    None => {
-                        unreachable!("Key not set");
                     }
                 }
             }
-
             return Vec::new();
         }
 
