@@ -22,8 +22,10 @@ impl From<u8> for ColorLayer {
 }
 
 /// The colors used to display the pixels
-#[derive(Debug, Clone, Copy, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct PixelColors {
+    pub(crate) palette: Palette,
+
     /// Pixel off/background color
     background: Color32,
 
@@ -69,6 +71,10 @@ impl PixelColors {
             ColorLayer::Foreground2 => &self.foreground2,
             ColorLayer::Blended => &self.blended,
         }
+    }
+
+    pub fn get_name(&self) -> &str {
+        self.palette.get_name()
     }
 
     pub fn get_background_color(&self) -> &Color32 {
@@ -118,10 +124,41 @@ impl PixelColors {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize, serde::Serialize)]
+pub enum Palette {
+    Default,
+    Octo,
+    LCD,
+    Grey,
+}
+
+impl From<Palette> for PixelColors {
+    fn from(palette: Palette) -> Self {
+        match palette {
+            Palette::Default => PALETTE_DEFAULT,
+            Palette::Octo => PALETTE_OCTO,
+            Palette::LCD => PALETTE_LCD,
+            Palette::Grey => PALETTE_GREY,
+        }
+    }
+}
+
+impl Palette {
+    pub fn get_name(&self) -> &str {
+        match self {
+            Palette::Default => "Default",
+            Palette::Octo => "Octo",
+            Palette::LCD => "LCD",
+            Palette::Grey => "Grey",
+        }
+    }
+}
+
 pub const PALETTES: &[PixelColors] = &[PALETTE_DEFAULT, PALETTE_OCTO, PALETTE_LCD, PALETTE_GREY];
 
 // TODO: Make this a dark theme since GREY is a light theme
 const PALETTE_DEFAULT: PixelColors = PixelColors {
+    palette: Palette::Default,
     background: Color32::BLACK,
     foreground1: Color32::WHITE,
     foreground2: Color32::LIGHT_GREEN,
@@ -131,6 +168,7 @@ const PALETTE_DEFAULT: PixelColors = PixelColors {
 };
 
 const PALETTE_OCTO: PixelColors = PixelColors {
+    palette: Palette::Octo,
     background: Color32::from_rgb(153, 102, 0),
     foreground1: Color32::from_rgb(255, 204, 0),
     foreground2: Color32::from_rgb(255, 102, 0),
@@ -140,6 +178,7 @@ const PALETTE_OCTO: PixelColors = PixelColors {
 };
 
 const PALETTE_LCD: PixelColors = PixelColors {
+    palette: Palette::LCD,
     background: Color32::from_rgb(249, 255, 179),
     foreground1: Color32::from_rgb(61, 128, 38),
     foreground2: Color32::from_rgb(174, 204, 71),
@@ -149,6 +188,7 @@ const PALETTE_LCD: PixelColors = PixelColors {
 };
 
 const PALETTE_GREY: PixelColors = PixelColors {
+    palette: Palette::Grey,
     background: Color32::from_rgb(170, 170, 170),
     foreground1: Color32::BLACK,
     foreground2: Color32::WHITE,

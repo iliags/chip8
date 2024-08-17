@@ -26,16 +26,13 @@ not_implemented = Not implemented
 cpu_speed = CPU Speed
 speed = Speed
 speed_hover = The number of instructions executed per frame (the UI updates at 60Hz/16ms)
-default_speed = Default Speed
 
 ## Display
 display = Display
 scale = Scale
-default_scale = Default Scale
 
 ## Pixel
 pixel_colors = Pixel Colors
-default_colors = Default Colors
 pixel_on = Pixel on
 pixel_off = Pixel off
 
@@ -64,6 +61,7 @@ language = Language
 font_small = Small Font
 font_large = Large Font
 font_hover = Font usage may not be supported by all ROMs
+default = Default
 
 ## Audio
 audio_controls = Audio Controls

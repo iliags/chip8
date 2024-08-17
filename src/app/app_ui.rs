@@ -2,7 +2,7 @@ use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
     keyboard::{get_key_mapping, KEYBOARD},
-    pixel_color::PixelColors,
+    pixel_color::{PixelColors, PALETTES},
 };
 use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
 use c8_i18n::{
@@ -517,12 +517,19 @@ impl AppUI {
             )
             .on_hover_text(self.language.get_locale_string("speed_hover"));
 
-            if ui
-                .button(self.language.get_locale_string("default_speed"))
-                .clicked()
-            {
-                self.settings.cpu_speed = DEFAULT_CPU_SPEED;
-            }
+            ui.horizontal(|ui| {
+                if ui
+                    .button(self.language.get_locale_string("default"))
+                    .clicked()
+                {
+                    self.settings.cpu_speed = DEFAULT_CPU_SPEED;
+                }
+                for speed in (500..=1500).step_by(500) {
+                    if ui.button(speed.to_string()).clicked() {
+                        self.settings.cpu_speed = speed;
+                    }
+                }
+            });
         });
     }
 
@@ -534,7 +541,7 @@ impl AppUI {
             );
 
             if ui
-                .button(self.language.get_locale_string("default_scale"))
+                .button(self.language.get_locale_string("default"))
                 .clicked()
             {
                 self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
@@ -547,13 +554,28 @@ impl AppUI {
             ui,
             |ui| {
                 // TODO: Make this look nicer
+                /*
                 if ui
-                    .button(self.language.get_locale_string("default_colors"))
+                    .button(self.language.get_locale_string("default"))
                     .clicked()
                 {
                     self.settings.pixel_colors = PixelColors::default();
                 }
+                 */
 
+                egui::ComboBox::from_label(self.language.get_locale_string("pixel_colors"))
+                    .selected_text(self.settings.pixel_colors.get_name())
+                    .show_ui(ui, |ui| {
+                        for palette in PALETTES.iter() {
+                            ui.selectable_value(
+                                &mut self.settings.pixel_colors,
+                                palette.clone(),
+                                palette.get_name(),
+                            );
+                        }
+                    });
+
+                /* TODO: Custom color palette
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
                     ui,
                     |ui| {
@@ -577,6 +599,7 @@ impl AppUI {
                         );
                     },
                 );
+                 */
             },
         );
     }
