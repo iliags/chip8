@@ -57,6 +57,9 @@ pub struct AppUI {
     #[serde(skip)]
     c8_device: C8,
 
+    #[serde(skip)]
+    default_plane: usize,
+
     language: LocaleText,
 
     settings: Settings,
@@ -74,6 +77,8 @@ impl Default for AppUI {
 
             file_data: Rc::new(RefCell::new(None)),
             file_name: Rc::new(RefCell::new(None)),
+
+            default_plane: 0,
 
             language: LocaleText::default(),
             settings: Settings::default(),
@@ -148,15 +153,23 @@ impl eframe::App for AppUI {
             }
 
             // Update the display image with the current display buffer
-            // TODO: Handle planes and colors
+            // TODO: There is some minor color blending issues with the display, probably needs a buffer
             if self.c8_device.get_is_running() {
-                let default_plane = 0;
                 self.display_image.pixels = self
                     .c8_device
                     .get_display()
-                    .get_plane_pixels(default_plane)
-                    .iter()
-                    .map(|&pixel| *self.settings.pixel_colors.get_color(pixel))
+                    .get_zipped_iterator()
+                    .map(|(&p0, &p1)| {
+                        if p0 == 1 && p1 == 1 {
+                            *self.settings.pixel_colors.get_blended_color()
+                        } else if p0 == 1 {
+                            *self.settings.pixel_colors.get_foreground1_color()
+                        } else if p1 == 1 {
+                            *self.settings.pixel_colors.get_foreground2_color()
+                        } else {
+                            *self.settings.pixel_colors.get_background_color()
+                        }
+                    })
                     .collect();
             }
 
@@ -289,6 +302,19 @@ impl eframe::App for AppUI {
                     ui.separator();
 
                     self.controls_audio(ui);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        ui.separator();
+
+                        egui::CollapsingHeader::new("Plane").show(ui, |ui| {
+                            ui.add(
+                                egui::Slider::new(&mut self.default_plane, 0..=1)
+                                    .clamp_to_range(false)
+                                    .text("Plane"),
+                            );
+                        });
+                    }
                 });
             },
         );

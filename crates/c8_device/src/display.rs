@@ -93,6 +93,13 @@ impl Default for Display {
 }
 
 impl Display {
+    /// Get the planes for iteration
+    pub fn get_zipped_iterator(&self) -> impl Iterator<Item = (&u8, &u8)> {
+        self.get_plane_pixels(0)
+            .iter()
+            .zip(self.get_plane_pixels(1).iter())
+    }
+
     /// Get the display resolution
     pub fn get_resolution(&self) -> DisplayResolution {
         self.resolution
