@@ -21,7 +21,7 @@ pub(crate) const SCREEN_SIZE_HIGH_XY: (usize, usize) =
     (DEFAULT_SCREEN_WIDTH * 2, DEFAULT_SCREEN_HEIGHT * 2);
 
 // Note: There are two planes, plane 0 and 1; drawing to plane 2 (i.e. plane 3) draws to both planes.
-// When retrieving pixels, plane 1 is superimposed on plane 0, allowing for more colors. Plane 0 is
+// When retrieving pixels, plane 0 is superimposed on plane 0, allowing for more colors. Plane 1 is
 // used for regular monochrome displays (default chip-8 behavior).
 
 /// Display resolution
@@ -90,7 +90,7 @@ impl Default for Display {
         Self {
             planes: vec![Plane::default(); 2],
             resolution: DisplayResolution::Low,
-            active_plane: 0,
+            active_plane: 1,
         }
     }
 }
@@ -109,7 +109,7 @@ impl Display {
     /// Set the display resolution
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
-        self.clear();
+        self.clear_all();
     }
 
     /// Get the screen size XY
@@ -124,13 +124,13 @@ impl Display {
 
     /// Get the pixels of a plane
     pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        let plane = plane.clamp(0, 2);
+        let plane = plane & 0x3;
         &self.planes[plane].pixels
     }
 
     /// Get the pixel at the given x and y coordinates for a plane
     pub fn get_plane_pixel(&self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = plane.clamp(0, 2);
+        let plane = plane & 0x3;
         // Get the pixel index
         let index = self.get_pixel_index(x, y);
 
@@ -144,9 +144,13 @@ impl Display {
     }
 
     /// Clear the display
-    pub(crate) fn clear(&mut self) {
-        for plane in self.planes.iter_mut() {
-            plane.pixels = vec![0; self.resolution.get_resolution_size()];
+    pub(crate) fn clear(&mut self, plane: usize) {
+        self.planes[plane].pixels = vec![0; self.get_screen_size()];
+    }
+
+    fn clear_all(&mut self) {
+        for plane in 0..self.get_plane_count() {
+            self.clear(plane);
         }
     }
 
@@ -156,7 +160,7 @@ impl Display {
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
         // TODO: If plane is 2, draw to both planes
         // TODO: Implement colors
-        let plane = plane.clamp(0, 2);
+        let plane = plane & 0x3;
         let index = self.get_pixel_index(x, y);
 
         // Pixels are XORed on the display
@@ -189,7 +193,7 @@ impl Display {
     }
 
     /// Get the active plane
-    pub(crate) fn get_active_plane(&self) -> usize {
+    pub fn get_active_plane(&self) -> usize {
         self.active_plane
     }
 
@@ -237,6 +241,10 @@ impl Display {
     /// Scroll the planes by the given number of pixels in the x and y directions
     fn scroll_planes(&mut self, pixels_x: isize, pixels_y: isize) {
         for i in 0..self.get_plane_count() {
+            if self.get_active_plane() & (i + 1) == 0 {
+                continue;
+            }
+
             let mut new_pixels = vec![0; self.resolution.get_resolution_size()];
 
             let (width, height) = self.get_screen_size_xy();
@@ -297,11 +305,13 @@ mod tests {
         let mut display = Display::default();
         let screen_size = display.get_screen_size();
 
-        display.planes[0].pixels = vec![1; screen_size];
+        let active_plane = display.get_active_plane();
 
-        display.clear();
+        display.planes[active_plane].pixels = vec![1; screen_size];
 
-        assert_eq!(display.planes[0].pixels, vec![0; screen_size]);
+        display.clear(active_plane);
+
+        assert_eq!(display.planes[active_plane].pixels, vec![0; screen_size]);
     }
 
     #[test]

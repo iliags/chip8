@@ -200,7 +200,12 @@ impl CPU {
             // Clear the display
             // 0x00E0
             (0, 0, 0xE, 0) => {
-                display.clear();
+                for layer in 0..display.get_plane_count() {
+                    if display.get_active_plane() & (layer + 1) == 0 {
+                        continue;
+                    }
+                    display.clear(layer);
+                }
             }
 
             // Return from a subroutine
@@ -448,9 +453,8 @@ impl CPU {
                 let sprite_height = if height == 0 { 16 } else { height } as usize;
                 let mut collision = 0;
 
-                for plane in 0..display.get_plane_count() {
-                    if plane == 1 {
-                        // Note: In Octo, the layers are 1 to 0, but in this emulator they are 0 to 1
+                for layer in 0..display.get_plane_count() {
+                    if display.get_active_plane() & (layer + 1) == 0 {
                         continue;
                     }
 
@@ -473,7 +477,7 @@ impl CPU {
                             let pos_x = x + column;
                             let pos_y = y + row;
 
-                            if display.set_plane_pixel(plane, pos_x, pos_y) == 1 {
+                            if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
                                 collision = 1;
                             }
                         }
@@ -517,7 +521,7 @@ impl CPU {
 
             // Set active plane from Vx
             // 0xFX01
-            (0xF, _, 0, 1) => display.set_active_plane(x),
+            (0xF, _, 0, 1) => display.set_active_plane(x & 0x3),
 
             // Audio control
             // 0xFX02
