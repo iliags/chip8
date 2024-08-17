@@ -296,12 +296,12 @@ impl CPU {
             // 0x5XY2
             (5, _, _, 2) => {
                 let distance = reg_x.abs_diff(reg_y);
-                for i in 0..=distance {
-                    let index = (self.index_register + i as u16) as usize;
+                for z in 0..=distance {
+                    let index = (self.index_register + z as u16) as usize;
                     memory.data[index] = if reg_x < reg_y {
-                        self.registers[reg_x + i]
+                        self.registers[reg_x + z]
                     } else {
-                        self.registers[reg_x - i]
+                        self.registers[reg_x - z]
                     };
                 }
             }
@@ -311,9 +311,9 @@ impl CPU {
             (5, _, _, 3) => {
                 let distance = reg_x.abs_diff(reg_y);
 
-                for i in 0..=distance {
-                    let index = if reg_x < reg_y { reg_x + i } else { reg_x - i };
-                    self.registers[index] = memory.data[(self.index_register + i as u16) as usize];
+                for z in 0..=distance {
+                    let index = if reg_x < reg_y { reg_x + z } else { reg_x - z };
+                    self.registers[index] = memory.data[(self.index_register + z as u16) as usize];
                 }
             }
 
@@ -464,7 +464,7 @@ impl CPU {
                 let mut collision = 0;
 
                 // False is the original implementation, true is the current test implementation
-                const VARIATION: bool = true;
+                const VARIATION: bool = false;
                 if VARIATION {
                     let row_size = display.get_screen_size_xy().0;
                     let column_size = display.get_screen_size_xy().1;
@@ -488,11 +488,10 @@ impl CPU {
                                     let index = i + (a * 2);
                                     let offset = if b > 7 { 1 } else { 0 };
                                     let shift = 7 - (b % 8);
-                                    let source =
+                                    let mut source =
                                         ((memory.data[index + offset] >> shift & 1) != 0) as u8;
 
-                                    /* TODO: Clip quirk option
-                                    if false {
+                                    if quirks.clip_sprites {
                                         source = if (x % row_size) + b >= row_size
                                             || (y % column_size) + a >= column_size
                                         {
@@ -501,7 +500,6 @@ impl CPU {
                                             source
                                         }
                                     }
-                                    */
 
                                     if source == 0 {
                                         continue;
@@ -519,10 +517,10 @@ impl CPU {
                                     let target =
                                         ((x + b) % row_size) + ((y + a) % column_size) * row_size;
 
-                                    let source = ((memory.data[i + a] >> (7 - b) & 1) != 0) as u8;
+                                    let mut source =
+                                        ((memory.data[i + a] >> (7 - b) & 1) != 0) as u8;
 
-                                    /* TODO: Clip quirk option
-                                    if false {
+                                    if quirks.clip_sprites {
                                         source = if (x % row_size) + b >= row_size
                                             || (y % column_size) + a >= column_size
                                         {
@@ -531,7 +529,6 @@ impl CPU {
                                             source
                                         }
                                     }
-                                    */
 
                                     if source == 0 {
                                         continue;
@@ -705,7 +702,7 @@ impl CPU {
             // 0xFX55
             (0xF, _, 5, 5) => {
                 // TODO: Check if this is correct
-                for i in 0..reg_x + 1 {
+                for i in 0..=reg_x {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
                 }
 

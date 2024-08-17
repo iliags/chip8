@@ -167,8 +167,8 @@ impl eframe::App for AppUI {
                     let current_key = &get_key_mapping(key)
                         .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
-                    // Temporary debug code
-
+                    /*
+                    // Fast load ROM for testing
                     #[cfg(debug_assertions)]
                     {
                         if i.key_pressed(egui::Key::Space) {
@@ -178,6 +178,7 @@ impl eframe::App for AppUI {
                             //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                         }
                     }
+                    */
 
                     self.c8_device
                         .get_keypad_mut()
