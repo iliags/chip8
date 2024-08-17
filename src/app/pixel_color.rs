@@ -1,6 +1,26 @@
 use egui::Color32;
 use std::default;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ColorLayer {
+    Background,
+    Foreground1,
+    Foreground2,
+    Blended,
+}
+
+impl From<u8> for ColorLayer {
+    fn from(layer: u8) -> Self {
+        match layer {
+            0 => ColorLayer::Background,
+            1 => ColorLayer::Foreground2,
+            2 => ColorLayer::Foreground1,
+            3 => ColorLayer::Blended,
+            _ => ColorLayer::Background,
+        }
+    }
+}
+
 /// The colors used to display the pixels
 #[derive(Debug, Clone, Copy, serde::Deserialize, serde::Serialize)]
 pub struct PixelColors {
@@ -42,11 +62,12 @@ impl From<&PixelColors> for [Color32; 6] {
 
 impl PixelColors {
     /// Get the color of a pixel
-    pub fn get_pixel_color(&self, pixel: u8) -> &Color32 {
-        if pixel == 1 {
-            self.get_on_color()
-        } else {
-            self.get_off_color()
+    pub fn get_pixel_color(&self, layer: ColorLayer) -> &Color32 {
+        match layer {
+            ColorLayer::Background => &self.background,
+            ColorLayer::Foreground1 => &self.foreground1,
+            ColorLayer::Foreground2 => &self.foreground2,
+            ColorLayer::Blended => &self.blended,
         }
     }
 

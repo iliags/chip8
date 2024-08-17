@@ -160,15 +160,8 @@ impl eframe::App for AppUI {
                     .get_display()
                     .get_zipped_iterator()
                     .map(|(&p0, &p1)| {
-                        if p0 == 1 && p1 == 1 {
-                            *self.settings.pixel_colors.get_blended_color()
-                        } else if p0 == 1 {
-                            *self.settings.pixel_colors.get_foreground1_color()
-                        } else if p1 == 1 {
-                            *self.settings.pixel_colors.get_foreground2_color()
-                        } else {
-                            *self.settings.pixel_colors.get_background_color()
-                        }
+                        let result = (p0 << 1) | p1;
+                        *self.settings.pixel_colors.get_pixel_color(result.into())
                     })
                     .collect();
             }
