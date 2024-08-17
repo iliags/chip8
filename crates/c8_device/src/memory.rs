@@ -11,17 +11,16 @@ const ENABLE_XO: bool = true;
 
 const MAX_MEMORY: usize = if ENABLE_XO { 65536 } else { 4096 };
 
+const MAX_ROM_SIZE: usize = MAX_MEMORY - PROGRAM_START as usize;
+
 /// Device memory
 #[derive(Debug)]
 pub struct Memory {
     /// Memory data
-    pub data: Vec<u8>,
+    pub(crate) data: Vec<u8>,
 
     /// Default system font
-    pub system_font: FontName,
-
-    /// Enable extensions
-    pub enable_xo: bool,
+    pub(crate) system_font: FontName,
 }
 
 impl Default for Memory {
@@ -29,7 +28,6 @@ impl Default for Memory {
         let mut new_self = Self {
             data: vec![0; MAX_MEMORY],
             system_font: FontName::CHIP8,
-            enable_xo: false,
         };
 
         new_self.load_font_small(FONT_DATA[FontName::CHIP8 as usize].clone());
@@ -52,7 +50,7 @@ impl Memory {
     /// Load large font data into memory
     pub fn load_font_large(&mut self, data: FontData) {
         // Only load large font data if the XO extension is enabled
-        if self.enable_xo {
+        if ENABLE_XO {
             let small_font_length = FONT_DATA[self.system_font as usize].small_data.len();
             let start = small_font_length;
             let end = start + data.large_data.len();
@@ -82,12 +80,35 @@ impl Memory {
         if data.is_empty() {
             println!("No ROM data provided");
             return;
+        } else if data.len() > MAX_ROM_SIZE {
+            eprintln!("ROM data is too large");
+            return;
         }
 
         let start = PROGRAM_START as usize;
         let end = start + data.len();
 
         self.data.splice(start..end, data.iter().cloned());
+    }
+
+    /// Get memory data
+    pub fn get_memory(&self) -> &Vec<u8> {
+        &self.data
+    }
+
+    /// Get mutable memory data
+    pub fn get_memory_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.data
+    }
+
+    /// Get the system font
+    pub fn get_system_font(&self) -> FontName {
+        self.system_font
+    }
+
+    /// Get mutable system font
+    pub fn get_system_font_mut(&mut self) -> &mut FontName {
+        &mut self.system_font
     }
 }
 
