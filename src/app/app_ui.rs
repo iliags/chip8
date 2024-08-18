@@ -125,67 +125,67 @@ impl eframe::App for AppUI {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // Step the emulator
-            let messages = self.c8_device.step(self.settings.cpu_speed);
+        // Step the emulator
+        let messages = self.c8_device.step(self.settings.cpu_speed);
 
-            // Process messages
-            for message in messages.iter() {
-                match message {
-                    DeviceMessage::ChangeResolution(_) => {
-                        self.update_resolution();
-                    }
-                    DeviceMessage::Exit => {
-                        println!("Exiting device");
-                        self.unload_rom();
-                    }
-                    DeviceMessage::UnknownOpCode(_opcode) => {
-                        // TODO: Push to a list
-                        //println!("Unknown OpCode: {:#06X}", op_code);
-                    }
-                    _ => {}
+        // Process messages
+        for message in messages.iter() {
+            match message {
+                DeviceMessage::ChangeResolution(_) => {
+                    self.update_resolution();
                 }
+                DeviceMessage::Exit => {
+                    println!("Exiting device");
+                    self.unload_rom();
+                }
+                DeviceMessage::UnknownOpCode(_opcode) => {
+                    // TODO: Push to a list
+                    //println!("Unknown OpCode: {:#06X}", op_code);
+                }
+                _ => {}
             }
+        }
 
-            // Update the display image with the current display buffer
-            // TODO: There is some minor color blending issues with the display, probably needs a buffer
-            if self.c8_device.get_is_running() {
-                self.display_image.pixels = self
-                    .c8_device
-                    .get_display()
-                    .get_zipped_iterator()
-                    .map(|(&p0, &p1)| {
-                        let result = (p0 << 1) | p1;
-                        *self.settings.pixel_colors.get_pixel_color(result.into())
-                    })
-                    .collect();
-            }
+        // Update the display image with the current display buffer
+        // TODO: There is some minor color blending issues with the display, probably needs a buffer
+        if self.c8_device.get_is_running() {
+            self.display_image.pixels = self
+                .c8_device
+                .get_display()
+                .get_zipped_iterator()
+                .map(|(&p0, &p1)| {
+                    let result = (p0 << 1) | p1;
+                    *self.settings.pixel_colors.get_pixel_color(result.into())
+                })
+                .collect();
+        }
 
-            // Process input
-            for key in KEYBOARD {
-                ctx.input(|i| {
-                    let current_key = &get_key_mapping(key)
-                        .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+        // Process input
+        for key in KEYBOARD {
+            ctx.input(|i| {
+                let current_key = &get_key_mapping(key)
+                    .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
-                    /*
-                    // Fast load ROM for testing
-                    #[cfg(debug_assertions)]
-                    {
-                        if i.key_pressed(egui::Key::Space) {
-                            self.load_rom(GAME_ROMS[6].get_data().to_vec());
-                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
-                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
-                        }
+                /*
+                // Fast load ROM for testing
+                #[cfg(debug_assertions)]
+                {
+                    if i.key_pressed(egui::Key::Space) {
+                        self.load_rom(GAME_ROMS[6].get_data().to_vec());
+                        //self.load_rom(TEST_ROMS[0].get_data().to_vec());
+                        //self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                        //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                     }
-                    */
+                }
+                */
 
-                    self.c8_device
-                        .get_keypad_mut()
-                        .set_key(current_key, i.key_down(*key))
-                });
-            }
+                self.c8_device
+                    .get_keypad_mut()
+                    .set_key(current_key, i.key_down(*key))
+            });
+        }
 
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
@@ -334,6 +334,18 @@ impl AppUI {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
 
+        /*
+        let texture = cc.egui_ctx.load_texture(
+            "noise",
+            egui::ColorImage::example(),
+            egui::TextureOptions::NEAREST,
+        );
+
+        Self {
+            display_handle: Some(texture),
+            ..Default::default()
+        }
+         */
         Default::default()
     }
 
