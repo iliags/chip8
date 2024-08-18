@@ -342,7 +342,8 @@ impl AppUI {
             .get_display()
             .get_resolution()
             .get_resolution_size_xy();
-        self.display_image = egui::ColorImage::new([width, height], Color32::BLACK);
+        let bg_color = self.settings.pixel_colors.get_background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context) {
