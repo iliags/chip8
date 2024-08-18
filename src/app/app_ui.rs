@@ -12,7 +12,6 @@ use c8_i18n::{
 use egui::{Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
-use std::sync::Arc;
 use std::{cell::RefCell, rc::Rc};
 use unic_langid::LanguageIdentifier;
 
@@ -334,18 +333,6 @@ impl AppUI {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
 
-        /*
-        let texture = cc.egui_ctx.load_texture(
-            "noise",
-            egui::ColorImage::example(),
-            egui::TextureOptions::NEAREST,
-        );
-
-        Self {
-            display_handle: Some(texture),
-            ..Default::default()
-        }
-         */
         Default::default()
     }
 
@@ -370,8 +357,6 @@ impl AppUI {
             .id("display_window".into())
             .show(ctx, |ui| {
                 // Note: This is hacky
-                // TODO: Figure out how to do this without cloning the image
-                let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
 
                 const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
                     magnification: egui::TextureFilter::Nearest,
@@ -381,11 +366,14 @@ impl AppUI {
 
                 match &mut self.display_handle {
                     Some(handle) => {
-                        handle.set(image_data, TEXTURE_OPTIONS);
+                        handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
                     }
                     None => {
-                        self.display_handle =
-                            Some(ctx.load_texture("DisplayTexture", image_data, TEXTURE_OPTIONS));
+                        self.display_handle = Some(ctx.load_texture(
+                            "DisplayTexture",
+                            self.display_image.clone(),
+                            TEXTURE_OPTIONS,
+                        ));
                     }
                 }
 
