@@ -100,6 +100,21 @@ impl Display {
             .zip(self.get_plane_pixels(1).iter())
     }
 
+    /// Performs plane superimposition for use in image generation
+    ///
+    /// Possible results from a plane pixel:
+    /// 0 - If plane 0 is off and plane 1 is off, use background color
+    /// 1 - If plane 0 is off and plane 1 is on, use foreground 2 color
+    /// 2 - If plane 0 is on and plane 1 is off, use foreground 1 color
+    /// 3 - If plane 0 is on and plane 1 is on, use blended color
+    pub fn get_plane_pixel_result(&self) -> Vec<u8> {
+        self.get_plane_pixels(0)
+            .iter()
+            .zip(self.get_plane_pixels(1).iter())
+            .map(|(&p0, &p1)| (p0 << 1) | p1)
+            .collect()
+    }
+
     /// Get the display resolution
     pub fn get_resolution(&self) -> DisplayResolution {
         self.resolution
