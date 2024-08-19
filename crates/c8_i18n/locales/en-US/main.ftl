@@ -43,6 +43,7 @@ color_palette = Color Palette
 
 ## Input
 keyboard = Keyboard
+mapping = Mapping
 
 ## Quirks
 compatibility_profile = Profile

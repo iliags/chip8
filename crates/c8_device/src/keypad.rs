@@ -20,7 +20,8 @@ pub enum KeypadKey {
     F = 0xF,
 }
 
-pub(crate) const KEYPAD_KEYS: [KeypadKey; 16] = [
+/// Keypad keys on the chip 8
+pub const KEYPAD_KEYS: [KeypadKey; 16] = [
     KeypadKey::Num1,
     KeypadKey::Num2,
     KeypadKey::Num3,

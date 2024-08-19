@@ -1,13 +1,14 @@
 use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
-    keyboard::{get_key_mapping, KEYBOARD},
+    keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
     pixel_color::{PixelColors, PALETTES},
 };
 use c8_device::{
     device::C8,
     display::DisplayResolution,
     fonts::FONT_DATA,
+    keypad::KEYPAD_KEYS,
     message::DeviceMessage,
     quirks::{CompatibilityProfile, Quirks, COMPATIBILITY_PROFILES},
 };
@@ -113,6 +114,8 @@ struct Settings {
     // Display is drawn under the side panels
     draw_display_underneath: bool,
 
+    key_mapping: KeyboardMapping,
+
     // Temporary audio enable
     temp_enable_audio: bool,
 }
@@ -130,6 +133,8 @@ impl Default for Settings {
 
             display_fullscreen: false,
             draw_display_underneath: false,
+
+            key_mapping: KeyboardMapping::default(),
 
             temp_enable_audio: true,
         }
@@ -182,8 +187,31 @@ impl eframe::App for AppUI {
         // Process input
         for key in KEYBOARD {
             ctx.input(|i| {
-                let current_key = &get_key_mapping(key)
+                // TODO: Refactor this
+                let current_key = &self
+                    .settings
+                    .key_mapping
+                    .get_key_from_mapping(key)
                     .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+
+                if self.settings.key_mapping.is_extra_key(key) {
+                    let regular_key = self
+                        .settings
+                        .key_mapping
+                        .get_regular_key_from_extra_key(key)
+                        .unwrap_or_else(|| panic!("No regular key found for key: {:?}", key));
+
+                    let is_down = i.key_down(regular_key) || i.key_down(*key);
+                    self.c8_device
+                        .get_keypad_mut()
+                        .set_key(current_key, is_down);
+
+                    return;
+                } else {
+                    self.c8_device
+                        .get_keypad_mut()
+                        .set_key(current_key, i.key_down(*key))
+                }
 
                 /*
                 // Fast load ROM for testing
@@ -197,10 +225,6 @@ impl eframe::App for AppUI {
                     }
                 }
                 */
-
-                self.c8_device
-                    .get_keypad_mut()
-                    .set_key(current_key, i.key_down(*key))
             });
         }
 
@@ -653,19 +677,36 @@ impl AppUI {
         );
     }
 
-    fn controls_keyboard_grid(&self, ui: &mut egui::Ui) {
+    fn controls_keyboard_grid(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("keyboard")).show(ui, |ui| {
-            egui::Grid::new("keyboard_grid").show(ui, |ui| {
-                for (i, key) in KEYBOARD.iter().enumerate() {
-                    let key_down = self.c8_device.get_keypad().is_key_pressed(
-                        &get_key_mapping(key)
-                            .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key)),
-                    );
+            egui::ComboBox::from_label(self.language.get_locale_string("mapping"))
+                .selected_text(self.settings.key_mapping.get_key_mapping_name())
+                .show_ui(ui, |ui| {
+                    for key_mapping in KEY_MAPPINGS {
+                        ui.selectable_value(
+                            self.settings.key_mapping.get_key_mapping_mut(),
+                            *key_mapping,
+                            key_mapping.get_name().to_owned(),
+                        );
+                    }
+                });
 
-                    let key_name = match get_key_mapping(key) {
-                        Some(key_pad) => key_pad.get_name().to_owned(),
-                        None => "Unknown".to_owned(),
-                    };
+            ui.separator();
+
+            egui::Grid::new("keyboard_grid").show(ui, |ui| {
+                for (i, key) in KEYPAD_KEYS.iter().enumerate() {
+                    /*
+                    let key_down = self.c8_device.get_keypad().is_key_pressed(
+                        &self
+                            .settings
+                            .key_mapping
+                            .get_key_from_mapping(key)
+                            .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key)),
+                    );*/
+
+                    let key_down = self.c8_device.get_keypad().is_key_pressed(key);
+
+                    let key_name = key.get_name();
 
                     if key_down {
                         let background_color = if ui.ctx().style().visuals.dark_mode {
