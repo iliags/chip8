@@ -673,10 +673,17 @@ impl AppUI {
                .on_hover_text(self.language.get_locale_string("quirk_display_waiting_hover"));
             */
             ui.checkbox(
-                &mut self.settings.quirk_settings.vx_shifted_directly,
+                &mut self.settings.quirk_settings.clip_sprites,
                 self.language.get_locale_string("quirk_clip_sprites"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_clip_sprites_hover"));
+
+            if ui
+                .button(self.language.get_locale_string("default"))
+                .clicked()
+            {
+                self.settings.quirk_settings = Quirks::default();
+            }
         });
 
         self.c8_device.set_quirks(self.settings.quirk_settings);

@@ -463,130 +463,56 @@ impl CPU {
                 self.registers[Register::VF as usize] = 0;
                 let mut collision = 0;
 
-                // False is the original implementation, true is the current test implementation
-                const VARIATION: bool = false;
-                if VARIATION {
-                    let row_size = display.get_screen_size_xy().0;
-                    let column_size = display.get_screen_size_xy().1;
-                    let mut i = self.index_register as usize;
-                    let length = n as usize;
+                let x = self.registers[reg_x] as usize;
+                let y = self.registers[reg_y] as usize;
 
-                    let x = self.registers[reg_x] as usize;
-                    let y = self.registers[reg_y] as usize;
+                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
+                let height = n;
 
-                    for layer in 0..display.get_plane_count() {
-                        if display.get_active_plane() & (layer + 1) == 0 {
-                            continue;
-                        }
+                let mut i = self.index_register as usize;
 
-                        if length == 0 {
-                            for a in 0..16 {
-                                for b in 0..16 {
-                                    let target =
-                                        ((x + b) % row_size) + ((y + a) % column_size) * row_size;
+                let sprite_width = if height == 0 { 16 } else { 8 };
+                let sprite_height = if height == 0 { 16 } else { height } as usize;
 
-                                    let index = i + (a * 2);
-                                    let offset = if b > 7 { 1 } else { 0 };
-                                    let shift = 7 - (b % 8);
-                                    let mut source =
-                                        ((memory.data[index + offset] >> shift & 1) != 0) as u8;
+                for layer in 0..display.get_plane_count() {
+                    if display.get_active_plane() & (layer + 1) == 0 {
+                        continue;
+                    }
 
-                                    if quirks.clip_sprites {
-                                        source = if (x % row_size) + b >= row_size
-                                            || (y % column_size) + a >= column_size
-                                        {
-                                            0
-                                        } else {
-                                            source
-                                        }
-                                    }
-
-                                    if source == 0 {
-                                        continue;
-                                    }
-
-                                    if display.set_plane_pixel_direct(layer, target) == 1 {
-                                        collision = 1;
-                                    }
-                                }
-                            }
-                            i += 32;
+                    for row in 0..sprite_height {
+                        let line: u16 = if height == 0 {
+                            let read = 2 * row;
+                            (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
                         } else {
-                            for a in 0..length {
-                                for b in 0..8 {
-                                    let target =
-                                        ((x + b) % row_size) + ((y + a) % column_size) * row_size;
+                            memory.data[i + row] as u16
+                        };
 
-                                    let mut source =
-                                        ((memory.data[i + a] >> (7 - b) & 1) != 0) as u8;
+                        for column in 0..sprite_width {
+                            let bit = if height == 0 { 15 - column } else { 7 - column };
+                            let mut pixel = (line & (1 << bit)) >> bit;
 
-                                    if quirks.clip_sprites {
-                                        source = if (x % row_size) + b >= row_size
-                                            || (y % column_size) + a >= column_size
-                                        {
-                                            0
-                                        } else {
-                                            source
-                                        }
-                                    }
-
-                                    if source == 0 {
-                                        continue;
-                                    }
-
-                                    if display.set_plane_pixel_direct(layer, target) == 1 {
-                                        collision = 1;
-                                    }
+                            if quirks.clip_sprites {
+                                if x + column >= display.get_screen_size_xy().0
+                                    || y + row >= display.get_screen_size_xy().1
+                                {
+                                    pixel = 0;
                                 }
                             }
-                            i += length;
-                        }
-                    }
-                } else {
-                    let x = self.registers[reg_x] as usize;
-                    let y = self.registers[reg_y] as usize;
 
-                    // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
-                    let height = n;
+                            if pixel == 0 {
+                                continue;
+                            }
 
-                    let mut i = self.index_register as usize;
+                            let pos_x = x + column;
+                            let pos_y = y + row;
 
-                    let sprite_width = if height == 0 { 16 } else { 8 };
-                    let sprite_height = if height == 0 { 16 } else { height } as usize;
-
-                    for layer in 0..display.get_plane_count() {
-                        if display.get_active_plane() & (layer + 1) == 0 {
-                            continue;
-                        }
-
-                        for row in 0..sprite_height {
-                            let line: u16 = if height == 0 {
-                                let read = 2 * row;
-                                (memory.data[read + i] as u16) << 8
-                                    | memory.data[read + i + 1] as u16
-                            } else {
-                                memory.data[i + row] as u16
-                            };
-
-                            for column in 0..sprite_width {
-                                let bit = if height == 0 { 15 - column } else { 7 - column };
-                                let pixel = (line & (1 << bit)) >> bit;
-
-                                if pixel == 0 {
-                                    continue;
-                                }
-
-                                let pos_x = x + column;
-                                let pos_y = y + row;
-
-                                if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
-                                    collision = 1;
-                                }
+                            if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
+                                collision = 1;
                             }
                         }
-
-                        i += if height == 0 { 32 } else { height as usize };
                     }
+
+                    i += if height == 0 { 32 } else { height as usize };
                 }
 
                 // Keep out of the variations

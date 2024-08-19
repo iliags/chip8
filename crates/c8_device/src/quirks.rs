@@ -28,7 +28,7 @@ pub struct Quirks {
 impl Default for Quirks {
     fn default() -> Self {
         Self {
-            vf_zero: true,
+            vf_zero: false,
             i_incremented: false,
             vx_shifted_directly: true,
             display_waiting: false,
