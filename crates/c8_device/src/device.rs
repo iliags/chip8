@@ -98,6 +98,11 @@ impl C8 {
         self.is_running
     }
 
+    /// Set the quirks of the device
+    pub fn set_quirks(&mut self, quirks: Quirks) {
+        self.quirks = quirks;
+    }
+
     /// Resets the device, loads ROM and font data into memory, and starts the device
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();

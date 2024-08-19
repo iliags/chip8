@@ -539,6 +539,7 @@ version = "0.1.0"
 dependencies = [
  "c8_audio",
  "rand",
+ "serde",
 ]
 
 [[package]]

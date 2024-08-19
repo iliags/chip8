@@ -4,7 +4,10 @@ use super::{
     keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::{PixelColors, PALETTES},
 };
-use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
+use c8_device::{
+    device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage,
+    quirks::Quirks,
+};
 use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
@@ -98,6 +101,8 @@ struct Settings {
     // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
 
+    quirk_settings: Quirks,
+
     temp_enable_audio: bool,
 }
 
@@ -110,6 +115,7 @@ impl Default for Settings {
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
+            quirk_settings: Quirks::default(),
 
             temp_enable_audio: true,
         }
@@ -645,21 +651,35 @@ impl AppUI {
     fn controls_quirks(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("quirks")).show(ui, |ui| {
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().vf_zero,
+                &mut self.settings.quirk_settings.vf_zero,
                 self.language.get_locale_string("quirk_vf0"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_vf0_hover"));
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().i_incremented,
+                &mut self.settings.quirk_settings.i_incremented,
                 self.language.get_locale_string("quirk_i"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_i_hover"));
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
+                &mut self.settings.quirk_settings.vx_shifted_directly,
                 self.language.get_locale_string("quirk_set_vxvy"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_set_vxvy_hover"));
+            /*
+               ui.checkbox(
+                   &mut self.settings.quirk_settings.display_waiting,
+                   self.language.get_locale_string("quirk_display_waiting"),
+               )
+               .on_hover_text(self.language.get_locale_string("quirk_display_waiting_hover"));
+            */
+            ui.checkbox(
+                &mut self.settings.quirk_settings.vx_shifted_directly,
+                self.language.get_locale_string("quirk_clip_sprites"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_clip_sprites_hover"));
         });
+
+        self.c8_device.set_quirks(self.settings.quirk_settings);
     }
 
     fn controls_emulator(&mut self, ui: &mut egui::Ui) {
