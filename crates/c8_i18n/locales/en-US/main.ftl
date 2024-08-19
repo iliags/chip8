@@ -39,7 +39,7 @@ color_palette = Color Palette
 keyboard = Keyboard
 
 ## Quirks
-compatibility_profile = Compatibility Profile
+compatibility_profile = Profile
 quirks = Quirks
 quirk_vf0 = VF Zero
 quirk_vf0_hover = VF is set to 0 during OR, AND, and XOR operations
@@ -47,8 +47,8 @@ quirk_i = I Incremented
 quirk_i_hover = I is incremented by 1 after storing a ranged memory value
 quirk_shift_vx = Shift VX directly
 quirk_shift_vx_hover = VX is set to VY directly during shift operations
-quirk_display_waiting = Display Waiting
-quirk_display_waiting_hover = The display waits until the vertical blank period to draw
+quirk_v_blank = Display Waiting
+quirk_v_blank_hover = The display waits until the vertical blank period to draw
 quirk_clip_sprites = Clip Sprites
 quirk_clip_sprites_hover = Sprites are clipped to the display area
 quirk_jump = Jump

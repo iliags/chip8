@@ -670,10 +670,10 @@ impl AppUI {
             .on_hover_text(self.language.get_locale_string("quirk_shift_vx_hover"));
             /*
                ui.checkbox(
-                   &mut self.settings.quirk_settings.display_waiting,
-                   self.language.get_locale_string("quirk_display_waiting"),
+                   &mut self.settings.quirk_settings.v_blank,
+                   self.language.get_locale_string("quirk_v_blank"),
                )
-               .on_hover_text(self.language.get_locale_string("quirk_display_waiting_hover"));
+               .on_hover_text(self.language.get_locale_string("quirk_v_blank_hover"));
             */
             ui.checkbox(
                 &mut self.settings.quirk_settings.clip_sprites,
@@ -687,13 +687,10 @@ impl AppUI {
             )
             .on_hover_text(self.language.get_locale_string("quirk_jump_hover"));
 
-            ui.horizontal(|ui| {
-                let profile_name =
-                    CompatibilityProfile::find_profile_name(self.settings.quirk_settings);
+            let profile_name =
+                CompatibilityProfile::find_profile_name(self.settings.quirk_settings);
 
-                egui::ComboBox::from_label(
-                    self.language.get_locale_string("compatibility_profile"),
-                )
+            egui::ComboBox::from_label(self.language.get_locale_string("compatibility_profile"))
                 .selected_text(profile_name)
                 .show_ui(ui, |ui| {
                     for profile in COMPATIBILITY_PROFILES.iter() {
@@ -704,16 +701,6 @@ impl AppUI {
                         );
                     }
                 });
-            });
-
-            /*
-            if ui
-                .button(self.language.get_locale_string("default"))
-                .clicked()
-            {
-                self.settings.quirk_settings = Quirks::default();
-            }
-             */
         });
 
         self.c8_device.set_quirks(self.settings.quirk_settings);
