@@ -214,10 +214,10 @@ impl eframe::App for AppUI {
                 }
 
                 /*
-                // Fast load ROM for testing
+                // Load ROM shortcut for testing
                 #[cfg(debug_assertions)]
                 {
-                    if i.key_pressed(egui::Key::Space) {
+                    if i.key_pressed(egui::Key::Tab) {
                         self.load_rom(GAME_ROMS[6].get_data().to_vec());
                         //self.load_rom(TEST_ROMS[0].get_data().to_vec());
                         //self.load_rom(TEST_ROMS[7].get_data().to_vec());
