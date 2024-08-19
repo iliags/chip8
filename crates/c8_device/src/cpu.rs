@@ -498,12 +498,11 @@ impl CPU {
                             let mut pixel = (line & (1 << bit)) >> bit;
 
                             // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
-                            if quirks.clip_sprites {
-                                if (x % screen_width) + b >= screen_width
-                                    || (y % screen_height) + a >= screen_height
-                                {
-                                    pixel = 0;
-                                }
+                            if quirks.clip_sprites
+                                && ((x % screen_width) + b >= screen_width
+                                    || (y % screen_height) + a >= screen_height)
+                            {
+                                pixel = 0;
                             }
 
                             if pixel == 0 {

@@ -735,7 +735,7 @@ impl AppUI {
                     for profile in COMPATIBILITY_PROFILES.iter() {
                         ui.selectable_value(
                             &mut self.settings.quirk_settings,
-                            profile.quirks.clone(),
+                            profile.quirks,
                             self.language.get_locale_string(profile.get_name_key()),
                         );
                     }

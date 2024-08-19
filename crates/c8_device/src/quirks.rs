@@ -1,5 +1,5 @@
 /// Quirks for the Chip-8 device
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Quirks {
     /// Quirk: Some programs expect VF to be 0
@@ -26,19 +26,6 @@ pub struct Quirks {
     /// Quirk: The 4 high bits of target address determines the offset register instead of V0
     /// Octo: compat-jump0
     pub jump_bits: bool,
-}
-
-impl Default for Quirks {
-    fn default() -> Self {
-        Self {
-            vf_zero: false,
-            i_incremented: false,
-            vx_shifted_directly: false,
-            v_blank: false,
-            clip_sprites: false,
-            jump_bits: false,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
