@@ -1,6 +1,6 @@
 [package]
 name = "chip8"
-version = "0.1.16"
+version = "0.1.17"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false

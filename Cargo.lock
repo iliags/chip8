@@ -664,7 +664,7 @@ dependencies = [
 
 [[package]]
 name = "chip8"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "c8_audio",
  "c8_device",
