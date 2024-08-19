@@ -4,6 +4,8 @@ Notes for later things.
 
 ## Octo `options.json`
 
+Egui has a hex to RGB color converter, however it isn't `const`.
+
 Conversion:
 
 ```json
@@ -11,16 +13,16 @@ Conversion:
 // cpu_speed
  "tickrate": 20,
 
- // Foreground1 color
+ // Foreground1
  "fillColor": "#FFCC00",
 
- // Foreground2 color
+ // Foreground2
  "fillColor2": "#FF6600",
 
- // Blended color
+ // Blended
  "blendColor": "#662200",
 
- // Background color
+ // Background
  "backgroundColor": "#996600",
 
  // Buzzer
@@ -67,7 +69,8 @@ Conversion:
 
 ## Compiler
 
-- Assembler/Disassembler
+- Assembler
+- Disassembler
 - Debugger
 
 ## Wishlist
@@ -76,5 +79,6 @@ Stuff that might be added later.
 
 - System visualizer
 - Save states
-- Bind actions to keys instead of hardcoding input
+- Touch input
 - User facing error messages rather than panicking.
+- Use icons over text
