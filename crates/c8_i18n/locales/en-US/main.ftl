@@ -30,6 +30,9 @@ speed_hover = The number of instructions executed per frame (the UI updates at 6
 ## Display
 display = Display
 scale = Scale
+display_fullscreen = Fullscreen Toggle
+display_underneath = Display Underneath
+display_underneath_hover = Draw the display underneath the rest of the UI
 
 ## Pixel
 pixel_colors = Pixel Colors

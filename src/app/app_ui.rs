@@ -104,8 +104,16 @@ struct Settings {
     // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
 
+    // Quirk settings
     quirk_settings: Quirks,
 
+    // Display in fullscreen
+    display_fullscreen: bool,
+
+    // Display is drawn under the side panels
+    draw_display_underneath: bool,
+
+    // Temporary audio enable
     temp_enable_audio: bool,
 }
 
@@ -119,6 +127,9 @@ impl Default for Settings {
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
             quirk_settings: Quirks::default(),
+
+            display_fullscreen: false,
+            draw_display_underneath: false,
 
             temp_enable_audio: true,
         }
@@ -266,61 +277,23 @@ impl eframe::App for AppUI {
             });
         });
 
-        // Control panel
-        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
-            ctx,
-            self.settings.control_panel_expanded,
-            |ui| {
-                ui.add_space(5.0);
+        if self.settings.draw_display_underneath {
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    self.controls_cpu_speed(ui);
+            self.side_panel_visualizer(ctx);
+            self.side_panel_controls(ctx);
+        } else {
+            self.side_panel_controls(ctx);
+            self.side_panel_visualizer(ctx);
 
-                    ui.separator();
-
-                    self.controls_display_scale(ui);
-
-                    ui.separator();
-
-                    self.controls_pixel_color(ui);
-
-                    ui.separator();
-
-                    self.controls_keyboard_grid(ui);
-
-                    ui.separator();
-
-                    self.controls_quirks(ui);
-
-                    ui.separator();
-
-                    self.controls_emulator(ui);
-
-                    ui.separator();
-
-                    self.controls_audio(ui);
-
-                    #[cfg(debug_assertions)]
-                    {
-                        //ui.separator();
-                    }
-                });
-            },
-        );
-
-        // Central panel with display window
-        egui::CentralPanel::default().show(ctx, |_ui| {
-            self.update_display_window(ctx);
-        });
-
-        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
-            ctx,
-            self.settings.visualizer_panel_expanded,
-            |ui| {
-                self.visualizer_memory(ui);
-                self.visualizer_registers(ui);
-            },
-        );
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
+        }
 
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
@@ -355,47 +328,51 @@ impl AppUI {
         self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
-    fn update_display_window(&mut self, ctx: &egui::Context) {
-        let display_title = if self.rom_name.is_empty() {
-            self.language.get_locale_string("display")
-        } else {
-            self.rom_name.clone()
+    fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        // Note: This is hacky
+        const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
+            magnification: egui::TextureFilter::Nearest,
+            minification: egui::TextureFilter::Nearest,
+            wrap_mode: egui::TextureWrapMode::ClampToEdge,
         };
 
-        egui::Window::new(display_title)
-            .resizable(false)
-            .id("display_window".into())
-            .show(ctx, |ui| {
-                // Note: This is hacky
+        match &mut self.display_handle {
+            Some(handle) => {
+                handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
+            }
+            None => {
+                self.display_handle = Some(ctx.load_texture(
+                    "DisplayTexture",
+                    self.display_image.clone(),
+                    TEXTURE_OPTIONS,
+                ));
+            }
+        }
 
-                const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
-                    magnification: egui::TextureFilter::Nearest,
-                    minification: egui::TextureFilter::Nearest,
-                    wrap_mode: egui::TextureWrapMode::ClampToEdge,
-                };
+        let image = match &self.display_handle {
+            Some(handle) => egui::Image::new(handle),
+            None => {
+                panic!("Display handle is None, this should never happen");
+            }
+        };
 
-                match &mut self.display_handle {
-                    Some(handle) => {
-                        handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
-                    }
-                    None => {
-                        self.display_handle = Some(ctx.load_texture(
-                            "DisplayTexture",
-                            self.display_image.clone(),
-                            TEXTURE_OPTIONS,
-                        ));
-                    }
-                }
-
-                let image = match &self.display_handle {
-                    Some(handle) => egui::Image::new(handle),
-                    None => {
-                        panic!("Display handle is None, this should never happen");
-                    }
-                };
-
-                ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale));
-            });
+        if self.settings.display_fullscreen {
+            ui.add(image.fit_to_exact_size(ui.available_size()));
+        } else {
+            let display_title = if self.rom_name.is_empty() {
+                self.language.get_locale_string("display")
+            } else {
+                self.rom_name.clone()
+            };
+            egui::Window::new(display_title)
+                .resizable(false)
+                .id("display_window".into())
+                .show(ctx, |ui| {
+                    ui.add(
+                        image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
+                    );
+                });
+        }
     }
 
     fn load_rom(&mut self, rom_data: Vec<u8>) {
@@ -518,6 +495,50 @@ impl AppUI {
         });
     }
 
+    pub fn side_panel_controls(&mut self, ctx: &egui::Context) {
+        // Control panel
+        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
+            ctx,
+            self.settings.control_panel_expanded,
+            |ui| {
+                ui.add_space(5.0);
+
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.controls_cpu_speed(ui);
+
+                    ui.separator();
+
+                    self.controls_display_scale(ui);
+
+                    ui.separator();
+
+                    self.controls_pixel_color(ui);
+
+                    ui.separator();
+
+                    self.controls_keyboard_grid(ui);
+
+                    ui.separator();
+
+                    self.controls_quirks(ui);
+
+                    ui.separator();
+
+                    self.controls_emulator(ui);
+
+                    ui.separator();
+
+                    self.controls_audio(ui);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        //ui.separator();
+                    }
+                });
+            },
+        );
+    }
+
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
@@ -545,16 +566,31 @@ impl AppUI {
 
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
-            ui.add(
-                egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
-                    .text(self.language.get_locale_string("scale")),
+            ui.toggle_value(
+                &mut self.settings.display_fullscreen,
+                self.language.get_locale_string("display_fullscreen"),
             );
 
-            if ui
-                .button(self.language.get_locale_string("default"))
-                .clicked()
-            {
-                self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+            ui.separator();
+
+            if self.settings.display_fullscreen {
+                ui.add(egui::Checkbox::new(
+                    &mut self.settings.draw_display_underneath,
+                    self.language.get_locale_string("display_underneath"),
+                ))
+                .on_hover_text(self.language.get_locale_string("display_underneath_hover"));
+            } else {
+                ui.add(
+                    egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
+                        .text(self.language.get_locale_string("scale")),
+                );
+
+                if ui
+                    .button(self.language.get_locale_string("default"))
+                    .clicked()
+                {
+                    self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+                }
             }
         });
     }
@@ -818,6 +854,19 @@ impl AppUI {
                         });
                     }
                 }
+            },
+        );
+    }
+
+    pub fn side_panel_visualizer(&mut self, ctx: &egui::Context) {
+        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
+            ctx,
+            self.settings.visualizer_panel_expanded,
+            |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.visualizer_memory(ui);
+                    self.visualizer_registers(ui);
+                });
             },
         );
     }
