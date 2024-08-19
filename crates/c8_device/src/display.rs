@@ -100,29 +100,9 @@ impl Display {
             .zip(self.get_plane_pixels(1).iter())
     }
 
-    /// Performs plane superimposition for use in image generation
-    ///
-    /// Possible results from a plane pixel:
-    /// 0 - If plane 0 is off and plane 1 is off, use background color
-    /// 1 - If plane 0 is off and plane 1 is on, use foreground 2 color
-    /// 2 - If plane 0 is on and plane 1 is off, use foreground 1 color
-    /// 3 - If plane 0 is on and plane 1 is on, use blended color
-    pub fn get_plane_pixel_result(&self) -> Vec<u8> {
-        self.get_plane_pixels(0)
-            .iter()
-            .zip(self.get_plane_pixels(1).iter())
-            .map(|(&p0, &p1)| (p0 << 1) | p1)
-            .collect()
-    }
-
     /// Get the display resolution
     pub fn get_resolution(&self) -> DisplayResolution {
         self.resolution
-    }
-
-    /// Get the display resolution as a string
-    pub fn get_resolution_str(&self) -> &str {
-        self.resolution.get_resolution_str()
     }
 
     /// Set the display resolution
@@ -132,34 +112,19 @@ impl Display {
     }
 
     /// Get the screen size XY
-    pub const fn get_screen_size_xy(&self) -> (usize, usize) {
+    pub(crate) const fn get_screen_size_xy(&self) -> (usize, usize) {
         self.resolution.get_resolution_size_xy()
     }
 
     /// Get the screen size
-    pub const fn get_screen_size(&self) -> usize {
+    pub(crate) const fn get_screen_size(&self) -> usize {
         self.resolution.get_resolution_size()
     }
 
     /// Get the pixels of a plane
-    pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        let plane = self.clamp_plane_value(plane);
+    fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
+        //let plane = self.clamp_plane_value(plane);
         &self.planes[plane].pixels
-    }
-
-    /// Get the pixel at the given x and y coordinates for a plane
-    pub fn get_plane_pixel(&self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = self.clamp_plane_value(plane);
-        // Get the pixel index
-        let index = self.get_pixel_index(x, y);
-
-        // Return the pixel value
-        self.planes[plane].pixels[index]
-    }
-
-    /// Get if a pixel is on or off at the given x and y coordinates
-    pub fn get_plane_pixel_state(&self, plane: usize, x: usize, y: usize) -> bool {
-        self.get_plane_pixel(plane, x, y) == 1
     }
 
     /// Clear the display
@@ -177,9 +142,6 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
-        // TODO: If plane is 2, draw to both planes
-        // TODO: Implement colors
-
         let plane = self.clamp_plane_value(plane);
         let index = self.get_pixel_index(x, y);
 

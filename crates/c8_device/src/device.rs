@@ -68,9 +68,9 @@ impl C8 {
         &self.quirks
     }
 
-    /// Get the quirks of the device (mutable)
-    pub fn get_quirks_mut(&mut self) -> &mut Quirks {
-        &mut self.quirks
+    /// Set the quirks of the device
+    pub fn set_quirks(&mut self, quirks: Quirks) {
+        self.quirks = quirks;
     }
 
     /// Get the display of the device
@@ -96,11 +96,6 @@ impl C8 {
     /// Get if the device is running
     pub fn get_is_running(&self) -> bool {
         self.is_running
-    }
-
-    /// Set the quirks of the device
-    pub fn set_quirks(&mut self, quirks: Quirks) {
-        self.quirks = quirks;
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
