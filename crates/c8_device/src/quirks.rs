@@ -24,6 +24,7 @@ pub struct Quirks {
     pub clip_sprites: bool,
 
     /// Quirk: The 4 high bits of target address determines the offset register instead of V0
+    /// Octo: compat-jump0
     pub jump_bits: bool,
 }
 
