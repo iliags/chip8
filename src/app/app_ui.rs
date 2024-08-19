@@ -409,11 +409,11 @@ impl AppUI {
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
 
-        self.c8_device.load_rom(self.rom_file.clone());
+        self.c8_device.load_rom(&self.rom_file);
     }
 
     fn reload_rom(&mut self) {
-        self.c8_device.load_rom(self.rom_file.clone());
+        self.c8_device.load_rom(&self.rom_file);
     }
 
     fn unload_rom(&mut self) {
@@ -821,9 +821,7 @@ impl AppUI {
                         .on_hover_text(self.language.get_locale_string("font_hover"))
                         .clicked()
                         .then(|| {
-                            self.c8_device
-                                .get_memory_mut()
-                                .load_font_small(font.clone());
+                            self.c8_device.get_memory_mut().load_font_small(font);
                         });
                     }
                 });

@@ -92,8 +92,8 @@ impl CPU {
     }
 
     /// Get the general registers
-    pub fn get_registers(&self) -> Vec<u8> {
-        self.registers.clone()
+    pub fn get_registers(&self) -> &Vec<u8> {
+        &self.registers
     }
 
     /// Step the CPU by one instruction
