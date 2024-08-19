@@ -566,7 +566,7 @@ impl AppUI {
 
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
-            ui.toggle_value(
+            ui.checkbox(
                 &mut self.settings.display_fullscreen,
                 self.language.get_locale_string("display_fullscreen"),
             );
