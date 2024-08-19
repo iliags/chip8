@@ -212,6 +212,7 @@ impl eframe::App for AppUI {
                     self.language.get_locale_string("control_panel"),
                 );
 
+                #[cfg(debug_assertions)]
                 ui.toggle_value(
                     &mut self.settings.visualizer_panel_expanded,
                     self.language.get_locale_string("visualizer_panel"),
