@@ -599,29 +599,31 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("pixel_colors")).show(
             ui,
             |ui| {
-                // TODO: Make this look nicer
-                /*
+                let selected_text = self
+                    .language
+                    .get_locale_string(self.settings.pixel_colors.get_name_key());
+
+                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
+                    .selected_text(selected_text)
+                    .show_ui(ui, |ui| {
+                        for palette in PALETTES.iter() {
+                            let palette_name =
+                                self.language.get_locale_string(palette.get_name_key());
+                            ui.selectable_value(
+                                &mut self.settings.pixel_colors,
+                                *palette,
+                                palette_name,
+                            );
+                        }
+                    });
+
+                /* TODO: Custom color palette
                 if ui
                     .button(self.language.get_locale_string("default"))
                     .clicked()
                 {
                     self.settings.pixel_colors = PixelColors::default();
                 }
-                 */
-
-                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
-                    .selected_text(self.settings.pixel_colors.get_name())
-                    .show_ui(ui, |ui| {
-                        for palette in PALETTES.iter() {
-                            ui.selectable_value(
-                                &mut self.settings.pixel_colors,
-                                *palette,
-                                palette.get_name(),
-                            );
-                        }
-                    });
-
-                /* TODO: Custom color palette
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
                     ui,
                     |ui| {
@@ -724,7 +726,7 @@ impl AppUI {
             .on_hover_text(self.language.get_locale_string("quirk_jump_hover"));
 
             let profile_name =
-                CompatibilityProfile::find_profile_name(self.settings.quirk_settings);
+                CompatibilityProfile::find_profile_name_key(self.settings.quirk_settings);
 
             egui::ComboBox::from_label(self.language.get_locale_string("compatibility_profile"))
                 .selected_text(profile_name)
@@ -733,7 +735,7 @@ impl AppUI {
                         ui.selectable_value(
                             &mut self.settings.quirk_settings,
                             profile.quirks.clone(),
-                            profile.get_name(),
+                            self.language.get_locale_string(profile.get_name_key()),
                         );
                     }
                 });

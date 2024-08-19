@@ -1,6 +1,12 @@
 # App name
 app_name = Chip 8
 
+# General
+default = Default
+custom = Custom
+under_construction = Under construction
+not_implemented = Not implemented
+
 # Menu bar
 open_rom = Open ROM
 control_panel = Control Panel
@@ -18,9 +24,6 @@ reload_rom = Reload ROM
 unload_rom = Unload ROM
 
 # Controls
-
-under_construction = Under construction
-not_implemented = Not implemented
 
 ## CPU
 cpu_speed = CPU Speed
@@ -70,7 +73,7 @@ language = Language
 font_small = Small Font
 font_large = Large Font
 font_hover = Font usage may not be supported by all ROMs
-default = Default
+
 
 ## Audio
 audio_controls = Audio Controls
@@ -82,3 +85,13 @@ enable_audio = Enable Audio
 ## Visualizer
 memory = Memory
 registers = Registers
+
+# Devices
+chip8 = Chip-8
+super_chip = Super Chip
+xo_chip = XO Chip
+
+# Color Palettes
+octo = Octo
+lcd = LCD
+grey = Grey

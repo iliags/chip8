@@ -62,24 +62,24 @@ pub struct CompatibilityProfile {
 }
 
 impl CompatibilityProfile {
-    /// Get the name of the compatibility profile
-    pub fn get_name(&self) -> &str {
+    /// Get the locale string key of the compatibility profile
+    pub fn get_name_key(&self) -> &str {
         match self.device {
-            CompatibilityDevice::Default => "Default",
-            CompatibilityDevice::Chip8 => "Chip-8",
-            CompatibilityDevice::SuperChip => "SuperChip",
-            //CompatibilityDevice::XOChip => "XO-Chip",
+            CompatibilityDevice::Default => "default",
+            CompatibilityDevice::Chip8 => "chip8",
+            CompatibilityDevice::SuperChip => "super_chip",
+            //CompatibilityDevice::XOChip => "xo_chip",
         }
     }
 
     /// Find the profile name based on the quirks
-    pub fn find_profile_name(quirks: Quirks) -> &'static str {
+    pub fn find_profile_name_key(quirks: Quirks) -> &'static str {
         for profile in COMPATIBILITY_PROFILES.iter() {
             if profile.quirks == quirks {
-                return profile.get_name();
+                return profile.get_name_key();
             }
         }
-        "Custom"
+        "custom"
     }
 }
 

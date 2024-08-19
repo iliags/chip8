@@ -73,8 +73,8 @@ impl PixelColors {
         }
     }
 
-    pub fn get_name(&self) -> &str {
-        self.palette.get_name()
+    pub fn get_name_key(&self) -> &str {
+        self.palette.get_name_key()
     }
 
     pub fn get_background_color(&self) -> &Color32 {
@@ -144,12 +144,13 @@ impl From<Palette> for PixelColors {
 }
 
 impl Palette {
-    pub fn get_name(&self) -> &str {
+    /// Get the locale string key
+    pub fn get_name_key(&self) -> &str {
         match self {
-            Palette::Default => "Default",
-            Palette::Octo => "Octo",
-            Palette::LCD => "LCD",
-            Palette::Grey => "Grey",
+            Palette::Default => "default",
+            Palette::Octo => "octo",
+            Palette::LCD => "lcd",
+            Palette::Grey => "grey",
         }
     }
 }
