@@ -5,19 +5,20 @@ authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
+default-run = "chip8"
 exclude = [
     # Exclude source art assets
     "art/**/*",
 ]
-default-run = "chip8"
+
 
 [[bin]]
 name = "chip8"
 path = "src/main.rs"
 
-[[bin]]
-name = "c8_compiler"
-path = "crates/c8_compiler/src/main.rs"
+#[[bin]]
+#name = "c8_compiler"
+#path = "crates/c8_compiler/src/main.rs"
 
 [workspace]
 members = ["crates/*"]
