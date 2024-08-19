@@ -5,8 +5,11 @@ use super::{
     pixel_color::{PixelColors, PALETTES},
 };
 use c8_device::{
-    device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage,
-    quirks::Quirks,
+    device::C8,
+    display::DisplayResolution,
+    fonts::FONT_DATA,
+    message::DeviceMessage,
+    quirks::{CompatibilityProfile, Quirks, COMPATIBILITY_PROFILES},
 };
 use c8_i18n::{
     locale_text::LocaleText,
@@ -662,9 +665,9 @@ impl AppUI {
             .on_hover_text(self.language.get_locale_string("quirk_i_hover"));
             ui.checkbox(
                 &mut self.settings.quirk_settings.vx_shifted_directly,
-                self.language.get_locale_string("quirk_set_vxvy"),
+                self.language.get_locale_string("quirk_shift_vx"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_set_vxvy_hover"));
+            .on_hover_text(self.language.get_locale_string("quirk_shift_vx_hover"));
             /*
                ui.checkbox(
                    &mut self.settings.quirk_settings.display_waiting,
@@ -678,12 +681,39 @@ impl AppUI {
             )
             .on_hover_text(self.language.get_locale_string("quirk_clip_sprites_hover"));
 
+            ui.checkbox(
+                &mut self.settings.quirk_settings.jump_bits,
+                self.language.get_locale_string("quirk_jump"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_jump_hover"));
+
+            ui.horizontal(|ui| {
+                let profile_name =
+                    CompatibilityProfile::find_profile_name(self.settings.quirk_settings);
+
+                egui::ComboBox::from_label(
+                    self.language.get_locale_string("compatibility_profile"),
+                )
+                .selected_text(profile_name)
+                .show_ui(ui, |ui| {
+                    for profile in COMPATIBILITY_PROFILES.iter() {
+                        ui.selectable_value(
+                            &mut self.settings.quirk_settings,
+                            profile.quirks.clone(),
+                            profile.get_name(),
+                        );
+                    }
+                });
+            });
+
+            /*
             if ui
                 .button(self.language.get_locale_string("default"))
                 .clicked()
             {
                 self.settings.quirk_settings = Quirks::default();
             }
+             */
         });
 
         self.c8_device.set_quirks(self.settings.quirk_settings);

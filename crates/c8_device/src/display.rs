@@ -198,21 +198,6 @@ impl Display {
         result as u8
     }
 
-    /// Set a pixel directly, can be dangerous
-    pub(crate) fn set_plane_pixel_direct(&mut self, plane: usize, index: usize) -> u8 {
-        let mut result = false;
-
-        if self.planes[plane].pixels[index] == 0 {
-            self.planes[plane].pixels[index] = 1;
-        } else {
-            self.planes[plane].pixels[index] = 0;
-            result = true;
-        }
-
-        // Return if a collision occurred
-        result as u8
-    }
-
     /// Set the active plane
     pub(crate) fn set_active_plane(&mut self, plane: usize) {
         let plane = self.clamp_plane_value(plane);

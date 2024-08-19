@@ -391,9 +391,9 @@ impl CPU {
             (8, _, _, 6) => {
                 // Quirk: Some programs expect Vx to be shifted directly without assigning VY
                 let quirk_y = if quirks.vx_shifted_directly {
-                    self.registers[reg_y]
-                } else {
                     self.registers[reg_x]
+                } else {
+                    self.registers[reg_y]
                 };
 
                 self.registers[reg_x] = quirk_y >> 1;
@@ -414,9 +414,9 @@ impl CPU {
             (8, _, _, 0xE) => {
                 // Quirk: Some programs expect Vx to be shifted directly without assigning VY
                 let quirk_y = if quirks.vx_shifted_directly {
-                    self.registers[reg_y]
-                } else {
                     self.registers[reg_x]
+                } else {
+                    self.registers[reg_y]
                 };
 
                 self.registers[reg_x] = quirk_y << 1;
@@ -441,7 +441,12 @@ impl CPU {
             // Jump to location nnn + V0
             // 0xBNNN
             (0xB, _, _, _) => {
-                self.program_counter = nnn + self.registers[Register::V0 as usize] as u16;
+                self.program_counter = if quirks.jump_bits {
+                    let index = (nnn >> 8) & 0xF;
+                    nnn + self.registers[index as usize] as u16
+                } else {
+                    nnn + self.registers[Register::V0 as usize] as u16
+                }
             }
 
             // Set Vx = random byte AND nn
@@ -463,8 +468,9 @@ impl CPU {
                 self.registers[Register::VF as usize] = 0;
                 let mut collision = 0;
 
-                let x = self.registers[reg_x] as usize;
-                let y = self.registers[reg_y] as usize;
+                let (screen_width, screen_height) = display.get_screen_size_xy();
+                let x = self.registers[reg_x] as usize; // % screen_width;
+                let y = self.registers[reg_y] as usize; // % screen_height;
 
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 let height = n;
@@ -479,21 +485,22 @@ impl CPU {
                         continue;
                     }
 
-                    for row in 0..sprite_height {
+                    for a in 0..sprite_height {
                         let line: u16 = if height == 0 {
-                            let read = 2 * row;
+                            let read = 2 * a;
                             (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
                         } else {
-                            memory.data[i + row] as u16
+                            memory.data[i + a] as u16
                         };
 
-                        for column in 0..sprite_width {
-                            let bit = if height == 0 { 15 - column } else { 7 - column };
+                        for b in 0..sprite_width {
+                            let bit = if height == 0 { 15 - b } else { 7 - b };
                             let mut pixel = (line & (1 << bit)) >> bit;
 
+                            // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
                             if quirks.clip_sprites {
-                                if x + column >= display.get_screen_size_xy().0
-                                    || y + row >= display.get_screen_size_xy().1
+                                if (x % screen_width) + b >= screen_width
+                                    || (y % screen_height) + a >= screen_height
                                 {
                                     pixel = 0;
                                 }
@@ -503,8 +510,8 @@ impl CPU {
                                 continue;
                             }
 
-                            let pos_x = x + column;
-                            let pos_y = y + row;
+                            let pos_x = x + b;
+                            let pos_y = y + a;
 
                             if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
                                 collision = 1;
