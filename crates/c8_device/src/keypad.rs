@@ -111,11 +111,6 @@ impl Keypad {
     pub fn is_key_pressed(&self, key: &KeypadKey) -> bool {
         self.get_key(key) == 1
     }
-
-    /// Get the underlying key array
-    pub fn get_keys(&self) -> &[u8; 16] {
-        &self.0
-    }
 }
 
 #[cfg(test)]

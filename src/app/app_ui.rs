@@ -4,7 +4,13 @@ use super::{
     keyboard::{get_key_mapping, KEYBOARD},
     pixel_color::{PixelColors, PALETTES},
 };
-use c8_device::{device::C8, display::DisplayResolution, fonts::FONT_DATA, message::DeviceMessage};
+use c8_device::{
+    device::C8,
+    display::DisplayResolution,
+    fonts::FONT_DATA,
+    message::DeviceMessage,
+    quirks::{CompatibilityProfile, Quirks, COMPATIBILITY_PROFILES},
+};
 use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
@@ -12,7 +18,6 @@ use c8_i18n::{
 use egui::{Color32, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
-use std::sync::Arc;
 use std::{cell::RefCell, rc::Rc};
 use unic_langid::LanguageIdentifier;
 
@@ -99,6 +104,16 @@ struct Settings {
     // Whether the visualizer panel is expanded
     visualizer_panel_expanded: bool,
 
+    // Quirk settings
+    quirk_settings: Quirks,
+
+    // Display in fullscreen
+    display_fullscreen: bool,
+
+    // Display is drawn under the side panels
+    draw_display_underneath: bool,
+
+    // Temporary audio enable
     temp_enable_audio: bool,
 }
 
@@ -111,6 +126,10 @@ impl Default for Settings {
 
             control_panel_expanded: true,
             visualizer_panel_expanded: false,
+            quirk_settings: Quirks::default(),
+
+            display_fullscreen: false,
+            draw_display_underneath: false,
 
             temp_enable_audio: true,
         }
@@ -125,67 +144,67 @@ impl eframe::App for AppUI {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // Step the emulator
-            let messages = self.c8_device.step(self.settings.cpu_speed);
+        // Step the emulator
+        let messages = self.c8_device.step(self.settings.cpu_speed);
 
-            // Process messages
-            for message in messages.iter() {
-                match message {
-                    DeviceMessage::ChangeResolution(_) => {
-                        self.update_resolution();
-                    }
-                    DeviceMessage::Exit => {
-                        println!("Exiting device");
-                        self.unload_rom();
-                    }
-                    DeviceMessage::UnknownOpCode(_opcode) => {
-                        // TODO: Push to a list
-                        //println!("Unknown OpCode: {:#06X}", op_code);
-                    }
-                    _ => {}
+        // Process messages
+        for message in messages.iter() {
+            match message {
+                DeviceMessage::ChangeResolution(_) => {
+                    self.update_resolution();
                 }
+                DeviceMessage::Exit => {
+                    println!("Exiting device");
+                    self.unload_rom();
+                }
+                DeviceMessage::UnknownOpCode(_opcode) => {
+                    // TODO: Push to a list
+                    //println!("Unknown OpCode: {:#06X}", op_code);
+                }
+                _ => {}
             }
+        }
 
-            // Update the display image with the current display buffer
-            // TODO: There is some minor color blending issues with the display, probably needs a buffer
-            if self.c8_device.get_is_running() {
-                self.display_image.pixels = self
-                    .c8_device
-                    .get_display()
-                    .get_zipped_iterator()
-                    .map(|(&p0, &p1)| {
-                        let result = (p0 << 1) | p1;
-                        *self.settings.pixel_colors.get_pixel_color(result.into())
-                    })
-                    .collect();
-            }
+        // Update the display image with the current display buffer
+        // TODO: There is some minor color blending issues with the display, probably needs a buffer
+        if self.c8_device.get_is_running() {
+            self.display_image.pixels = self
+                .c8_device
+                .get_display()
+                .get_zipped_iterator()
+                .map(|(&p0, &p1)| {
+                    let result = (p0 << 1) | p1;
+                    *self.settings.pixel_colors.get_pixel_color(result.into())
+                })
+                .collect();
+        }
 
-            // Process input
-            for key in KEYBOARD {
-                ctx.input(|i| {
-                    let current_key = &get_key_mapping(key)
-                        .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+        // Process input
+        for key in KEYBOARD {
+            ctx.input(|i| {
+                let current_key = &get_key_mapping(key)
+                    .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
-                    /*
-                    // Fast load ROM for testing
-                    #[cfg(debug_assertions)]
-                    {
-                        if i.key_pressed(egui::Key::Space) {
-                            self.load_rom(GAME_ROMS[6].get_data().to_vec());
-                            //self.load_rom(TEST_ROMS[0].get_data().to_vec());
-                            //self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                            //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
-                        }
+                /*
+                // Fast load ROM for testing
+                #[cfg(debug_assertions)]
+                {
+                    if i.key_pressed(egui::Key::Space) {
+                        self.load_rom(GAME_ROMS[6].get_data().to_vec());
+                        //self.load_rom(TEST_ROMS[0].get_data().to_vec());
+                        //self.load_rom(TEST_ROMS[7].get_data().to_vec());
+                        //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                     }
-                    */
+                }
+                */
 
-                    self.c8_device
-                        .get_keypad_mut()
-                        .set_key(current_key, i.key_down(*key))
-                });
-            }
+                self.c8_device
+                    .get_keypad_mut()
+                    .set_key(current_key, i.key_down(*key))
+            });
+        }
 
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
@@ -193,6 +212,7 @@ impl eframe::App for AppUI {
                     self.language.get_locale_string("control_panel"),
                 );
 
+                #[cfg(debug_assertions)]
                 ui.toggle_value(
                     &mut self.settings.visualizer_panel_expanded,
                     self.language.get_locale_string("visualizer_panel"),
@@ -258,61 +278,23 @@ impl eframe::App for AppUI {
             });
         });
 
-        // Control panel
-        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
-            ctx,
-            self.settings.control_panel_expanded,
-            |ui| {
-                ui.add_space(5.0);
+        if self.settings.draw_display_underneath {
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    self.controls_cpu_speed(ui);
+            self.side_panel_visualizer(ctx);
+            self.side_panel_controls(ctx);
+        } else {
+            self.side_panel_controls(ctx);
+            self.side_panel_visualizer(ctx);
 
-                    ui.separator();
-
-                    self.controls_display_scale(ui);
-
-                    ui.separator();
-
-                    self.controls_pixel_color(ui);
-
-                    ui.separator();
-
-                    self.controls_keyboard_grid(ui);
-
-                    ui.separator();
-
-                    self.controls_quirks(ui);
-
-                    ui.separator();
-
-                    self.controls_emulator(ui);
-
-                    ui.separator();
-
-                    self.controls_audio(ui);
-
-                    #[cfg(debug_assertions)]
-                    {
-                        //ui.separator();
-                    }
-                });
-            },
-        );
-
-        // Central panel with display window
-        egui::CentralPanel::default().show(ctx, |_ui| {
-            self.update_display_window(ctx);
-        });
-
-        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
-            ctx,
-            self.settings.visualizer_panel_expanded,
-            |ui| {
-                self.visualizer_memory(ui);
-                self.visualizer_registers(ui);
-            },
-        );
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
+        }
 
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
@@ -343,49 +325,55 @@ impl AppUI {
             .get_display()
             .get_resolution()
             .get_resolution_size_xy();
-        self.display_image = egui::ColorImage::new([width, height], Color32::BLACK);
+        let bg_color = self.settings.pixel_colors.get_background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
-    fn update_display_window(&mut self, ctx: &egui::Context) {
-        let display_title = if self.rom_name.is_empty() {
-            self.language.get_locale_string("display")
-        } else {
-            self.rom_name.clone()
+    fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        // Note: This is hacky
+        const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
+            magnification: egui::TextureFilter::Nearest,
+            minification: egui::TextureFilter::Nearest,
+            wrap_mode: egui::TextureWrapMode::ClampToEdge,
         };
 
-        egui::Window::new(display_title)
-            .resizable(false)
-            .id("display_window".into())
-            .show(ctx, |ui| {
-                // Note: This is hacky
-                // TODO: Figure out how to do this without cloning the image
-                let image_data = egui::ImageData::Color(Arc::new(self.display_image.clone()));
+        match &mut self.display_handle {
+            Some(handle) => {
+                handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
+            }
+            None => {
+                self.display_handle = Some(ctx.load_texture(
+                    "DisplayTexture",
+                    self.display_image.clone(),
+                    TEXTURE_OPTIONS,
+                ));
+            }
+        }
 
-                const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
-                    magnification: egui::TextureFilter::Nearest,
-                    minification: egui::TextureFilter::Nearest,
-                    wrap_mode: egui::TextureWrapMode::ClampToEdge,
-                };
+        let image = match &self.display_handle {
+            Some(handle) => egui::Image::new(handle),
+            None => {
+                panic!("Display handle is None, this should never happen");
+            }
+        };
 
-                match &mut self.display_handle {
-                    Some(handle) => {
-                        handle.set(image_data, TEXTURE_OPTIONS);
-                    }
-                    None => {
-                        self.display_handle =
-                            Some(ctx.load_texture("DisplayTexture", image_data, TEXTURE_OPTIONS));
-                    }
-                }
-
-                let image = match &self.display_handle {
-                    Some(handle) => egui::Image::new(handle),
-                    None => {
-                        panic!("Display handle is None, this should never happen");
-                    }
-                };
-
-                ui.add(image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale));
-            });
+        if self.settings.display_fullscreen {
+            ui.add(image.fit_to_exact_size(ui.available_size()));
+        } else {
+            let display_title = if self.rom_name.is_empty() {
+                self.language.get_locale_string("display")
+            } else {
+                self.rom_name.clone()
+            };
+            egui::Window::new(display_title)
+                .resizable(false)
+                .id("display_window".into())
+                .show(ctx, |ui| {
+                    ui.add(
+                        image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
+                    );
+                });
+        }
     }
 
     fn load_rom(&mut self, rom_data: Vec<u8>) {
@@ -508,6 +496,50 @@ impl AppUI {
         });
     }
 
+    pub fn side_panel_controls(&mut self, ctx: &egui::Context) {
+        // Control panel
+        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
+            ctx,
+            self.settings.control_panel_expanded,
+            |ui| {
+                ui.add_space(5.0);
+
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.controls_cpu_speed(ui);
+
+                    ui.separator();
+
+                    self.controls_display_scale(ui);
+
+                    ui.separator();
+
+                    self.controls_pixel_color(ui);
+
+                    ui.separator();
+
+                    self.controls_keyboard_grid(ui);
+
+                    ui.separator();
+
+                    self.controls_quirks(ui);
+
+                    ui.separator();
+
+                    self.controls_emulator(ui);
+
+                    ui.separator();
+
+                    self.controls_audio(ui);
+
+                    #[cfg(debug_assertions)]
+                    {
+                        //ui.separator();
+                    }
+                });
+            },
+        );
+    }
+
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
@@ -535,16 +567,31 @@ impl AppUI {
 
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
-            ui.add(
-                egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
-                    .text(self.language.get_locale_string("scale")),
+            ui.checkbox(
+                &mut self.settings.display_fullscreen,
+                self.language.get_locale_string("display_fullscreen"),
             );
 
-            if ui
-                .button(self.language.get_locale_string("default"))
-                .clicked()
-            {
-                self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+            ui.separator();
+
+            if self.settings.display_fullscreen {
+                ui.add(egui::Checkbox::new(
+                    &mut self.settings.draw_display_underneath,
+                    self.language.get_locale_string("display_underneath"),
+                ))
+                .on_hover_text(self.language.get_locale_string("display_underneath_hover"));
+            } else {
+                ui.add(
+                    egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
+                        .text(self.language.get_locale_string("scale")),
+                );
+
+                if ui
+                    .button(self.language.get_locale_string("default"))
+                    .clicked()
+                {
+                    self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+                }
             }
         });
     }
@@ -553,29 +600,31 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("pixel_colors")).show(
             ui,
             |ui| {
-                // TODO: Make this look nicer
-                /*
+                let selected_text = self
+                    .language
+                    .get_locale_string(self.settings.pixel_colors.get_name_key());
+
+                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
+                    .selected_text(selected_text)
+                    .show_ui(ui, |ui| {
+                        for palette in PALETTES.iter() {
+                            let palette_name =
+                                self.language.get_locale_string(palette.get_name_key());
+                            ui.selectable_value(
+                                &mut self.settings.pixel_colors,
+                                *palette,
+                                palette_name,
+                            );
+                        }
+                    });
+
+                /* TODO: Custom color palette
                 if ui
                     .button(self.language.get_locale_string("default"))
                     .clicked()
                 {
                     self.settings.pixel_colors = PixelColors::default();
                 }
-                 */
-
-                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
-                    .selected_text(self.settings.pixel_colors.get_name())
-                    .show_ui(ui, |ui| {
-                        for palette in PALETTES.iter() {
-                            ui.selectable_value(
-                                &mut self.settings.pixel_colors,
-                                *palette,
-                                palette.get_name(),
-                            );
-                        }
-                    });
-
-                /* TODO: Custom color palette
                 egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
                     ui,
                     |ui| {
@@ -644,21 +693,56 @@ impl AppUI {
     fn controls_quirks(&mut self, ui: &mut egui::Ui) {
         egui::CollapsingHeader::new(self.language.get_locale_string("quirks")).show(ui, |ui| {
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().vf_zero,
+                &mut self.settings.quirk_settings.vf_zero,
                 self.language.get_locale_string("quirk_vf0"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_vf0_hover"));
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().i_incremented,
+                &mut self.settings.quirk_settings.i_incremented,
                 self.language.get_locale_string("quirk_i"),
             )
             .on_hover_text(self.language.get_locale_string("quirk_i_hover"));
             ui.checkbox(
-                &mut self.c8_device.get_quirks_mut().vx_shifted_directly,
-                self.language.get_locale_string("quirk_set_vxvy"),
+                &mut self.settings.quirk_settings.vx_shifted_directly,
+                self.language.get_locale_string("quirk_shift_vx"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_set_vxvy_hover"));
+            .on_hover_text(self.language.get_locale_string("quirk_shift_vx_hover"));
+            /*
+               ui.checkbox(
+                   &mut self.settings.quirk_settings.v_blank,
+                   self.language.get_locale_string("quirk_v_blank"),
+               )
+               .on_hover_text(self.language.get_locale_string("quirk_v_blank_hover"));
+            */
+            ui.checkbox(
+                &mut self.settings.quirk_settings.clip_sprites,
+                self.language.get_locale_string("quirk_clip_sprites"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_clip_sprites_hover"));
+
+            ui.checkbox(
+                &mut self.settings.quirk_settings.jump_bits,
+                self.language.get_locale_string("quirk_jump"),
+            )
+            .on_hover_text(self.language.get_locale_string("quirk_jump_hover"));
+
+            let profile_name =
+                CompatibilityProfile::find_profile_name_key(self.settings.quirk_settings);
+
+            egui::ComboBox::from_label(self.language.get_locale_string("compatibility_profile"))
+                .selected_text(self.language.get_locale_string(profile_name))
+                .show_ui(ui, |ui| {
+                    for profile in COMPATIBILITY_PROFILES.iter() {
+                        ui.selectable_value(
+                            &mut self.settings.quirk_settings,
+                            profile.quirks,
+                            self.language.get_locale_string(profile.get_name_key()),
+                        );
+                    }
+                });
         });
+
+        self.c8_device.set_quirks(self.settings.quirk_settings);
     }
 
     fn controls_emulator(&mut self, ui: &mut egui::Ui) {
@@ -773,6 +857,19 @@ impl AppUI {
                         });
                     }
                 }
+            },
+        );
+    }
+
+    pub fn side_panel_visualizer(&mut self, ctx: &egui::Context) {
+        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
+            ctx,
+            self.settings.visualizer_panel_expanded,
+            |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    self.visualizer_memory(ui);
+                    self.visualizer_registers(ui);
+                });
             },
         );
     }

@@ -105,11 +105,6 @@ impl Display {
         self.resolution
     }
 
-    /// Get the display resolution as a string
-    pub fn get_resolution_str(&self) -> &str {
-        self.resolution.get_resolution_str()
-    }
-
     /// Set the display resolution
     pub fn set_resolution(&mut self, resolution: DisplayResolution) {
         self.resolution = resolution;
@@ -117,34 +112,19 @@ impl Display {
     }
 
     /// Get the screen size XY
-    pub const fn get_screen_size_xy(&self) -> (usize, usize) {
+    pub(crate) const fn get_screen_size_xy(&self) -> (usize, usize) {
         self.resolution.get_resolution_size_xy()
     }
 
     /// Get the screen size
-    pub const fn get_screen_size(&self) -> usize {
+    pub(crate) const fn get_screen_size(&self) -> usize {
         self.resolution.get_resolution_size()
     }
 
     /// Get the pixels of a plane
-    pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        let plane = self.clamp_plane_value(plane);
+    fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
+        //let plane = self.clamp_plane_value(plane);
         &self.planes[plane].pixels
-    }
-
-    /// Get the pixel at the given x and y coordinates for a plane
-    pub fn get_plane_pixel(&self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = self.clamp_plane_value(plane);
-        // Get the pixel index
-        let index = self.get_pixel_index(x, y);
-
-        // Return the pixel value
-        self.planes[plane].pixels[index]
-    }
-
-    /// Get if a pixel is on or off at the given x and y coordinates
-    pub fn get_plane_pixel_state(&self, plane: usize, x: usize, y: usize) -> bool {
-        self.get_plane_pixel(plane, x, y) == 1
     }
 
     /// Clear the display
@@ -162,30 +142,12 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
-        // TODO: If plane is 2, draw to both planes
-        // TODO: Implement colors
-
         let plane = self.clamp_plane_value(plane);
         let index = self.get_pixel_index(x, y);
 
         let mut result = false;
 
         // Pixels are XORed on the display
-
-        if self.planes[plane].pixels[index] == 0 {
-            self.planes[plane].pixels[index] = 1;
-        } else {
-            self.planes[plane].pixels[index] = 0;
-            result = true;
-        }
-
-        // Return if a collision occurred
-        result as u8
-    }
-
-    /// Set a pixel directly, can be dangerous
-    pub(crate) fn set_plane_pixel_direct(&mut self, plane: usize, index: usize) -> u8 {
-        let mut result = false;
 
         if self.planes[plane].pixels[index] == 0 {
             self.planes[plane].pixels[index] = 1;

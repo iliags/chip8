@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 rand = { workspace = true }
 c8_audio = { workspace = true }
+serde = { workspace = true, optional = true }
 
 [lints]
 workspace = true
@@ -13,3 +14,7 @@ workspace = true
 [lib]
 test = true
 doctest = true
+
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
