@@ -729,7 +729,7 @@ impl AppUI {
                 CompatibilityProfile::find_profile_name_key(self.settings.quirk_settings);
 
             egui::ComboBox::from_label(self.language.get_locale_string("compatibility_profile"))
-                .selected_text(profile_name)
+                .selected_text(self.language.get_locale_string(profile_name))
                 .show_ui(ui, |ui| {
                     for profile in COMPATIBILITY_PROFILES.iter() {
                         ui.selectable_value(
