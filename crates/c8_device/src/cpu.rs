@@ -157,7 +157,6 @@ impl CPU {
         messages
     }
 
-    #[inline]
     fn execute_instruction(
         &mut self,
         opcode: u16,
@@ -182,8 +181,6 @@ impl CPU {
         let op_4 = opcode & 0x000F;
 
         // TODO: Audio buffer is not implemented
-        // TODO: Skyward has issues with some deaths and flying enemies don't move
-        // TODO: An evening to die for is unplayable past the menu screen
 
         match (op_1, op_2, op_3, op_4) {
             //NOP
@@ -270,7 +267,6 @@ impl CPU {
             // 0x3XNN
             (3, _, _, _) => {
                 if self.registers[reg_x] == nn {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -279,7 +275,6 @@ impl CPU {
             // 0x4XNN
             (4, _, _, _) => {
                 if self.registers[reg_x] != nn {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -288,7 +283,6 @@ impl CPU {
             // 0x5XY0
             (5, _, _, 0) => {
                 if self.registers[reg_x] == self.registers[reg_y] {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -428,7 +422,6 @@ impl CPU {
             // 0x9XY0
             (9, _, _, 0) => {
                 if self.registers[reg_x] != self.registers[reg_y] {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -543,7 +536,6 @@ impl CPU {
                 let key = self.registers[reg_x] as usize;
 
                 if keypad.get_key(&key.into()) != 0 {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -554,7 +546,6 @@ impl CPU {
                 let key = self.registers[reg_x] as usize;
 
                 if keypad.get_key(&key.into()) == 0 {
-                    //self.program_counter += 2;
                     self.skip_next_instruction(memory);
                 }
             }
@@ -562,8 +553,6 @@ impl CPU {
             // Load I extended
             // 0xF000
             (0xF, 0, 0, 0) => {
-                // TODO: Check if this is correct
-                // The program counter has already been incremented by 2
                 let pc: usize = self.program_counter as usize;
                 let address = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
 
@@ -616,21 +605,15 @@ impl CPU {
             // Set I to the location of the sprite for the character in Vx
             // 0xFX29
             (0xF, _, 2, 9) => {
-                // TODO: Check if this is correct
                 self.index_register = (self.registers[reg_x] * 5) as u16;
-                //self.index_register = ((self.registers[x] & 0xF) * 5) as u16;
             }
 
             // Load I with big sprite
             // 0xFX30
             (0xF, _, 3, 0) => {
-                // TODO: Check if this is correct
                 let block = (self.registers[reg_x] & 0xF) * 10;
                 let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
                 self.index_register = (block + *font_size as u8) as u16;
-
-                // Alternate
-                //self.index_register = 0x50 + (self.registers[x] * 10) as u16;
             }
 
             // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
@@ -655,12 +638,6 @@ impl CPU {
                     memory.data[(self.index_register + i as u16) as usize] = self.registers[i];
                 }
 
-                /* Alternate
-                let start = self.index_register as usize;
-                let end = (self.index_register + x as u16) as usize;
-                memory.data[start..=end].copy_from_slice(&self.registers[0..=x]);
-                 */
-
                 // Quirk: Some programs expect I to be incremented
                 if quirks.i_incremented {
                     self.index_register += 1;
@@ -674,12 +651,6 @@ impl CPU {
                 for i in 0..reg_x + 1 {
                     self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
                 }
-
-                /* Alternate
-                let start = self.index_register as usize;
-                let end = (self.index_register + x as u16) as usize;
-                self.registers[start..=end].copy_from_slice(&memory.data[0..=x]);
-                */
 
                 // Quirk: Some programs expect I to be incremented
                 if quirks.i_incremented {
@@ -707,14 +678,7 @@ impl CPU {
             // Unknown opcode
             _ => {
                 println!("Unknown opcode: {:#X}", opcode);
-
-                /*
-                let pc = self.program_counter as usize;
-                let prev_opcode = (memory.data[pc] as u16) << 8 | memory.data[pc + 1] as u16;
-                self.program_counter -= 2;
-                println!("Previous opcode: {:#X}", prev_opcode);
-                //messages.push(DeviceMessage::UnknownOpcode(opcode));
-                 */
+                // TODO: User facing error
             }
         }
 
