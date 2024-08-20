@@ -285,13 +285,7 @@ impl Display {
         let (width, _) = self.get_screen_size_xy();
 
         // Get the pixel index
-        let result = y * width + x;
-
-        if result >= self.get_screen_size() {
-            result % self.get_screen_size()
-        } else {
-            result
-        }
+        y * width + x
     }
 }
 

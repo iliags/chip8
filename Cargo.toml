@@ -93,9 +93,9 @@ embed-resource = { version = "2.4" }
 criterion = { version = "0.5", features = ["html_reports"] }
 rand = { workspace = true }
 
-[[bench]]
-name = "pixel_benchmark"
-harness = false
+#[[bench]]
+#name = "pixel_benchmark"
+#harness = false
 
 [[bench]]
 name = "match_benchmark"
