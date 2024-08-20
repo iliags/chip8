@@ -51,6 +51,10 @@ wasm-bindgen-futures = "0.4"
 wasm-bindgen = "0.2"
 futures = "0.3"
 
+# Profiling
+puffin_egui = { version = "0.29" }
+puffin = { version = "0.19" }
+
 [dependencies]
 egui = "0.28"
 eframe = { version = "0.28", default-features = false, features = [
@@ -72,6 +76,9 @@ c8_device = { workspace = true }
 c8_i18n = { workspace = true }
 
 futures = { workspace = true }
+
+puffin = { workspace = true, optional = true }
+puffin_egui = { workspace = true, optional = true }
 
 
 [build-dependencies]
@@ -106,3 +113,8 @@ lto = true
 # Optimize all dependencies even in debug builds:
 [profile.dev.package."*"]
 opt-level = 3
+
+[features]
+default = []
+#default = ["enable_puffin"]
+enable_puffin = ["dep:puffin_egui", "dep:puffin"]
