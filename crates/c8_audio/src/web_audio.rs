@@ -40,6 +40,33 @@ impl WebAudio {
     pub(crate) fn stop(&mut self) {
         stop_source(self.source.take());
     }
+
+    pub(crate) fn play_buffer(
+        &mut self,
+        audio_settings: AudioSettings,
+        buffer: Vec<u8>,
+        buffer_pitch: f32,
+    ) {
+        if self.source.is_some() {
+            return;
+        }
+
+        let result = play_buffer(
+            self.context.clone(),
+            audio_settings.volume,
+            buffer,
+            buffer_pitch,
+        );
+
+        self.source = Some(result);
+    }
+}
+
+#[wasm_bindgen]
+pub fn stop_source(source: Option<AudioBufferSourceNode>) {
+    if let Some(source) = source {
+        source.stop().unwrap();
+    }
 }
 
 #[wasm_bindgen]
@@ -56,10 +83,11 @@ pub fn play_beep(
         .create_buffer(1, buffer_size as u32, context.sample_rate())
         .unwrap_or_else(|_| {
             let message = "Failed to create an AudioBuffer";
-            console::log_1(&message.into());
+            console::error_1(&message.into());
             panic!("{}", message);
         });
 
+    // TODO: Check if data creation can be done once instead of every time beep is called
     let mut data = buffer.get_channel_data(0).unwrap();
 
     for (i, block) in data.iter_mut().enumerate().take(buffer_size) {
@@ -67,12 +95,75 @@ pub fn play_beep(
         *block = volume * (2.0 * std::f32::consts::PI * frequency * t).sin();
     }
 
-    /*
-    for i in 0..buffer_size {
-        let t = i as f32 / context.sample_rate();
-        data[i] = volume * (2.0 * std::f32::consts::PI * frequency * t).sin();
+    // TODO: Catch errors
+    let _ = buffer.copy_to_channel(&data, 0);
+
+    let source = context.create_buffer_source().unwrap();
+    source.set_buffer(Some(&buffer));
+
+    // Connect the source to the audio context's destination (speakers)
+    source
+        .connect_with_audio_node(&context.destination())
+        .unwrap_or_else(|_| {
+            let message = "Failed to create an AudioBufferSourceNode";
+            console::error_1(&message.into());
+            panic!("{}", message);
+        });
+
+    // Start playback
+    source.start().unwrap_or_else(|_| {
+        let message = "Failed to start the audio source";
+        console::error_1(&message.into());
+        panic!("{}", message);
+    });
+
+    source
+}
+
+#[wasm_bindgen]
+pub fn play_buffer(
+    context: web_sys::AudioContext,
+    volume: f32,
+    audio_buffer: Vec<u8>,
+    buffer_pitch: f32,
+) -> AudioBufferSourceNode {
+    // The duration is longer as the sound should be stopped by the CPU timer
+    let buffer_sample = context.sample_rate() as f32 / buffer_pitch;
+
+    // TODO: Check if the 8.0 is necessary
+    let duration = audio_buffer.len() as f32 * 8.0;
+    let buffer_size = (buffer_sample * duration) as usize;
+
+    let buffer = context
+        .create_buffer(1, buffer_size as u32, context.sample_rate())
+        .unwrap_or_else(|_| {
+            let message = "Failed to create an AudioBuffer";
+            console::error_1(&message.into());
+            panic!("{}", message);
+        });
+
+    let mut data = buffer.get_channel_data(0).unwrap();
+
+    for byte in audio_buffer.iter() {
+        // V1
+        let value = *byte as f32 / 255.0;
+        for block in data.iter_mut().take(buffer_size) {
+            *block = value;
+        }
+
+        // Yay, audio wizardry!
+        // (no idea how this works)
+        /*
+        for idx_bit in 0..8 {
+            let bit = byte >> (7 - idx_bit) & 0b1 == 0b1;
+            //let value = if bit { volume } else { 0.0 };
+            let value = if bit { 1.0 } else { 0.0 };
+            for block in data.iter_mut().take(buffer_size) {
+                *block = value;
+            }
+        }
+         */
     }
-    */
 
     // TODO: Catch errors
     let _ = buffer.copy_to_channel(&data, 0);
@@ -80,22 +171,21 @@ pub fn play_beep(
     let source = context.create_buffer_source().unwrap();
     source.set_buffer(Some(&buffer));
 
-    // TODO: Catch errors
     // Connect the source to the audio context's destination (speakers)
     source
         .connect_with_audio_node(&context.destination())
-        .unwrap();
+        .unwrap_or_else(|_| {
+            let message = "Failed to create an AudioBufferSourceNode";
+            console::error_1(&message.into());
+            panic!("{}", message);
+        });
 
-    // TODO: Catch errors
     // Start playback
-    source.start().unwrap();
+    source.start().unwrap_or_else(|_| {
+        let message = "Failed to start the audio source";
+        console::error_1(&message.into());
+        panic!("{}", message);
+    });
 
     source
-}
-
-#[wasm_bindgen]
-pub fn stop_source(source: Option<AudioBufferSourceNode>) {
-    if let Some(source) = source {
-        source.stop().unwrap();
-    }
 }

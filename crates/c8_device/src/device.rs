@@ -166,14 +166,12 @@ impl C8 {
                         self.audio_device.play_beep();
                     }
                 }
-                DeviceMessage::SetPitch(_pitch) => {
-                    // TODO: Set pitch
-                }
+                DeviceMessage::SetPitch(pitch) => self.audio_device.set_buffer_pitch(*pitch),
                 DeviceMessage::NewAudioBuffer => {
-                    // TODO: Push buffer to audio
+                    self.audio_device
+                        .play_buffer(self.cpu.get_audio_buffer().clone());
                 }
                 DeviceMessage::Exit => {
-                    //self.is_running = false;
                     self.reset_device();
                 }
                 _ => {}

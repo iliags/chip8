@@ -86,6 +86,11 @@ impl Default for CPU {
 }
 
 impl CPU {
+    /// Get the audio buffer
+    pub fn get_audio_buffer(&self) -> &Vec<u8> {
+        &self.audio_buffer
+    }
+
     /// Get the program counter
     pub fn get_program_counter(&self) -> u16 {
         self.program_counter
@@ -633,7 +638,8 @@ impl CPU {
 
             // Buzz pitch
             (0xF, _, 3, 0xA) => {
-                let reg = self.registers[reg_x].pow(2) as f64;
+                // TODO: Check if this is correct
+                let reg = self.registers[reg_x].pow(2) as f32;
                 let pitch = 4000.0 * (reg - 64.0) / 48.0;
                 messages.push(DeviceMessage::SetPitch(pitch));
             }

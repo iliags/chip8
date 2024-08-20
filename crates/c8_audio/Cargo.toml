@@ -4,9 +4,22 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cpal = { version = "0.15", features = ["wasm-bindgen"] }
+cpal = { version = "0.15" }
+
+#wasm-bindgen = { workspace = true }
+#web-sys = { version = "0.3", features = [
+#    "AudioContext",
+#    "AudioBuffer",
+#    "AudioBufferSourceNode",
+#    "AudioNode",
+#    "AudioDestinationNode",
+#    "console",
+#] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }
-web-sys = { version = "*", features = [
+wasm-bindgen-futures = { workspace = true }
+web-sys = { version = "0.3", features = [
     "AudioContext",
     "AudioBuffer",
     "AudioBufferSourceNode",
@@ -14,10 +27,6 @@ web-sys = { version = "*", features = [
     "AudioDestinationNode",
     "console",
 ] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
 
 [lints]
 workspace = true

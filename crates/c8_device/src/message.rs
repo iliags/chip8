@@ -17,7 +17,7 @@ pub enum DeviceMessage {
     Beep(u8),
 
     /// Set the pitch of the beeper
-    SetPitch(f64),
+    SetPitch(f32),
 
     /// New audio buffer created
     NewAudioBuffer,
