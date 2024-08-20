@@ -48,6 +48,7 @@ serde = { version = "1", features = ["derive"] }
 
 # Web
 # Note: The web crates cannot be updated until egui is updated
+# past 0.28.1 due to a breaking change in the wasm-bindgen crate.
 wasm-bindgen-futures = "=0.4.42"
 wasm-bindgen = "=0.2.92"
 web-sys = "=0.3.69"
