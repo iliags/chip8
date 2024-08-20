@@ -97,6 +97,10 @@ rand = { workspace = true }
 name = "pixel_benchmark"
 harness = false
 
+[[bench]]
+name = "match_benchmark"
+harness = false
+
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
