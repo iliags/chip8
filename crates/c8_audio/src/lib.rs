@@ -2,9 +2,6 @@
 
 use audio_settings::AudioSettings;
 
-/// Beeper module for playing sound.
-pub mod beeper;
-
 /// Custom audio settings
 pub mod audio_settings;
 
@@ -16,6 +13,7 @@ mod web_audio;
 #[cfg(not(target_arch = "wasm32"))]
 mod desktop_audio;
 
+/// Trait for sound devices
 pub(crate) trait SoundDevice: std::fmt::Debug {
     fn play_beep(&mut self, audio_settings: AudioSettings);
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32);
@@ -59,6 +57,11 @@ impl AudioDevice {
     /// Get the current audio settings
     pub fn get_audio_settings(&self) -> &AudioSettings {
         &self.audio_settings
+    }
+
+    /// Get the current audio settings mutable
+    pub fn get_audio_settings_mut(&mut self) -> &mut AudioSettings {
+        &mut self.audio_settings
     }
 
     /// Set the audio settings

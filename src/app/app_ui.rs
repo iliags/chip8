@@ -879,15 +879,11 @@ impl AppUI {
 
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
-                            //self.c8_device.beeper.play();
-                            //self.c8_device.sound_device.play();
                             self.c8_device.audio_device.play_beep();
                         }
 
                         if ui.button("Pause").clicked() {
-                            //self.c8_device.beeper.pause();
-                            //self.c8_device.sound_device.pause();
-                            self.c8_device.audio_device.stop();
+                            self.c8_device.audio_device.pause();
                         }
 
                         /*
@@ -904,7 +900,11 @@ impl AppUI {
                         ui.vertical(|ui| {
                             ui.add(
                                 egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.volume,
+                                    &mut self
+                                        .c8_device
+                                        .audio_device
+                                        .get_audio_settings_mut()
+                                        .volume,
                                     0.0..=1.0,
                                 )
                                 .text(self.language.get_locale_string("volume")),
@@ -913,19 +913,14 @@ impl AppUI {
 
                             ui.add(
                                 egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.pitch,
+                                    &mut self
+                                        .c8_device
+                                        .audio_device
+                                        .get_audio_settings_mut()
+                                        .frequency,
                                     20.0..=20000.0,
                                 )
                                 .text(self.language.get_locale_string("pitch")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.octave,
-                                    1.0..=4.0,
-                                )
-                                .text(self.language.get_locale_string("octave")),
                             )
                             .on_hover_text(self.language.get_locale_string("not_implemented"));
                         });

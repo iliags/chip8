@@ -1,4 +1,4 @@
-use c8_audio::{beeper::Beeper, AudioDevice};
+use c8_audio::AudioDevice;
 
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
@@ -29,9 +29,6 @@ pub struct C8 {
     /// Quirks
     quirks: Quirks,
 
-    /// Audio
-    pub beeper: Beeper,
-
     /// Audio device for both web and non-web targets
     pub audio_device: AudioDevice,
 
@@ -49,7 +46,6 @@ impl Default for C8 {
             is_running: false,
             keypad: Keypad::default(),
             quirks: Quirks::default(),
-            beeper: Beeper::new(),
             audio_device: AudioDevice::new(),
             temp_enable_audio: true,
         }
@@ -113,7 +109,6 @@ impl C8 {
 
     /// Resets the device
     pub fn reset_device(&mut self) {
-        self.beeper.stop();
         self.audio_device.stop();
         let current_font = self.memory.system_font;
         *self = Self::default();
@@ -139,7 +134,7 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
             } else {
-                self.audio_device.stop();
+                self.audio_device.pause();
             }
 
             // Execute instructions
