@@ -464,13 +464,12 @@ impl CPU {
                 // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
                 // This may be implemented in the future with a toggle.
 
-                // Keep out of the variations
                 self.registers[Register::VF as usize] = 0;
                 let mut collision = 0;
 
                 let (screen_width, screen_height) = display.get_screen_size_xy();
-                let x = self.registers[reg_x] as usize; // % screen_width;
-                let y = self.registers[reg_y] as usize; // % screen_height;
+                let x = self.registers[reg_x] as usize % screen_width;
+                let y = self.registers[reg_y] as usize % screen_height;
 
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 let height = n;
@@ -487,8 +486,9 @@ impl CPU {
 
                     for a in 0..sprite_height {
                         let line: u16 = if height == 0 {
-                            let read = 2 * a;
-                            (memory.data[read + i] as u16) << 8 | memory.data[read + i + 1] as u16
+                            let read_index = (2 * a) + i;
+                            (memory.data[read_index] as u16) << 8
+                                | memory.data[read_index + 1] as u16
                         } else {
                             memory.data[i + a] as u16
                         };
@@ -497,10 +497,12 @@ impl CPU {
                             let bit = if height == 0 { 15 - b } else { 7 - b };
                             let mut pixel = (line & (1 << bit)) >> bit;
 
+                            let pos_x = x + b;
+                            let pos_y = y + a;
+
                             // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
                             if quirks.clip_sprites
-                                && ((x % screen_width) + b >= screen_width
-                                    || (y % screen_height) + a >= screen_height)
+                                && (x + b >= screen_width || y + a >= screen_height)
                             {
                                 pixel = 0;
                             }
@@ -508,9 +510,6 @@ impl CPU {
                             if pixel == 0 {
                                 continue;
                             }
-
-                            let pos_x = x + b;
-                            let pos_y = y + a;
 
                             if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
                                 collision = 1;
@@ -521,7 +520,6 @@ impl CPU {
                     i += if height == 0 { 32 } else { height as usize };
                 }
 
-                // Keep out of the variations
                 self.registers[Register::VF as usize] = collision;
             }
 

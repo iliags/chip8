@@ -365,22 +365,28 @@ impl AppUI {
         self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
+    fn reset_display(&mut self) {
+        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
+        let bg_color = self.settings.pixel_colors.get_background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+    }
+
     fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         profile_function!();
 
         // Update the display image with the current display buffer
         // TODO: There is some minor color blending issues with the display, probably needs a buffer
-        if self.c8_device.get_is_running() {
-            self.display_image.pixels = self
-                .c8_device
-                .get_display()
-                .get_zipped_iterator()
-                .map(|(&p0, &p1)| {
-                    let result = (p0 << 1) | p1;
-                    *self.settings.pixel_colors.get_pixel_color(result.into())
-                })
-                .collect();
-        }
+        //if self.c8_device.get_is_running() {
+        self.display_image.pixels = self
+            .c8_device
+            .get_display()
+            .get_zipped_iterator()
+            .map(|(&p0, &p1)| {
+                let result = (p0 << 1) | p1;
+                *self.settings.pixel_colors.get_pixel_color(result.into())
+            })
+            .collect();
+        //}
 
         // Note: This is hacky
         const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
@@ -437,6 +443,8 @@ impl AppUI {
             return;
         }
 
+        self.reset_display();
+
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
 
@@ -448,6 +456,7 @@ impl AppUI {
     }
 
     fn unload_rom(&mut self) {
+        self.reset_display();
         self.c8_device.reset_device();
     }
 

@@ -123,7 +123,6 @@ impl Display {
 
     /// Get the pixels of a plane
     fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        //let plane = self.clamp_plane_value(plane);
         &self.planes[plane].pixels
     }
 
@@ -142,7 +141,6 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = self.clamp_plane_value(plane);
         let index = self.get_pixel_index(x, y);
 
         let mut result = false;
@@ -265,14 +263,7 @@ impl Display {
     }
 
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
-        // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
-        // This may be implemented in the future with a toggle.
-
-        // If the pixels are out of bounds, wrap them around
-        let (width, height) = self.get_screen_size_xy();
-
-        let x = x % width;
-        let y = y % height;
+        let (width, _) = self.get_screen_size_xy();
 
         // Get the pixel index
         y * width + x
