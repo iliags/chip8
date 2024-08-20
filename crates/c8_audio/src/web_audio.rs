@@ -1,12 +1,48 @@
 use wasm_bindgen::prelude::*;
 use web_sys::{console, AudioBufferSourceNode};
 
-use crate::audio_settings::AudioSettings;
+use crate::{audio_settings::AudioSettings, SoundDevice};
 
 #[derive(Debug)]
 pub(crate) struct WebAudio {
-    pub(crate) context: web_sys::AudioContext,
-    pub(crate) source: Option<AudioBufferSourceNode>,
+    context: web_sys::AudioContext,
+    source: Option<AudioBufferSourceNode>,
+}
+
+impl SoundDevice for WebAudio {
+    fn play_beep(&mut self, audio_settings: AudioSettings) {
+        if self.source.is_some() {
+            return;
+        }
+
+        let result = play_beep(
+            self.context.clone(),
+            audio_settings.volume,
+            audio_settings.frequency,
+        );
+
+        self.source = Some(result);
+    }
+    fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
+        if self.source.is_some() {
+            return;
+        }
+
+        let result = play_buffer(
+            self.context.clone(),
+            audio_settings.volume,
+            buffer,
+            buffer_pitch,
+        );
+
+        self.source = Some(result);
+    }
+    fn pause(&mut self) {
+        self.stop();
+    }
+    fn stop(&mut self) {
+        stop_source(self.source.take());
+    }
 }
 
 impl WebAudio {
@@ -21,44 +57,6 @@ impl WebAudio {
             context,
             source: None,
         }
-    }
-
-    pub(crate) fn play_beep(&mut self, audio_settings: AudioSettings) {
-        if self.source.is_some() {
-            return;
-        }
-
-        let result = play_beep(
-            self.context.clone(),
-            audio_settings.volume,
-            audio_settings.frequency,
-        );
-
-        self.source = Some(result);
-    }
-
-    pub(crate) fn stop(&mut self) {
-        stop_source(self.source.take());
-    }
-
-    pub(crate) fn play_buffer(
-        &mut self,
-        audio_settings: AudioSettings,
-        buffer: Vec<u8>,
-        buffer_pitch: f32,
-    ) {
-        if self.source.is_some() {
-            return;
-        }
-
-        let result = play_buffer(
-            self.context.clone(),
-            audio_settings.volume,
-            buffer,
-            buffer_pitch,
-        );
-
-        self.source = Some(result);
     }
 }
 
