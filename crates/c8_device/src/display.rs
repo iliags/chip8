@@ -231,6 +231,20 @@ impl Display {
                 continue;
             }
 
+            self.planes[layer].pixels = self.planes[layer]
+                .pixels
+                .iter()
+                .enumerate()
+                .map(|(i, _)| {
+                    if i < buffer_size - row_size * pixels as usize {
+                        self.planes[layer].pixels[i + (row_size * pixels as usize)]
+                    } else {
+                        0
+                    }
+                })
+                .collect();
+
+            /*
             for z in 0..buffer_size {
                 let condition = z < (buffer_size - row_size * pixels as usize);
                 self.planes[layer].pixels[z] = if condition {
@@ -239,6 +253,7 @@ impl Display {
                     0
                 };
             }
+             */
         }
     }
 
@@ -251,6 +266,20 @@ impl Display {
                 continue;
             }
 
+            self.planes[layer].pixels = self.planes[layer]
+                .pixels
+                .iter()
+                .enumerate()
+                .map(|(i, _)| {
+                    if i < row_size * pixels as usize {
+                        0
+                    } else {
+                        self.planes[layer].pixels[i - (row_size * pixels as usize)]
+                    }
+                })
+                .collect();
+
+            /*
             for z in (0..self.planes[layer].pixels.len()).rev() {
                 let condition = z >= row_size * pixels as usize;
                 self.planes[layer].pixels[z] = if condition {
@@ -259,6 +288,7 @@ impl Display {
                     0
                 };
             }
+             */
         }
     }
 

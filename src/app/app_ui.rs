@@ -222,18 +222,16 @@ impl eframe::App for AppUI {
                         .set_key(current_key, i.key_down(*key))
                 }
 
-                /*
                 // Load ROM shortcut for testing
                 #[cfg(debug_assertions)]
                 {
                     if i.key_pressed(egui::Key::Tab) {
-                        self.load_rom(GAME_ROMS[6].get_data().to_vec());
+                        self.load_rom(GAME_ROMS[8].get_data().to_vec());
                         //self.load_rom(TEST_ROMS[0].get_data().to_vec());
                         //self.load_rom(TEST_ROMS[7].get_data().to_vec());
                         //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
                     }
                 }
-                */
             });
         }
 
@@ -452,6 +450,7 @@ impl AppUI {
     }
 
     fn reload_rom(&mut self) {
+        self.reset_display();
         self.c8_device.load_rom(&self.rom_file);
     }
 
