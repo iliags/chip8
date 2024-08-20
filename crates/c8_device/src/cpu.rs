@@ -570,6 +570,11 @@ impl CPU {
                 // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
                 //println!("Audio control not implemented");
                 //todo!("Audio control")
+
+                for z in 0..16 as u16 {
+                    let _index = (self.index_register + z) as usize;
+                    // Write memory(index) to audio buffer
+                }
             }
 
             // Set Vx to the value of the delay timer
@@ -627,7 +632,10 @@ impl CPU {
 
             // Buzz pitch
             (0xF, _, 3, 0xA) => {
-                // TODO: Buzz pitch not implemented
+                let reg = self.registers[reg_x].pow(2) as f64;
+                let _pitch = 4000.0 * (reg - 64.0) / 48.0;
+
+                //todo!("Buzz pitch")
             }
 
             // Store V0 to Vx in memory starting at address I

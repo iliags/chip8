@@ -134,6 +134,7 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
+                // TODO: Construct two buffers, one for the beep and one for the ROM audio
                 // Make very sure the audio doesn't play if audio is disabled while running ROMs
                 if self.temp_enable_audio {
                     self.beeper.play();
