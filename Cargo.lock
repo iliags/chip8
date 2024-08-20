@@ -1431,9 +1431,9 @@ dependencies = [
 
 [[package]]
 name = "fluent-template-macros"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da77a943b6ad467c33ea31ce0998c33b3c566c5ef3f64416995ed61b4c473404"
+checksum = "b86ebacac709a063f57ee83d37c451d60dc873554f9bd828531fd1ec43209c80"
 dependencies = [
  "flume",
  "ignore",
@@ -1446,11 +1446,10 @@ dependencies = [
 
 [[package]]
 name = "fluent-templates"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e311f7dcf02d2af6c66cf6fda01348cefb912976698ac99abf0498ee2a62155"
+checksum = "f339cc149c01ba2f7b0feba2acde6dd6e4a48472daffe2ddfdd6073e564c60b3"
 dependencies = [
- "fluent",
  "fluent-bundle",
  "fluent-langneg",
  "fluent-syntax",
@@ -1985,7 +1984,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -3703,7 +3702,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
