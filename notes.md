@@ -82,3 +82,4 @@ Stuff that might be added later.
 - Touch input
 - User facing error messages rather than panicking.
 - Use icons over text
+- UI color themes
