@@ -47,6 +47,16 @@ impl AudioDevice {
         }
     }
 
+    /// Get the current audio settings
+    pub fn get_audio_settings(&self) -> &AudioSettings {
+        &self.audio_settings
+    }
+
+    /// Set the audio settings
+    pub fn set_audio_settings(&mut self, settings: AudioSettings) {
+        self.audio_settings = settings;
+    }
+
     /// Play a beep sound
     pub fn play_beep(&mut self) {
         // TODO: Desktop

@@ -138,21 +138,8 @@ impl C8 {
 
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
-
-                // TODO: Construct two buffers, one for the beep and one for the ROM audio
-                // Make very sure the audio doesn't play if audio is disabled while running ROMs
-                if self.temp_enable_audio {
-                    //self.beeper.play();
-                    // TODO: Implement audio buffer
-                    //self.audio_device.play_beep();
-                } else {
-                    self.audio_device.stop();
-                    //self.beeper.pause();
-                }
             } else {
-                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
                 self.audio_device.stop();
-                //self.beeper.pause();
             }
 
             // Execute instructions
@@ -175,8 +162,9 @@ impl C8 {
                     self.display.set_resolution(*resolution);
                 }
                 DeviceMessage::Beep(_duration) => {
-                    // TODO: Beep buffer
-                    self.audio_device.play_beep();
+                    if self.audio_device.get_audio_settings().is_enabled() {
+                        self.audio_device.play_beep();
+                    }
                 }
                 DeviceMessage::SetPitch(_pitch) => {
                     // TODO: Set pitch
