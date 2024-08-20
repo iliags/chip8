@@ -735,15 +735,6 @@ impl AppUI {
 
             egui::Grid::new("keyboard_grid").show(ui, |ui| {
                 for (i, key) in KEYPAD_KEYS.iter().enumerate() {
-                    /*
-                    let key_down = self.c8_device.get_keypad().is_key_pressed(
-                        &self
-                            .settings
-                            .key_mapping
-                            .get_key_from_mapping(key)
-                            .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key)),
-                    );*/
-
                     let key_down = self.c8_device.get_keypad().is_key_pressed(key);
 
                     let key_name = key.get_name();
