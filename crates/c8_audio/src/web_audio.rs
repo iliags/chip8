@@ -148,7 +148,8 @@ pub fn play_buffer(
         // V1
         let value = *byte as f32 / 255.0;
         for block in data.iter_mut().take(buffer_size) {
-            *block = value;
+            // This is too quiet
+            *block = value * volume;
         }
 
         // Yay, audio wizardry!
