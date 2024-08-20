@@ -245,7 +245,7 @@ impl Display {
                 .enumerate()
                 .map(|(i, _)| {
                     if i < buffer_size - size {
-                        self.planes[layer].pixels[i + (size as usize)]
+                        self.planes[layer].pixels[i + size]
                     } else {
                         0
                     }

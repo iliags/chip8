@@ -42,7 +42,7 @@ impl Memory {
         let start = 0;
         let end = data.small_data.len();
 
-        self.data[start..end].copy_from_slice(&data.small_data);
+        self.data[start..end].copy_from_slice(data.small_data);
         self.system_font = data.name;
     }
 
@@ -54,15 +54,15 @@ impl Memory {
             let start = small_font_length;
             let end = start + data.large_data.len();
 
-            self.data[start..end].copy_from_slice(&data.large_data);
+            self.data[start..end].copy_from_slice(data.large_data);
         }
     }
 
     /// Load font data into memory
     pub fn load_font(&mut self, data: &FontData, size: &FontSize) {
         match size {
-            FontSize::Small => self.load_font_small(&data),
-            FontSize::Large => self.load_font_large(&data),
+            FontSize::Small => self.load_font_small(data),
+            FontSize::Large => self.load_font_large(data),
         }
     }
 
@@ -72,7 +72,7 @@ impl Memory {
     }
 
     /// Load ROM data into memory
-    pub fn load_rom(&mut self, data: &Vec<u8>) {
+    pub fn load_rom(&mut self, data: &[u8]) {
         // Make sure the ROM data is valid
         // TODO: Implement other checks
         if data.is_empty() {
@@ -86,7 +86,7 @@ impl Memory {
         let start = PROGRAM_START as usize;
         let end = start + data.len();
 
-        self.data[start..end].copy_from_slice(&data);
+        self.data[start..end].copy_from_slice(data);
     }
 
     /// Get memory data

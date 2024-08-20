@@ -570,7 +570,7 @@ impl CPU {
             // Audio control
             // 0xFX02
             (0xF, _, 0, 2) => {
-                for z in 0..16 as u16 {
+                for z in 0..16_u16 {
                     let index = (self.index_register + z) as usize;
                     self.audio_buffer[z as usize] = memory.data[index];
                 }

@@ -75,10 +75,10 @@ impl KeyboardMapping {
     }
 
     pub fn is_extra_key(&self, key: &Key) -> bool {
-        match key {
-            Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight | Key::Space => true,
-            _ => false,
-        }
+        matches!(
+            key,
+            Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight | Key::Space
+        )
     }
 
     pub fn get_regular_key_from_extra_key(&self, key: &Key) -> Option<Key> {
