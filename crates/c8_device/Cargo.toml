@@ -17,6 +17,7 @@ test = true
 doctest = true
 
 [features]
-default = ["serde", "enable_puffin"]
+default = ["serde"]
+#default = ["serde", "enable_puffin"]
 serde = ["dep:serde"]
 enable_puffin = ["dep:puffin"]

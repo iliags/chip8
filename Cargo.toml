@@ -115,6 +115,6 @@ lto = true
 opt-level = 3
 
 [features]
-#default = []
-default = ["enable_puffin"]
+default = []
+#default = ["enable_puffin"]
 enable_puffin = ["dep:puffin_egui", "dep:puffin"]

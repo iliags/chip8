@@ -1,4 +1,3 @@
-use crate::profile_function;
 use c8_audio::beeper::Beeper;
 
 use crate::{
@@ -121,7 +120,7 @@ impl C8 {
 
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
-        profile_function!();
+        crate::profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         if self.is_running {
@@ -156,20 +155,20 @@ impl C8 {
                     &self.keypad,
                 );
 
-                for message in new_messages.iter() {
-                    match message {
-                        DeviceMessage::ChangeResolution(resolution) => {
-                            self.display.set_resolution(*resolution);
-                        }
-                        DeviceMessage::Exit => {
-                            //self.is_running = false;
-                            self.reset_device();
-                        }
-                        _ => {}
-                    }
-                }
-
                 messages.append(new_messages.as_mut());
+            }
+        }
+
+        for message in messages.iter() {
+            match message {
+                DeviceMessage::ChangeResolution(resolution) => {
+                    self.display.set_resolution(*resolution);
+                }
+                DeviceMessage::Exit => {
+                    //self.is_running = false;
+                    self.reset_device();
+                }
+                _ => {}
             }
         }
 

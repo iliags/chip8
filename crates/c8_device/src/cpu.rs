@@ -7,7 +7,6 @@ use crate::{
 };
 
 use super::{display, quirks, PROGRAM_START};
-use crate::profile_function;
 use rand::prelude::*;
 
 /// The general purpose registers of the Chip-8
@@ -106,7 +105,6 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
-        profile_function!();
         // Note: This feels very hacky and should be refactored
         if let Some(task) = self.waiting_for_key.as_mut() {
             match task.key {
@@ -159,6 +157,7 @@ impl CPU {
         messages
     }
 
+    #[inline]
     fn execute_instruction(
         &mut self,
         opcode: u16,
@@ -168,7 +167,6 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
-        profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         // Extract the opcode parts
@@ -471,24 +469,37 @@ impl CPU {
                 let mut collision = 0;
 
                 let (screen_width, screen_height) = display.get_screen_size_xy();
-                let x = self.registers[reg_x] as usize % screen_width;
-                let y = self.registers[reg_y] as usize % screen_height;
+
+                let x = if self.registers[reg_x] as usize >= screen_width {
+                    self.registers[reg_x] as usize % screen_width
+                } else {
+                    self.registers[reg_x] as usize
+                };
+
+                let y = if self.registers[reg_y] as usize >= screen_height {
+                    self.registers[reg_y] as usize % screen_height
+                } else {
+                    self.registers[reg_y] as usize
+                };
 
                 // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
                 let height = n;
+                let zero_height = n == 0;
 
                 let mut i = self.index_register as usize;
 
-                let sprite_width = if height == 0 { 16 } else { 8 };
-                let sprite_height = if height == 0 { 16 } else { height } as usize;
+                let sprite_width = if zero_height { 16 } else { 8 };
+                let sprite_height = if zero_height { 16 } else { height } as usize;
+                let step = if zero_height { 32 } else { height as usize };
 
                 for layer in 0..display.get_plane_count() {
+                    crate::profile_scope!("Draw sprite");
                     if display.get_active_plane() & (layer + 1) == 0 {
                         continue;
                     }
 
                     for a in 0..sprite_height {
-                        let line: u16 = if height == 0 {
+                        let line: u16 = if zero_height {
                             let read_index = (2 * a) + i;
                             (memory.data[read_index] as u16) << 8
                                 | memory.data[read_index + 1] as u16
@@ -497,7 +508,7 @@ impl CPU {
                         };
 
                         for b in 0..sprite_width {
-                            let bit = if height == 0 { 15 - b } else { 7 - b };
+                            let bit = if zero_height { 15 - b } else { 7 - b };
                             let mut pixel = (line & (1 << bit)) >> bit;
 
                             let pos_x = x + b;
@@ -520,7 +531,7 @@ impl CPU {
                         }
                     }
 
-                    i += if height == 0 { 32 } else { height as usize };
+                    i += step;
                 }
 
                 self.registers[Register::VF as usize] = collision;
