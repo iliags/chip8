@@ -1,4 +1,4 @@
-use c8_audio::beeper::Beeper;
+use c8_audio::{beeper::Beeper, AudioDevice};
 
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
@@ -32,6 +32,9 @@ pub struct C8 {
     /// Audio
     pub beeper: Beeper,
 
+    /// Audio device for both web and non-web targets
+    pub audio_device: AudioDevice,
+
     /// Temporary enable/disable audio flag while controls are being implemented
     pub temp_enable_audio: bool,
 }
@@ -47,6 +50,7 @@ impl Default for C8 {
             keypad: Keypad::default(),
             quirks: Quirks::default(),
             beeper: Beeper::new(),
+            audio_device: AudioDevice::new(),
             temp_enable_audio: true,
         }
     }
@@ -99,7 +103,7 @@ impl C8 {
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
-    pub fn load_rom(&mut self, rom: &Vec<u8>) {
+    pub fn load_rom(&mut self, rom: &[u8]) {
         self.reset_device();
 
         self.memory.load_rom(rom);
@@ -110,6 +114,7 @@ impl C8 {
     /// Resets the device
     pub fn reset_device(&mut self) {
         self.beeper.stop();
+        self.audio_device.stop();
         let current_font = self.memory.system_font;
         *self = Self::default();
 
@@ -137,13 +142,17 @@ impl C8 {
                 // TODO: Construct two buffers, one for the beep and one for the ROM audio
                 // Make very sure the audio doesn't play if audio is disabled while running ROMs
                 if self.temp_enable_audio {
-                    self.beeper.play();
+                    //self.beeper.play();
+                    // TODO: Implement audio buffer
+                    //self.audio_device.play_beep();
                 } else {
-                    self.beeper.pause();
+                    self.audio_device.stop();
+                    //self.beeper.pause();
                 }
             } else {
                 // TODO: Make this more ergonomic (i.e. only pause if it's playing)
-                self.beeper.pause();
+                self.audio_device.stop();
+                //self.beeper.pause();
             }
 
             // Execute instructions
@@ -167,6 +176,7 @@ impl C8 {
                 }
                 DeviceMessage::Beep(_duration) => {
                     // TODO: Beep buffer
+                    self.audio_device.play_beep();
                 }
                 DeviceMessage::SetPitch(_pitch) => {
                     // TODO: Set pitch

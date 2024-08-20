@@ -7,7 +7,7 @@ use super::{
     keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
     pixel_color::{PixelColors, PALETTES},
 };
-use c8_audio::sound;
+
 use c8_device::{
     device::C8,
     display::DisplayResolution,
@@ -890,12 +890,13 @@ impl AppUI {
                         if ui.button("Play").clicked() {
                             //self.c8_device.beeper.play();
                             //self.c8_device.sound_device.play();
-                            sound::play_beep();
+                            self.c8_device.audio_device.play_beep();
                         }
 
                         if ui.button("Pause").clicked() {
                             //self.c8_device.beeper.pause();
                             //self.c8_device.sound_device.pause();
+                            self.c8_device.audio_device.stop();
                         }
 
                         /*
