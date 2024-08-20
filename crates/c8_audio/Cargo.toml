@@ -6,16 +6,6 @@ edition = "2021"
 [dependencies]
 cpal = { version = "0.15" }
 
-#wasm-bindgen = { workspace = true }
-#web-sys = { workspace = true, features = [
-#    "AudioContext",
-#    "AudioBuffer",
-#    "AudioBufferSourceNode",
-#    "AudioNode",
-#    "AudioDestinationNode",
-#    "console",
-#] }
-
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
