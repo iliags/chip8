@@ -165,6 +165,15 @@ impl C8 {
                 DeviceMessage::ChangeResolution(resolution) => {
                     self.display.set_resolution(*resolution);
                 }
+                DeviceMessage::Beep(_duration) => {
+                    // TODO: Beep buffer
+                }
+                DeviceMessage::SetPitch(_pitch) => {
+                    // TODO: Set pitch
+                }
+                DeviceMessage::NewAudioBuffer => {
+                    // TODO: Push buffer to audio
+                }
                 DeviceMessage::Exit => {
                     //self.is_running = false;
                     self.reset_device();

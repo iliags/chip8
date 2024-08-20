@@ -17,7 +17,7 @@ pub fn play_beep() {
 
     let frequency = 440.0;
     let volume = 0.1;
-    let duration = 0.5;
+    let _duration = 0.5;
 
     let mut data = buffer.get_channel_data(0).unwrap();
     for i in 0..buffer_size {

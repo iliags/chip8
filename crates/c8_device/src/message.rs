@@ -12,4 +12,13 @@ pub enum DeviceMessage {
 
     /// Waiting for a key to be pressed
     WaitingForKey(Option<usize>),
+
+    /// Beep
+    Beep(u8),
+
+    /// Set the pitch of the beeper
+    SetPitch(f64),
+
+    /// New audio buffer created
+    NewAudioBuffer,
 }

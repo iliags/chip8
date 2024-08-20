@@ -5,3 +5,6 @@ pub mod beeper;
 
 /// Sound module
 pub mod sound;
+
+/// Audio module
+pub struct Audio;

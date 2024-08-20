@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{
     display::DisplayResolution,
     fonts::FONT_DATA,
@@ -64,6 +66,8 @@ pub struct CPU {
 
     // Flags are saved to a file or external storage in some implementations
     saved_registers: Vec<u8>,
+
+    audio_buffer: Vec<u8>,
 }
 
 impl Default for CPU {
@@ -76,6 +80,7 @@ impl Default for CPU {
             sound_timer: 0,
             waiting_for_key: None,
             saved_registers: vec![0; 16],
+            audio_buffer: vec![0; 16],
         }
     }
 }
@@ -179,8 +184,6 @@ impl CPU {
         let op_2 = (opcode & 0x0F00) >> 8;
         let op_3 = (opcode & 0x00F0) >> 4;
         let op_4 = opcode & 0x000F;
-
-        // TODO: Audio buffer is not implemented
 
         match (op_1, op_2, op_3, op_4) {
             //NOP
@@ -567,14 +570,11 @@ impl CPU {
             // Audio control
             // 0xFX02
             (0xF, _, 0, 2) => {
-                // Note: Playback rate needs to be 4000*2^((vx-64)/48) Hz
-                //println!("Audio control not implemented");
-                //todo!("Audio control")
-
                 for z in 0..16 as u16 {
-                    let _index = (self.index_register + z) as usize;
-                    // Write memory(index) to audio buffer
+                    let index = (self.index_register + z) as usize;
+                    self.audio_buffer[z as usize] = memory.data[index];
                 }
+                messages.push(DeviceMessage::NewAudioBuffer);
             }
 
             // Set Vx to the value of the delay timer
@@ -599,6 +599,7 @@ impl CPU {
             // 0xFX18
             (0xF, _, 1, 8) => {
                 self.sound_timer = self.registers[reg_x];
+                messages.push(DeviceMessage::Beep(self.registers[reg_x]));
             }
 
             // Add Vx to the index register
@@ -633,9 +634,8 @@ impl CPU {
             // Buzz pitch
             (0xF, _, 3, 0xA) => {
                 let reg = self.registers[reg_x].pow(2) as f64;
-                let _pitch = 4000.0 * (reg - 64.0) / 48.0;
-
-                //todo!("Buzz pitch")
+                let pitch = 4000.0 * (reg - 64.0) / 48.0;
+                messages.push(DeviceMessage::SetPitch(pitch));
             }
 
             // Store V0 to Vx in memory starting at address I
