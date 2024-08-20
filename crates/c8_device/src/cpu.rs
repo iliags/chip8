@@ -502,7 +502,7 @@ impl CPU {
 
                             // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
                             if quirks.clip_sprites
-                                && (x + b >= screen_width || y + a >= screen_height)
+                                && (pos_x >= screen_width || pos_y >= screen_height)
                             {
                                 pixel = 0;
                             }
