@@ -80,7 +80,6 @@ impl AudioDevice {
     }
 
     /// Play a buffer
-    #[allow(unused_variables)]
     pub fn play_buffer(&mut self, buffer: Vec<u8>) {
         self.audio_device
             .play_buffer(self.audio_settings, buffer, self.pitch);
