@@ -1,3 +1,4 @@
+use crate::profile_function;
 use c8_audio::beeper::Beeper;
 
 use crate::{
@@ -120,6 +121,7 @@ impl C8 {
 
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
+        profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         if self.is_running {

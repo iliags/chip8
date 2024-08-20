@@ -553,6 +553,7 @@ name = "c8_device"
 version = "0.1.0"
 dependencies = [
  "c8_audio",
+ "puffin",
  "rand",
  "serde",
 ]

@@ -7,6 +7,7 @@ use crate::{
 };
 
 use super::{display, quirks, PROGRAM_START};
+use crate::profile_function;
 use rand::prelude::*;
 
 /// The general purpose registers of the Chip-8
@@ -105,6 +106,7 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
+        profile_function!();
         // Note: This feels very hacky and should be refactored
         if let Some(task) = self.waiting_for_key.as_mut() {
             match task.key {
@@ -166,6 +168,7 @@ impl CPU {
         quirks: &quirks::Quirks,
         keypad: &Keypad,
     ) -> Vec<DeviceMessage> {
+        profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         // Extract the opcode parts

@@ -1,3 +1,5 @@
+use crate::profile_function;
+
 /// Screen width constant
 pub(crate) const DEFAULT_SCREEN_WIDTH: usize = 64;
 
@@ -141,6 +143,7 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
+        profile_function!();
         let index = self.get_pixel_index(x, y);
 
         let mut result = false;
@@ -179,7 +182,9 @@ impl Display {
 
     /// Scroll planes left by the given number of pixels
     pub(crate) fn scroll_left(&mut self, pixels: u8) {
+        profile_function!();
         let row_size = self.get_screen_size_xy().0;
+        let size = self.get_screen_size_xy().0 * pixels as usize;
 
         for layer in 0..self.get_plane_count() {
             if self.get_active_plane() & (layer + 1) == 0 {
@@ -189,7 +194,7 @@ impl Display {
             for a in (0..self.planes[layer].pixels.len()).step_by(row_size) {
                 for b in 0..row_size {
                     let index = a + b;
-                    self.planes[layer].pixels[index] = if b < row_size - pixels as usize {
+                    self.planes[layer].pixels[index] = if b < size {
                         self.planes[layer].pixels[index + pixels as usize]
                     } else {
                         0
@@ -201,6 +206,7 @@ impl Display {
 
     /// Scroll planes right by the given number of pixels
     pub(crate) fn scroll_right(&mut self, pixels: u8) {
+        profile_function!();
         let row_size = self.get_screen_size_xy().0;
 
         for layer in 0..self.get_plane_count() {
@@ -223,7 +229,9 @@ impl Display {
 
     /// Scroll planes up by the given number of pixels
     pub(crate) fn scroll_up(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
+        profile_function!();
+
+        let size = self.get_screen_size_xy().0 * pixels as usize;
         let buffer_size = self.get_screen_size();
 
         for layer in 0..self.get_plane_count() {
@@ -236,30 +244,21 @@ impl Display {
                 .iter()
                 .enumerate()
                 .map(|(i, _)| {
-                    if i < buffer_size - row_size * pixels as usize {
-                        self.planes[layer].pixels[i + (row_size * pixels as usize)]
+                    if i < buffer_size - size {
+                        self.planes[layer].pixels[i + (size as usize)]
                     } else {
                         0
                     }
                 })
                 .collect();
-
-            /*
-            for z in 0..buffer_size {
-                let condition = z < (buffer_size - row_size * pixels as usize);
-                self.planes[layer].pixels[z] = if condition {
-                    self.planes[layer].pixels[z + (row_size * pixels as usize)]
-                } else {
-                    0
-                };
-            }
-             */
         }
     }
 
     /// Scroll planes down by the given number of pixels
     pub(crate) fn scroll_down(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
+        profile_function!();
+
+        let size = self.get_screen_size_xy().0 * pixels as usize;
 
         for layer in 0..self.get_plane_count() {
             if self.get_active_plane() & (layer + 1) == 0 {
@@ -271,35 +270,28 @@ impl Display {
                 .iter()
                 .enumerate()
                 .map(|(i, _)| {
-                    if i < row_size * pixels as usize {
+                    if i < size {
                         0
                     } else {
-                        self.planes[layer].pixels[i - (row_size * pixels as usize)]
+                        self.planes[layer].pixels[i - size]
                     }
                 })
                 .collect();
-
-            /*
-            for z in (0..self.planes[layer].pixels.len()).rev() {
-                let condition = z >= row_size * pixels as usize;
-                self.planes[layer].pixels[z] = if condition {
-                    self.planes[layer].pixels[z - (row_size * pixels as usize)]
-                } else {
-                    0
-                };
-            }
-             */
         }
     }
 
+    #[inline]
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
-        let (width, height) = self.get_screen_size_xy();
-
-        let x = x % width;
-        let y = y % height;
+        let (width, _) = self.get_screen_size_xy();
 
         // Get the pixel index
-        y * width + x
+        let result = y * width + x;
+
+        if result >= self.get_screen_size() {
+            result % self.get_screen_size()
+        } else {
+            result
+        }
     }
 }
 

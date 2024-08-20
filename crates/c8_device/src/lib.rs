@@ -26,3 +26,25 @@ pub mod message;
 
 /// Program entry point
 pub const PROGRAM_START: u16 = 0x200;
+
+#[allow(missing_docs)]
+#[macro_export]
+macro_rules! profile_scope {
+    () => {
+        #[cfg(feature = "enable_puffin")]
+        puffin::profile_scope!("scope");
+    };
+    ($name:expr) => {
+        #[cfg(feature = "enable_puffin")]
+        puffin::profile_scope!($name);
+    };
+}
+
+#[allow(missing_docs)]
+#[macro_export]
+macro_rules! profile_function {
+    () => {
+        #[cfg(feature = "enable_puffin")]
+        puffin::profile_function!();
+    };
+}
