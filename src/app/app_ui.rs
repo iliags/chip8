@@ -893,37 +893,39 @@ impl AppUI {
                          */
                     });
 
-                    #[cfg(debug_assertions)]
+                    ui.separator();
+
+                    ui.vertical(|ui| {
+                        ui.add(
+                            egui::Slider::new(
+                                &mut self.c8_device.audio_device.get_audio_settings_mut().volume,
+                                0.0..=1.0,
+                            )
+                            .text(self.language.get_locale_string("volume")),
+                        )
+                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+
+                        ui.add(
+                            egui::Slider::new(
+                                &mut self
+                                    .c8_device
+                                    .audio_device
+                                    .get_audio_settings_mut()
+                                    .frequency,
+                                110.0..=2200.0,
+                            )
+                            .text(self.language.get_locale_string("pitch")),
+                        )
+                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                    });
+
+                    if ui
+                        .button(self.language.get_locale_string("default"))
+                        .clicked()
                     {
-                        ui.separator();
-
-                        ui.vertical(|ui| {
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self
-                                        .c8_device
-                                        .audio_device
-                                        .get_audio_settings_mut()
-                                        .volume,
-                                    0.0..=1.0,
-                                )
-                                .text(self.language.get_locale_string("volume")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self
-                                        .c8_device
-                                        .audio_device
-                                        .get_audio_settings_mut()
-                                        .frequency,
-                                    20.0..=20000.0,
-                                )
-                                .text(self.language.get_locale_string("pitch")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-                        });
+                        self.c8_device
+                            .audio_device
+                            .set_audio_settings(Default::default());
                     }
                 }
             },
