@@ -151,6 +151,7 @@ impl C8 {
             }
         }
 
+        // TODO: Change to observer pattern
         for message in messages.iter() {
             match message {
                 DeviceMessage::ChangeResolution(resolution) => {
