@@ -68,6 +68,8 @@ pub struct CPU {
     saved_registers: Vec<u8>,
 
     audio_buffer: Vec<u8>,
+
+    buffer_pitch: f32,
 }
 
 impl Default for CPU {
@@ -81,6 +83,7 @@ impl Default for CPU {
             waiting_for_key: None,
             saved_registers: vec![0; 16],
             audio_buffer: vec![0; 16],
+            buffer_pitch: 1.0,
         }
     }
 }
@@ -89,6 +92,11 @@ impl CPU {
     /// Get the audio buffer
     pub fn get_audio_buffer(&self) -> &Vec<u8> {
         &self.audio_buffer
+    }
+
+    /// Get the buffer pitch
+    pub fn get_buffer_pitch(&self) -> f32 {
+        self.buffer_pitch
     }
 
     /// Get the program counter
@@ -1210,6 +1218,7 @@ impl CPU {
                 // TODO: Check if this is correct
                 let reg = self.registers[reg_x].pow(2) as f32;
                 let pitch = 4000.0 * (reg - 64.0) / 48.0;
+                self.buffer_pitch = pitch;
                 messages.push(DeviceMessage::SetPitch(pitch));
             }
 

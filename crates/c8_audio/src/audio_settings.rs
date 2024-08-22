@@ -1,13 +1,15 @@
 /// Custom audio settings
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AudioSettings {
     /// Whether audio is enabled
     enabled: bool,
 
     /// Tone pitch
+    // Marked public for egui access, find a better way to do this
     pub frequency: f32,
 
     /// Tone volume
+    // Marked public for egui access, find a better way to do this
     pub volume: f32,
 }
 impl Default for AudioSettings {
@@ -36,6 +38,11 @@ impl AudioSettings {
         self.frequency
     }
 
+    /// Get the frequency (mutable)
+    pub fn get_frequency_mut(&mut self) -> &mut f32 {
+        &mut self.frequency
+    }
+
     /// Set the frequency
     pub fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency;
@@ -44,6 +51,11 @@ impl AudioSettings {
     /// Get the volume
     pub fn get_volume(&self) -> f32 {
         self.volume
+    }
+
+    /// Get the volume (mutable)
+    pub fn get_volume_mut(&mut self) -> &mut f32 {
+        &mut self.volume
     }
 
     /// Set the volume

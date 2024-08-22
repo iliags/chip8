@@ -860,6 +860,7 @@ impl AppUI {
     }
 
     fn controls_audio(&mut self, ui: &mut egui::Ui) {
+        // TODO: Add audio settings to the settings struct
         egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
             ui,
             |ui| {
@@ -879,7 +880,16 @@ impl AppUI {
 
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
-                            self.c8_device.audio_device.play_beep();
+                            //self.c8_device.audio_device.play_beep();
+                            // 0x4C 0x22 0xC7 0x81 0x25 0x2E 0x2A 0x1E 0xD1 0x92 0xE6 0x37 0xB2 0xF6 0xDA 0x0C
+                            const BUFFER: [u8; 16] = [
+                                0x4C, 0x22, 0xC7, 0x81, 0x25, 0x2E, 0x2A, 0x1E, 0xD1, 0x92, 0xE6,
+                                0x37, 0xB2, 0xF6, 0xDA, 0x0C,
+                            ];
+                            const PITCH: f32 = 100.0;
+                            self.c8_device
+                                .audio_device
+                                .play_buffer(BUFFER.to_vec(), PITCH);
                         }
 
                         if ui.button("Pause").clicked() {
@@ -902,8 +912,7 @@ impl AppUI {
                                 0.0..=1.0,
                             )
                             .text(self.language.get_locale_string("volume")),
-                        )
-                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                        );
 
                         ui.add(
                             egui::Slider::new(
@@ -915,8 +924,7 @@ impl AppUI {
                                 110.0..=2200.0,
                             )
                             .text(self.language.get_locale_string("pitch")),
-                        )
-                        .on_hover_text(self.language.get_locale_string("not_implemented"));
+                        );
                     });
 
                     if ui

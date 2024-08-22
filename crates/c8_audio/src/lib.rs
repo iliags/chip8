@@ -19,6 +19,7 @@ pub(crate) trait SoundDevice: std::fmt::Debug {
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32);
     fn pause(&mut self);
     fn stop(&mut self);
+    fn update(&mut self, audio_settings: AudioSettings);
 }
 
 /// Audio module
@@ -80,9 +81,9 @@ impl AudioDevice {
     }
 
     /// Play a buffer
-    pub fn play_buffer(&mut self, buffer: Vec<u8>) {
+    pub fn play_buffer(&mut self, buffer: Vec<u8>, buffer_pitch: f32) {
         self.audio_device
-            .play_buffer(self.audio_settings, buffer, self.pitch);
+            .play_buffer(self.audio_settings, buffer, buffer_pitch);
     }
 
     /// Pause the audio, if supported
@@ -97,6 +98,9 @@ impl AudioDevice {
 
     /// Update audio settings
     pub fn update_settings(&mut self, settings: AudioSettings) {
-        self.audio_settings = settings;
+        if self.audio_settings != settings {
+            self.audio_settings = settings;
+            self.audio_device.update(self.audio_settings);
+        }
     }
 }
