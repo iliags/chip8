@@ -134,6 +134,7 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
             } else {
+                self.cpu.clear_audio_buffer();
                 self.audio_device.pause();
             }
 

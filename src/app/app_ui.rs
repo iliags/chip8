@@ -880,16 +880,21 @@ impl AppUI {
 
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
-                            //self.c8_device.audio_device.play_beep();
-                            // 0x4C 0x22 0xC7 0x81 0x25 0x2E 0x2A 0x1E 0xD1 0x92 0xE6 0x37 0xB2 0xF6 0xDA 0x0C
-                            const BUFFER: [u8; 16] = [
-                                0x4C, 0x22, 0xC7, 0x81, 0x25, 0x2E, 0x2A, 0x1E, 0xD1, 0x92, 0xE6,
-                                0x37, 0xB2, 0xF6, 0xDA, 0x0C,
-                            ];
-                            const PITCH: f32 = 100.0;
-                            self.c8_device
-                                .audio_device
-                                .play_buffer(BUFFER.to_vec(), PITCH);
+                            const BEEP: bool = false;
+
+                            if BEEP {
+                                self.c8_device.audio_device.play_beep();
+                            } else {
+                                // 0x4C 0x22 0xC7 0x81 0x25 0x2E 0x2A 0x1E 0xD1 0x92 0xE6 0x37 0xB2 0xF6 0xDA 0x0C
+                                const BUFFER: [u8; 16] = [
+                                    0x4C, 0x22, 0xC7, 0x81, 0x25, 0x2E, 0x2A, 0x1E, 0xD1, 0x92,
+                                    0xE6, 0x37, 0xB2, 0xF6, 0xDA, 0x0C,
+                                ];
+                                const PITCH: f32 = 103.0;
+                                self.c8_device
+                                    .audio_device
+                                    .play_buffer(BUFFER.to_vec(), PITCH);
+                            }
                         }
 
                         if ui.button("Pause").clicked() {

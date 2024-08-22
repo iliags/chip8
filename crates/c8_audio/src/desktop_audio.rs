@@ -153,19 +153,21 @@ impl DesktopAudio {
             0.0
         };
 
+        const BUFFER_FREQ: f32 = 4000.0;
+
         let pitch = buffer_pitch;
 
-        const BUFF_FREQ: f32 = 4000.0;
-        let repetitions = (sample_rate / BUFF_FREQ) as usize;
+        let calculated_pitch = BUFFER_FREQ * (2.0_f32).powf((pitch - 64.0) / 48.0);
+        let repetitions = (sample_rate / calculated_pitch) as usize;
 
-        let mut samples: Vec<f32> = Vec::with_capacity(buffer.len() * 8 * repetitions as usize);
+        let mut samples: Vec<f32> = Vec::with_capacity(buffer.len() * 8 * repetitions);
 
         for byte in &buffer {
             for idx_bit in 0..8 {
                 let bit = byte >> (7 - idx_bit) & 0b1 == 0b1;
                 let val = if bit { volume } else { 0.0 };
                 for _ in 0..repetitions {
-                    samples.push(val);
+                    samples.push(val * pitch);
                 }
             }
         }
@@ -173,7 +175,7 @@ impl DesktopAudio {
         let mut next_value = move || {
             sample_clock = (sample_clock + 1.0) % samples.len() as f32;
 
-            samples[sample_clock as usize]
+            samples[sample_clock as usize] * volume
         };
 
         let err_fn = |err| eprintln!("Stream error: {}", err);
@@ -184,7 +186,7 @@ impl DesktopAudio {
                 Self::write_data(data, channels, &mut next_value)
             },
             err_fn,
-            None, //Some(Duration::from_secs_f32(1.0 / 60.0)),
+            Some(Duration::from_secs_f32(1.0 / 60.0)),
         )
     }
 
@@ -227,7 +229,7 @@ impl DesktopAudio {
                 Self::write_data(data, channels, &mut next_value)
             },
             err_fn,
-            None,
+            Some(Duration::from_secs_f32(1.0 / 60.0)),
         )
     }
 
