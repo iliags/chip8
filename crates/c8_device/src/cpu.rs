@@ -1188,14 +1188,7 @@ impl CPU {
             (0xF, _, 1, 8) => {
                 self.sound_timer = self.registers[reg_x];
 
-                if self.sound_timer == 0 {
-                    self.audio_buffer.clear();
-                }
-
-                // Only beep if the audio buffer is empty
-                if self.audio_buffer.is_empty() {
-                    messages.push(DeviceMessage::Beep(self.registers[reg_x]));
-                }
+                messages.push(DeviceMessage::Beep(self.registers[reg_x]));
             }
 
             // Add Vx to the index register
@@ -1230,13 +1223,7 @@ impl CPU {
             // Buzz pitch
             // 0xFX3A
             (0xF, _, 3, 0xA) => {
-                // TODO: Check if this is correct
-                //4000*2^((vx-64)/48)
-                //let reg = self.registers[reg_x].pow(2) as f32;
-                //let pitch = 4000.0 * (reg - 64.0) / 48.0;
-
                 self.buffer_pitch = self.registers[reg_x] as f32;
-                //messages.push(DeviceMessage::SetPitch(pitch));
             }
 
             // Store V0 to Vx in memory starting at address I
