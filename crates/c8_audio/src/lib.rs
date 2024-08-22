@@ -28,9 +28,6 @@ pub struct AudioDevice {
     audio_device: Box<dyn SoundDevice>,
 
     audio_settings: AudioSettings,
-
-    // Used for buffer playback
-    pitch: f32,
 }
 
 impl Default for AudioDevice {
@@ -50,8 +47,6 @@ impl AudioDevice {
             audio_device: Box::new(desktop_audio::DesktopAudio::new()),
 
             audio_settings: AudioSettings::default(),
-
-            pitch: 440.0,
         }
     }
 
@@ -63,11 +58,6 @@ impl AudioDevice {
     /// Set the audio settings
     pub fn set_audio_settings(&mut self, settings: AudioSettings) {
         self.audio_settings = settings;
-    }
-
-    /// Set the buffer pitch
-    pub fn set_buffer_pitch(&mut self, pitch: f32) {
-        self.pitch = pitch;
     }
 
     /// Play a beep sound
