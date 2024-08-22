@@ -266,12 +266,14 @@ impl CPU {
             // Enable low-res
             // 0x00FE
             (0, 0, 0xF, 0xE) => {
+                display.set_resolution(DisplayResolution::Low);
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
             }
 
             // Enable high-res
             // 0x00FF
             (0, 0, 0xF, 0xF) => {
+                display.set_resolution(DisplayResolution::High);
                 messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
             }
 
@@ -686,8 +688,8 @@ impl CPU {
 
         // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
         let sprite_width = if height == 0 { 16 } else { 8 };
-        let sprite_height = if height == 0 { 16 } else { height } as usize;
-        let step = if height == 0 { 32 } else { height as usize };
+        let sprite_height = if height == 0 { 16 } else { height };
+        let step = if height == 0 { 32 } else { height };
 
         for layer in 0..display.get_plane_count() {
             crate::profile_scope!("Draw sprite");

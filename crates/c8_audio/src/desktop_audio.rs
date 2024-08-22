@@ -106,13 +106,10 @@ impl SoundDevice for DesktopAudio {
         }
     }
     fn pause(&mut self) {
-        match self.stream.as_ref() {
-            Some(stream) => {
-                if stream.pause().is_err() {
-                    println!("Failed to pause stream");
-                }
+        if let Some(stream) = self.stream.as_ref() {
+            if stream.pause().is_err() {
+                println!("Failed to pause stream");
             }
-            None => {}
         }
 
         let _ = self.stream_buffer.take();

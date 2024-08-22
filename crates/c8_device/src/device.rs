@@ -161,21 +161,9 @@ impl C8 {
                     &self.keypad,
                 );
 
-                // TODO refactor
                 for message in new_messages.iter().clone() {
-                    match message {
-                        DeviceMessage::ChangeResolution(resolution) => {
-                            self.display.set_resolution(*resolution);
-                        }
-                        DeviceMessage::Beep(_duration) => {
-                            if self.audio_device.get_audio_settings().is_enabled() {
-                                //self.audio_device.play_beep();
-                            }
-                        }
-                        DeviceMessage::Exit => {
-                            self.reset_device();
-                        }
-                        _ => {}
+                    if message == &DeviceMessage::Exit {
+                        self.reset_device();
                     }
                 }
 
