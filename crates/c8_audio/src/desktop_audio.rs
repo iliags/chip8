@@ -116,7 +116,7 @@ impl DesktopAudio {
         let mut sample_clock = 0f32;
 
         let volume = if settings.is_enabled() {
-            settings.get_volume() * 0.05
+            settings.get_volume() * 0.5
         } else {
             0.0
         };
@@ -133,7 +133,7 @@ impl DesktopAudio {
         for byte in &buffer {
             for idx_bit in 0..8 {
                 let bit = byte >> (7 - idx_bit) & 0b1 == 0b1;
-                let val = if bit { volume } else { 0.0 };
+                let val = if bit { 1.0 } else { 0.0 };
                 for _ in 0..repetitions {
                     samples.push(val * pitch);
                 }
@@ -143,7 +143,7 @@ impl DesktopAudio {
         let mut next_value = move || {
             sample_clock = (sample_clock + 1.0) % samples.len() as f32;
 
-            samples[sample_clock as usize] * volume
+            (samples[sample_clock as usize]).sin() * volume
         };
 
         let err_fn = |err| eprintln!("Stream error: {}", err);
