@@ -12,7 +12,7 @@ pub struct Publisher<T> {
 
 impl<T> Publisher<T>
 where
-    T: Eq + Hash + Copy,
+    T: PartialEq + Eq + Hash + Copy,
 {
     /// Subscribe to an event
     pub fn subscribe(&mut self, event: T, listener: Subscriber<T>) {
