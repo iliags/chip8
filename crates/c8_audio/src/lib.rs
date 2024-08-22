@@ -60,11 +60,6 @@ impl AudioDevice {
         &self.audio_settings
     }
 
-    /// Get the current audio settings mutable
-    pub fn get_audio_settings_mut(&mut self) -> &mut AudioSettings {
-        &mut self.audio_settings
-    }
-
     /// Set the audio settings
     pub fn set_audio_settings(&mut self, settings: AudioSettings) {
         self.audio_settings = settings;

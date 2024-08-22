@@ -7,9 +7,7 @@ use cpal::{
 };
 
 pub struct DesktopAudio {
-    stream: Option<Stream>,
     stream_buffer: Option<Stream>,
-    //host: cpal::Host,
     device: cpal::Device,
     config: cpal::SupportedStreamConfig,
 }
@@ -27,9 +25,7 @@ impl Default for DesktopAudio {
             .expect("no default output config");
 
         DesktopAudio {
-            stream: None,
             stream_buffer: None,
-            //host,
             device,
             config,
         }
@@ -44,35 +40,17 @@ impl std::fmt::Debug for DesktopAudio {
 
 impl SoundDevice for DesktopAudio {
     fn play_beep(&mut self, audio_settings: AudioSettings) {
-        // Creating a new stream for each beep is bad, refactor later
-        if self.stream.is_none() {
-            let new_stream = match self.config.sample_format() {
-                cpal::SampleFormat::F32 => Self::create_stream_beep::<f32>(
-                    &self.device,
-                    &self.config.clone().into(),
-                    &audio_settings,
-                ),
-                sample_format => Err(BuildStreamError::BackendSpecific {
-                    err: BackendSpecificError {
-                        description: format!("Unsupported sample format '{sample_format}'"),
-                    },
-                }),
-            };
+        // Constant clean tone
+        const BUFFER: [u8; 16] = [
+            0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+            0xFF, 0x00,
+        ];
 
-            // TODO: Error handling
-            self.stream = Some(new_stream.unwrap());
-        }
-
-        match self.stream.as_ref() {
-            Some(stream) => {
-                if stream.play().is_err() {
-                    eprintln!("Failed to play stream");
-                }
-            }
-            None => {
-                eprintln!("No stream available to play");
-            }
-        }
+        self.play_buffer(
+            audio_settings,
+            BUFFER.to_vec(),
+            audio_settings.get_frequency(),
+        );
     }
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
         if self.stream_buffer.is_none() {
@@ -106,16 +84,9 @@ impl SoundDevice for DesktopAudio {
         }
     }
     fn pause(&mut self) {
-        if let Some(stream) = self.stream.as_ref() {
-            if stream.pause().is_err() {
-                println!("Failed to pause stream");
-            }
-        }
-
         let _ = self.stream_buffer.take();
     }
     fn stop(&mut self) {
-        let _ = self.stream.take();
         let _ = self.stream_buffer.take();
     }
     fn update(&mut self, _audio_settings: AudioSettings) {
@@ -145,7 +116,7 @@ impl DesktopAudio {
         let mut sample_clock = 0f32;
 
         let volume = if settings.is_enabled() {
-            settings.get_volume()
+            settings.get_volume() * 0.05
         } else {
             0.0
         };
@@ -184,49 +155,6 @@ impl DesktopAudio {
             },
             err_fn,
             Some(Duration::from_secs_f32(10.0 / 60.0)),
-        )
-    }
-
-    fn create_stream_beep<T>(
-        device: &cpal::Device,
-        config: &cpal::StreamConfig,
-        settings: &AudioSettings,
-    ) -> Result<Stream, BuildStreamError>
-    where
-        T: SizedSample + FromSample<f32>,
-    {
-        let sample_rate = config.sample_rate.0 as f32;
-        let channels = config.channels as usize;
-
-        // Produce a sinusoid of maximum amplitude.
-        let mut sample_clock = 0f32;
-
-        let pitch = settings.get_frequency();
-
-        // Zero volume if audio is disabled
-        let volume = if settings.is_enabled() {
-            settings.get_volume()
-        } else {
-            0.0
-        };
-
-        let octave = 2.0;
-
-        let mut next_value = move || {
-            sample_clock = (sample_clock + 1.0) % sample_rate;
-
-            (sample_clock * pitch * octave * std::f32::consts::PI / sample_rate).sin() * volume
-        };
-
-        let err_fn = |err| eprintln!("Stream error: {}", err);
-
-        device.build_output_stream(
-            config,
-            move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
-                Self::write_data(data, channels, &mut next_value)
-            },
-            err_fn,
-            None,
         )
     }
 

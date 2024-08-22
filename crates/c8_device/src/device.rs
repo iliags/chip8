@@ -30,9 +30,6 @@ pub struct C8 {
 
     /// Audio device for both web and non-web targets
     pub audio_device: AudioDevice,
-
-    /// Temporary enable/disable audio flag while controls are being implemented
-    pub temp_enable_audio: bool,
 }
 
 impl Default for C8 {
@@ -47,8 +44,6 @@ impl Default for C8 {
             quirks: Quirks::default(),
 
             audio_device: AudioDevice::new(),
-
-            temp_enable_audio: true,
         }
     }
 }

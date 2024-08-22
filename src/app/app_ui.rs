@@ -8,6 +8,7 @@ use super::{
     pixel_color::{PixelColors, PALETTES},
 };
 
+use c8_audio::audio_settings::AudioSettings;
 use c8_device::{
     device::C8,
     display::DisplayResolution,
@@ -136,8 +137,7 @@ struct Settings {
 
     key_mapping: KeyboardMapping,
 
-    // Temporary audio enable
-    temp_enable_audio: bool,
+    audio_settings: AudioSettings,
 }
 
 impl Default for Settings {
@@ -156,7 +156,7 @@ impl Default for Settings {
 
             key_mapping: KeyboardMapping::default(),
 
-            temp_enable_audio: true,
+            audio_settings: AudioSettings::default(),
         }
     }
 }
@@ -891,10 +891,37 @@ impl AppUI {
                 ui.separator();
 
                 ui.checkbox(
-                    &mut self.settings.temp_enable_audio,
+                    &mut self.settings.audio_settings.enabled,
                     self.language.get_locale_string("enable_audio"),
                 );
-                self.c8_device.temp_enable_audio = self.settings.temp_enable_audio;
+
+                ui.separator();
+
+                ui.vertical(|ui| {
+                    ui.add(
+                        egui::Slider::new(&mut self.settings.audio_settings.volume, 0.0..=1.0)
+                            .text(self.language.get_locale_string("volume")),
+                    );
+
+                    ui.add(
+                        egui::Slider::new(
+                            &mut self.settings.audio_settings.frequency,
+                            50.0..=150.0,
+                        )
+                        .text(self.language.get_locale_string("pitch")),
+                    );
+                });
+
+                if ui
+                    .button(self.language.get_locale_string("default"))
+                    .clicked()
+                {
+                    self.settings.audio_settings = AudioSettings::default();
+                }
+
+                self.c8_device
+                    .audio_device
+                    .set_audio_settings(self.settings.audio_settings);
 
                 #[cfg(debug_assertions)]
                 {
@@ -902,21 +929,7 @@ impl AppUI {
 
                     ui.horizontal(|ui| {
                         if ui.button("Play").clicked() {
-                            const BEEP: bool = false;
-
-                            if BEEP {
-                                self.c8_device.audio_device.play_beep();
-                            } else {
-                                // 0x4C 0x22 0xC7 0x81 0x25 0x2E 0x2A 0x1E 0xD1 0x92 0xE6 0x37 0xB2 0xF6 0xDA 0x0C
-                                const BUFFER: [u8; 16] = [
-                                    0x4C, 0x22, 0xC7, 0x81, 0x25, 0x2E, 0x2A, 0x1E, 0xD1, 0x92,
-                                    0xE6, 0x37, 0xB2, 0xF6, 0xDA, 0x0C,
-                                ];
-                                const PITCH: f32 = 103.0;
-                                self.c8_device
-                                    .audio_device
-                                    .play_buffer(BUFFER.to_vec(), PITCH);
-                            }
+                            self.c8_device.audio_device.play_beep();
                         }
 
                         if ui.button("Pause").clicked() {
@@ -929,39 +942,6 @@ impl AppUI {
                         }
                          */
                     });
-
-                    ui.separator();
-
-                    ui.vertical(|ui| {
-                        ui.add(
-                            egui::Slider::new(
-                                &mut self.c8_device.audio_device.get_audio_settings_mut().volume,
-                                0.0..=1.0,
-                            )
-                            .text(self.language.get_locale_string("volume")),
-                        );
-
-                        ui.add(
-                            egui::Slider::new(
-                                &mut self
-                                    .c8_device
-                                    .audio_device
-                                    .get_audio_settings_mut()
-                                    .frequency,
-                                110.0..=2200.0,
-                            )
-                            .text(self.language.get_locale_string("pitch")),
-                        );
-                    });
-
-                    if ui
-                        .button(self.language.get_locale_string("default"))
-                        .clicked()
-                    {
-                        self.c8_device
-                            .audio_device
-                            .set_audio_settings(Default::default());
-                    }
                 }
             },
         );
