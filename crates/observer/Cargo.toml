@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 [dependencies]
 
 [lints]
-#workspace = true
+workspace = true
