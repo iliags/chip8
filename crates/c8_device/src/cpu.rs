@@ -1,7 +1,7 @@
 use std::vec;
 
 use crate::{
-    display::DisplayResolution,
+    display::{Display, DisplayResolution},
     fonts::FONT_DATA,
     keypad::{Keypad, KeypadKey, KEYPAD_KEYS},
     memory::Memory,
@@ -472,94 +472,14 @@ impl CPU {
 
             // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
             // 0xDXYN
-            (0xD, _, _, _) => {
-                // Note: This is one of the more complex instructions.
-
-                // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
-                // This may be implemented in the future with a toggle.
-
-                self.registers[Register::VF as usize] = 0;
-                let mut collision = 0;
-
-                let (screen_width, screen_height) = display.get_screen_size_xy();
-
-                let x = if self.registers[reg_x] as usize >= screen_width {
-                    self.registers[reg_x] as usize % screen_width
-                } else {
-                    self.registers[reg_x] as usize
-                };
-
-                let y = if self.registers[reg_y] as usize >= screen_height {
-                    self.registers[reg_y] as usize % screen_height
-                } else {
-                    self.registers[reg_y] as usize
-                };
-
-                // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
-                let height = n;
-                let zero_height = n == 0;
-
-                let mut i = self.index_register as usize;
-
-                let sprite_width = if zero_height { 16 } else { 8 };
-                let sprite_height = if zero_height { 16 } else { height } as usize;
-                let step = if zero_height { 32 } else { height as usize };
-
-                for layer in 0..display.get_plane_count() {
-                    crate::profile_scope!("Draw sprite");
-                    if display.get_active_plane() & (layer + 1) == 0 {
-                        continue;
-                    }
-
-                    for a in 0..sprite_height {
-                        let line: u16 = if zero_height {
-                            let read_index = (2 * a) + i;
-                            (memory.data[read_index] as u16) << 8
-                                | memory.data[read_index + 1] as u16
-                        } else {
-                            memory.data[i + a] as u16
-                        };
-
-                        for b in 0..sprite_width {
-                            let bit = if zero_height { 15 - b } else { 7 - b };
-                            let mut pixel = (line & (1 << bit)) >> bit;
-
-                            // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
-                            if quirks.clip_sprites
-                                && (x + b >= screen_width || y + a >= screen_height)
-                            {
-                                pixel = 0;
-                            }
-
-                            if pixel == 0 {
-                                continue;
-                            }
-
-                            // Note, something in the previous code causes the sprite index to be past capacity.
-                            // This is a temporary fix until the root cause is found.
-                            let pos_x = if x + b >= screen_width {
-                                (x + b) % screen_width
-                            } else {
-                                x + b
-                            };
-
-                            let pos_y = if y + a >= screen_height {
-                                (y + a) % screen_height
-                            } else {
-                                y + a
-                            };
-
-                            if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
-                                collision = 1;
-                            }
-                        }
-                    }
-
-                    i += step;
-                }
-
-                self.registers[Register::VF as usize] = collision;
-            }
+            (0xD, _, _, _) => self.draw_sprite(
+                display,
+                memory,
+                self.registers[reg_x] as usize,
+                self.registers[reg_y] as usize,
+                n as usize,
+                quirks.clip_sprites,
+            ),
 
             // Skip next instruction if key with the value of Vx is pressed
             // 0xEX9E
@@ -731,5 +651,90 @@ impl CPU {
         let result = if next_op == 0xF000 { 4 } else { 2 };
 
         self.program_counter += result;
+    }
+
+    fn draw_sprite(
+        &mut self,
+        display: &mut Display,
+        memory: &mut Memory,
+        x: usize,
+        y: usize,
+        height: usize,
+        clip_sprites: bool,
+    ) {
+        // Note: This is one of the more complex instructions.
+
+        // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
+        // This may be implemented in the future with a toggle.
+
+        let (screen_width, screen_height) = display.get_screen_size_xy();
+        let x = x % screen_width;
+        let y = y % screen_height;
+
+        self.registers[Register::VF as usize] = 0;
+        let mut collision = 0;
+
+        let mut i = self.index_register as usize;
+
+        // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
+        let sprite_width = if height == 0 { 16 } else { 8 };
+        let sprite_height = if height == 0 { 16 } else { height } as usize;
+        let step = if height == 0 { 32 } else { height as usize };
+
+        for layer in 0..display.get_plane_count() {
+            crate::profile_scope!("Draw sprite");
+            if display.get_active_plane() & (layer + 1) == 0 {
+                continue;
+            }
+
+            for a in 0..sprite_height {
+                let line: u16 = if height == 0 {
+                    let read_index = (2 * a) + i;
+                    (memory.data[read_index] as u16) << 8 | memory.data[read_index + 1] as u16
+                } else {
+                    memory.data[i + a] as u16
+                };
+
+                for b in 0..sprite_width {
+                    let bit = if height == 0 { 15 - b } else { 7 - b };
+                    let mut pixel = (line & (1 << bit)) >> bit;
+
+                    // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
+                    if clip_sprites && (x + b >= screen_width || y + a >= screen_height) {
+                        pixel = 0;
+                    }
+
+                    if pixel == 0 {
+                        continue;
+                    }
+
+                    // Note, something in the previous code causes the sprite index to be past capacity.
+                    // This is a temporary fix until the root cause is found.
+                    /*
+                    let pos_x = if x + b >= screen_width {
+                        (x + b) % screen_width
+                    } else {
+                        x + b
+                    };
+
+                    let pos_y = if y + a >= screen_height {
+                        (y + a) % screen_height
+                    } else {
+                        y + a
+                    };
+                     */
+                    let pos_x = x + b;
+                    let pos_y = y + a;
+
+                    if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
+                        collision = 1;
+                    }
+                }
+            }
+
+            i += step;
+        }
+
+        self.registers[Register::VF as usize] = collision;
     }
 }
