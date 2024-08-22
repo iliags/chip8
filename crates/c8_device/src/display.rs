@@ -163,12 +163,7 @@ impl Display {
 
     /// Set the active plane
     pub(crate) fn set_active_plane(&mut self, plane: usize) {
-        let plane = self.clamp_plane_value(plane);
-        self.active_plane = plane;
-    }
-
-    const fn clamp_plane_value(&self, value: usize) -> usize {
-        value & 0x3
+        self.active_plane = plane & 0x3;
     }
 
     pub(crate) fn get_plane_count(&self) -> usize {
