@@ -277,7 +277,10 @@ impl Display {
 
     #[inline]
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
-        let (width, _) = self.get_screen_size_xy();
+        let (width, height) = self.get_screen_size_xy();
+
+        let x = x % width;
+        let y = y % height;
 
         // Get the pixel index
         y * width + x
