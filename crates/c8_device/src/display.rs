@@ -179,7 +179,6 @@ impl Display {
     pub(crate) fn scroll_left(&mut self, pixels: u8) {
         profile_function!();
         let row_size = self.get_screen_size_xy().0;
-        let size = self.get_screen_size_xy().0 * pixels as usize;
 
         for layer in 0..self.get_plane_count() {
             if self.get_active_plane() & (layer + 1) == 0 {
@@ -189,7 +188,7 @@ impl Display {
             for a in (0..self.planes[layer].pixels.len()).step_by(row_size) {
                 for b in 0..row_size {
                     let index = a + b;
-                    self.planes[layer].pixels[index] = if b < size {
+                    self.planes[layer].pixels[index] = if b < row_size - pixels as usize {
                         self.planes[layer].pixels[index + pixels as usize]
                     } else {
                         0
@@ -277,10 +276,10 @@ impl Display {
 
     #[inline]
     const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
-        let (width, height) = self.get_screen_size_xy();
+        let (width, _) = self.get_screen_size_xy();
 
-        let x = x % width;
-        let y = y % height;
+        //let x = x % width;
+        //let y = y % height;
 
         // Get the pixel index
         y * width + x

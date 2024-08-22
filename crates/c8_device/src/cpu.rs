@@ -554,6 +554,10 @@ impl CPU {
             (0xF, _, 1, 8) => {
                 self.sound_timer = self.registers[reg_x];
 
+                if self.sound_timer == 0 {
+                    self.audio_buffer.clear();
+                }
+
                 messages.push(DeviceMessage::Beep(self.registers[reg_x]));
             }
 
@@ -646,7 +650,7 @@ impl CPU {
         messages
     }
 
-    //#[inline]
+    #[inline]
     fn skip_next_instruction(&mut self, memory: &Memory) {
         let pc = self.program_counter as usize;
         let next_op = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
@@ -676,15 +680,14 @@ impl CPU {
         let y = y % screen_height;
 
         self.registers[Register::VF as usize] = 0;
-
-        let big_sprite = height == 0;
-        let step = if big_sprite { 2 } else { 1 };
-        let width = if big_sprite { 16 } else { 8 };
-        let height = if height == 0 { 16 } else { height };
-
         let mut collision = 0;
+
         let mut i = self.index_register as usize;
-        let len = width / 8 * height;
+
+        // If height is 0, we are drawing a SuperChip 16x16 sprite, otherwise we are drawing an 8xN sprite
+        let sprite_width = if height == 0 { 16 } else { 8 };
+        let sprite_height = if height == 0 { 16 } else { height } as usize;
+        let step = if height == 0 { 32 } else { height as usize };
 
         for layer in 0..display.get_plane_count() {
             crate::profile_scope!("Draw sprite");
@@ -692,42 +695,49 @@ impl CPU {
                 continue;
             }
 
-            let sprite = &memory.data[i..i + len];
-            i += len;
+            for a in 0..sprite_height {
+                let line: u16 = if height == 0 {
+                    let read_index = (2 * a) + i;
+                    (memory.data[read_index] as u16) << 8 | memory.data[read_index + 1] as u16
+                } else {
+                    memory.data[i + a] as u16
+                };
 
-            for (mut y, k) in (y..y + height).zip((0..sprite.len()).step_by(step)) {
-                // Clip or wrap
-                if y >= screen_height {
-                    if clip_sprites {
+                for b in 0..sprite_width {
+                    let bit = if height == 0 { 15 - b } else { 7 - b };
+                    let mut pixel = (line & (1 << bit)) >> bit;
+
+                    // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
+                    if clip_sprites && (x + b >= screen_width || y + a >= screen_height) {
+                        pixel = 0;
+                    }
+
+                    if pixel == 0 {
                         continue;
-                    } else {
-                        y %= screen_height;
-                    }
-                }
-
-                for (mut x, i) in (x..x + width).zip((0..width).rev()) {
-                    // Clip or wrap
-                    if x >= screen_width {
-                        if clip_sprites {
-                            continue;
-                        } else {
-                            x %= screen_width;
-                        }
                     }
 
-                    // Get bit
-                    let bit = if width == 16 {
-                        ((sprite[k] as u16) << 8 | sprite[k + 1] as u16) >> i & 0b1 > 0
+                    // Note, something in the previous code causes the sprite index to be past capacity.
+                    // This is a temporary fix until the root cause is found.
+
+                    let pos_x = if x + b >= screen_width {
+                        (x + b) % screen_width
                     } else {
-                        sprite[k] >> i & 0b1 > 0
+                        x + b
                     };
 
-                    // Detect collision and draw pixel
-                    if bit && display.set_plane_pixel(layer, x, y) == 1 {
+                    let pos_y = if y + a >= screen_height {
+                        (y + a) % screen_height
+                    } else {
+                        y + a
+                    };
+
+                    if display.set_plane_pixel(layer, pos_x, pos_y) == 1 {
                         collision = 1;
                     }
                 }
             }
+
+            i += step;
         }
 
         self.registers[Register::VF as usize] = collision;
