@@ -124,7 +124,7 @@ impl Display {
     }
 
     /// Get the pixels of a plane
-    fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
+    pub fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
         &self.planes[plane].pixels
     }
 

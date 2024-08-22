@@ -67,6 +67,9 @@ pub struct AppUI {
     #[serde(skip)]
     c8_device: C8,
 
+    #[serde(skip)]
+    debug_window: bool,
+
     language: LocaleText,
 
     settings: Settings,
@@ -92,6 +95,8 @@ impl Default for AppUI {
 
             file_data: Rc::new(RefCell::new(None)),
             file_name: Rc::new(RefCell::new(None)),
+
+            debug_window: false,
 
             language: LocaleText::default(),
             settings: Settings::default(),
@@ -661,6 +666,21 @@ impl AppUI {
                     .clicked()
                 {
                     self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+                }
+            }
+
+            #[cfg(debug_assertions)]
+            {
+                ui.separator();
+
+                ui.checkbox(&mut self.debug_window, "Debug window");
+
+                if self.debug_window {
+                    let pixels0 = format!("{:?}", self.c8_device.get_display().get_plane_pixels(0));
+                    let pixels1 = format!("{:?}", self.c8_device.get_display().get_plane_pixels(0));
+
+                    ui.label(pixels0);
+                    ui.label(pixels1);
                 }
             }
         });
