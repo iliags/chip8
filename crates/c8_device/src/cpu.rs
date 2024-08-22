@@ -70,6 +70,8 @@ pub struct CPU {
     audio_buffer: Vec<u8>,
 
     buffer_pitch: f32,
+
+    requesting_exit: bool,
 }
 
 impl Default for CPU {
@@ -84,11 +86,17 @@ impl Default for CPU {
             saved_registers: vec![0; 16],
             audio_buffer: Vec::new(),
             buffer_pitch: 64.0,
+            requesting_exit: false,
         }
     }
 }
 
 impl CPU {
+    /// Check if the CPU is requesting an exit
+    pub(crate) fn is_requesting_exit(&self) -> bool {
+        self.requesting_exit
+    }
+
     /// Get the audio buffer
     pub fn get_audio_buffer(&self) -> &Vec<u8> {
         &self.audio_buffer
@@ -259,8 +267,8 @@ impl CPU {
             (0, 0, 0xF, 0xD) => {
                 // Note: The program counter is decremented by 2 to prevent the program from advancing
 
+                self.requesting_exit = true;
                 self.program_counter -= 2;
-                messages.push(DeviceMessage::Exit);
             }
 
             // Enable low-res
@@ -530,7 +538,6 @@ impl CPU {
                     let index = (self.index_register + z) as usize;
                     self.audio_buffer[z as usize] = memory.data[index];
                 }
-                messages.push(DeviceMessage::NewAudioBuffer);
             }
 
             // Set Vx to the value of the delay timer
@@ -559,8 +566,6 @@ impl CPU {
                 if self.sound_timer == 0 {
                     self.audio_buffer.clear();
                 }
-
-                messages.push(DeviceMessage::Beep(self.registers[reg_x]));
             }
 
             // Add Vx to the index register

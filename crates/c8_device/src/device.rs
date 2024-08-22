@@ -161,10 +161,9 @@ impl C8 {
                     &self.keypad,
                 );
 
-                for message in new_messages.iter().clone() {
-                    if message == &DeviceMessage::Exit {
-                        self.reset_device();
-                    }
+                if self.cpu.is_requesting_exit() {
+                    self.is_running = false;
+                    self.reset_device();
                 }
 
                 messages.append(new_messages.as_mut());
