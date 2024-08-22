@@ -33,6 +33,7 @@ unsafe_code = "deny"
 c8_audio = { path = "crates/c8_audio" }
 c8_device = { path = "crates/c8_device" }
 c8_i18n = { path = "crates/c8_i18n" }
+observer = { path = "crates/observer" }
 
 # Accessibility
 fluent = "0.16"
@@ -79,6 +80,7 @@ serde = { workspace = true }
 c8_audio = { workspace = true }
 c8_device = { workspace = true }
 c8_i18n = { workspace = true }
+observer = { workspace = true }
 
 futures = { workspace = true }
 
