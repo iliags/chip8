@@ -44,7 +44,6 @@ impl std::fmt::Debug for DesktopAudio {
 
 impl SoundDevice for DesktopAudio {
     fn play_beep(&mut self, audio_settings: AudioSettings) {
-        println!("Playing beep");
         // Creating a new stream for each beep is bad, refactor later
         if self.stream.is_none() {
             let new_stream = match self.config.sample_format() {
@@ -76,7 +75,6 @@ impl SoundDevice for DesktopAudio {
         }
     }
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
-        println!("Playing buffer");
         if self.stream_buffer.is_none() {
             let new_stream = match self.config.sample_format() {
                 cpal::SampleFormat::F32 => Self::create_stream_buffer::<f32>(
