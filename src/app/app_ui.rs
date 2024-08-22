@@ -458,12 +458,12 @@ impl AppUI {
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
 
-        self.c8_device.load_rom(&self.rom_file);
+        self.c8_device.load_rom(self.rom_file.clone());
     }
 
     fn reload_rom(&mut self) {
         self.reset_display();
-        self.c8_device.load_rom(&self.rom_file);
+        self.c8_device.load_rom(self.rom_file.clone());
     }
 
     fn unload_rom(&mut self) {

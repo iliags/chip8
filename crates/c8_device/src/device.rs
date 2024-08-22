@@ -1,9 +1,8 @@
-use c8_audio::AudioDevice;
-
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
     quirks::Quirks,
 };
+use c8_audio::AudioDevice;
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -46,7 +45,9 @@ impl Default for C8 {
             is_running: false,
             keypad: Keypad::default(),
             quirks: Quirks::default(),
+
             audio_device: AudioDevice::new(),
+
             temp_enable_audio: true,
         }
     }
@@ -99,10 +100,10 @@ impl C8 {
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
-    pub fn load_rom(&mut self, rom: &[u8]) {
+    pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();
 
-        self.memory.load_rom(rom);
+        self.memory.load_rom(&rom);
 
         self.is_running = true;
     }
@@ -145,6 +146,7 @@ impl C8 {
                     }
                 }
             } else {
+                // TODO: Make this more ergonomic (i.e. only pause if it's playing)
                 self.cpu.clear_audio_buffer();
                 self.audio_device.pause();
             }
@@ -159,25 +161,20 @@ impl C8 {
                     &self.keypad,
                 );
 
-                messages.append(new_messages.as_mut());
-            }
-        }
-
-        // TODO: Change to observer pattern
-        for message in messages.iter() {
-            match message {
-                DeviceMessage::ChangeResolution(resolution) => {
-                    self.display.set_resolution(*resolution);
-                }
-                DeviceMessage::Beep(_duration) => {
-                    if self.audio_device.get_audio_settings().is_enabled() {
-                        self.audio_device.play_beep();
+                for message in new_messages.iter().clone() {
+                    match message {
+                        DeviceMessage::ChangeResolution(resolution) => {
+                            self.display.set_resolution(*resolution);
+                        }
+                        DeviceMessage::Exit => {
+                            //self.is_running = false;
+                            self.reset_device();
+                        }
+                        _ => {}
                     }
                 }
-                DeviceMessage::Exit => {
-                    self.reset_device();
-                }
-                _ => {}
+
+                messages.append(new_messages.as_mut());
             }
         }
 
@@ -194,7 +191,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut c8 = C8::default();
-        c8.load_rom(&vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
         assert_eq!(c8.memory.data[0x200], 0x00);
         assert_eq!(c8.memory.data[0x201], 0xE0);
         assert_eq!(c8.memory.data[0x202], 0x00);
@@ -218,7 +215,7 @@ mod tests {
     #[test]
     fn test_step_timers() {
         let mut c8 = C8::default();
-        c8.load_rom(&vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
         c8.cpu.delay_timer = 1;
         c8.cpu.sound_timer = 1;
         c8.step(1);
