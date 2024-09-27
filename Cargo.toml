@@ -37,7 +37,7 @@ observer = { path = "crates/observer" }
 
 # Accessibility
 fluent = "0.16"
-fluent-templates = "0.10"
+fluent-templates = "0.11"
 unic-langid = "0.9"
 
 # Random number generator
@@ -50,9 +50,9 @@ serde = { version = "1", features = ["derive"] }
 # Web
 # Note: The web crates cannot be updated until egui is updated
 # past 0.28.1 due to a breaking change in the wasm-bindgen crate.
-wasm-bindgen-futures = "=0.4.42"
-wasm-bindgen = "=0.2.92"
-web-sys = "=0.3.69"
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+web-sys = "0.3"
 futures = "0.3"
 
 
@@ -61,14 +61,14 @@ puffin_egui = { version = "0.29" }
 puffin = { version = "0.19" }
 
 [dependencies]
-egui = "0.28"
-eframe = { version = "0.28", default-features = false, features = [
+egui = "0.29"
+eframe = { version = "0.29", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
 log = "0.4"
-rfd = "0.14"
+rfd = "0.15"
 
 
 fluent = { workspace = true }

@@ -305,7 +305,7 @@ impl eframe::App for AppUI {
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                     // Global dark/light mode buttons
-                    egui::widgets::global_dark_light_mode_buttons(ui);
+                    egui::widgets::global_theme_preference_switch(ui);
 
                     ui.separator();
 
@@ -399,6 +399,7 @@ impl AppUI {
             magnification: egui::TextureFilter::Nearest,
             minification: egui::TextureFilter::Nearest,
             wrap_mode: egui::TextureWrapMode::ClampToEdge,
+            mipmap_mode: None,
         };
 
         match &mut self.display_handle {
@@ -615,7 +616,7 @@ impl AppUI {
         egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
                 egui::Slider::new(&mut self.settings.cpu_speed, 1..=240)
-                    .clamp_to_range(false)
+                    .clamping(egui::SliderClamping::Never)
                     .text(self.language.get_locale_string("speed")),
             )
             .on_hover_text(self.language.get_locale_string("speed_hover"));
