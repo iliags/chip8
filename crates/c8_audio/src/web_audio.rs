@@ -43,7 +43,7 @@ impl SoundDevice for WebAudio {
     fn stop(&mut self) {
         stop_source(self.source.take());
     }
-    fn update(&mut self, audio_settings: AudioSettings) {
+    fn update(&mut self, _audio_settings: AudioSettings) {
         // TODO: Implement
     }
 }
