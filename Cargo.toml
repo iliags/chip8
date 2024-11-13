@@ -80,7 +80,6 @@ serde = { workspace = true }
 c8_audio = { workspace = true }
 c8_device = { workspace = true }
 c8_i18n = { workspace = true }
-observer = { workspace = true }
 
 futures = { workspace = true }
 

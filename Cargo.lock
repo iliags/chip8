@@ -653,7 +653,6 @@ dependencies = [
  "futures",
  "getrandom",
  "log",
- "observer",
  "puffin",
  "puffin_egui",
  "rand",
@@ -2562,10 +2561,6 @@ checksum = "6c8bb09a4a2b1d668170cfe0a7d5bc103f8999fb316c98099b6a9939c9f2e79d"
 dependencies = [
  "cc",
 ]
-
-[[package]]
-name = "observer"
-version = "0.1.0"
 
 [[package]]
 name = "once_cell"
