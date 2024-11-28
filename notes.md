@@ -2,6 +2,11 @@
 
 Notes for later things.
 
+## Refactoring Stuff
+
+- Get rid of the ad-hoc message system and run the emulator on a background thread
+- Reference Octo for the audio issues
+
 ## Octo `options.json`
 
 Egui has a hex to RGB color converter, however it isn't `const`.
@@ -67,12 +72,6 @@ Conversion:
 }
 ```
 
-## Compiler
-
-- Assembler
-- Disassembler
-- Debugger
-
 ## Wishlist
 
 Stuff that might be added later.
@@ -83,3 +82,6 @@ Stuff that might be added later.
 - User facing error messages rather than panicking.
 - Use icons over text
 - UI color themes
+- Assembler
+- Disassembler
+- Debugger
