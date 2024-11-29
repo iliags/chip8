@@ -4,8 +4,6 @@ Notes for later things.
 
 ## Refactoring Stuff
 
-- Rewrite CPU match statement with a single opcode statement
-  - i.e. `(0, 0, 0, 0)` to `0x0000`
 - Get rid of the ad-hoc message system and run the emulator on a background thread
 - Reference Octo for the audio issues
 
