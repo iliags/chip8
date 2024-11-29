@@ -86,7 +86,7 @@ impl Default for AppUI {
             puffin::set_scopes_on(true);
         }
 
-        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
+        let (width, height) = DisplayResolution::Low.resolution_size_xy();
         Self {
             display_image: egui::ColorImage::new([width, height], Color32::BLACK),
             display_handle: None,
@@ -213,14 +213,12 @@ impl eframe::App for AppUI {
                         .unwrap_or_else(|| panic!("No regular key found for key: {:?}", key));
 
                     let is_down = i.key_down(regular_key) || i.key_down(*key);
-                    self.c8_device
-                        .get_keypad_mut()
-                        .set_key(current_key, is_down);
+                    self.c8_device.keypad_mut().set_key(current_key, is_down);
 
                     return;
                 } else {
                     self.c8_device
-                        .get_keypad_mut()
+                        .keypad_mut()
                         .set_key(current_key, i.key_down(*key))
                 }
 
@@ -293,7 +291,7 @@ impl eframe::App for AppUI {
 
                 if ui
                     .add_enabled(
-                        self.c8_device.get_is_running(),
+                        self.c8_device.is_running(),
                         egui::Button::new(self.language.get_locale_string("unload_rom")),
                     )
                     .clicked()
@@ -340,7 +338,7 @@ impl eframe::App for AppUI {
 
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
-        if self.c8_device.get_is_running() {
+        if self.c8_device.is_running() {
             ctx.request_repaint();
         }
     }
@@ -362,17 +360,13 @@ impl AppUI {
     }
 
     fn update_resolution(&mut self) {
-        let (width, height) = self
-            .c8_device
-            .get_display()
-            .get_resolution()
-            .get_resolution_size_xy();
+        let (width, height) = self.c8_device.display().resolution().resolution_size_xy();
         let bg_color = self.settings.pixel_colors.get_background_color();
         self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
     fn reset_display(&mut self) {
-        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
+        let (width, height) = DisplayResolution::Low.resolution_size_xy();
         let bg_color = self.settings.pixel_colors.get_background_color();
         self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
@@ -385,8 +379,8 @@ impl AppUI {
         //if self.c8_device.get_is_running() {
         self.display_image.pixels = self
             .c8_device
-            .get_display()
-            .get_zipped_iterator()
+            .display()
+            .zipped_iterator()
             .map(|(&p0, &p1)| {
                 let result = (p0 << 1) | p1;
                 *self.settings.pixel_colors.get_pixel_color(result.into())
@@ -673,8 +667,8 @@ impl AppUI {
                 ui.checkbox(&mut self.debug_window, "Debug window");
 
                 if self.debug_window {
-                    let pixels0 = format!("{:?}", self.c8_device.get_display().get_plane_pixels(0));
-                    let pixels1 = format!("{:?}", self.c8_device.get_display().get_plane_pixels(0));
+                    let pixels0 = format!("{:?}", self.c8_device.display().plane_pixels(0));
+                    let pixels1 = format!("{:?}", self.c8_device.display().plane_pixels(0));
 
                     ui.label(pixels0);
                     ui.label(pixels1);
@@ -758,9 +752,9 @@ impl AppUI {
 
             egui::Grid::new("keyboard_grid").show(ui, |ui| {
                 for (i, key) in KEYPAD_KEYS.iter().enumerate() {
-                    let key_down = self.c8_device.get_keypad().is_key_pressed(key);
+                    let key_down = self.c8_device.keypad().is_key_pressed(key);
 
-                    let key_name = key.get_name();
+                    let key_name = key.name();
 
                     if key_down {
                         let background_color = if ui.ctx().style().visuals.dark_mode {
@@ -857,7 +851,7 @@ impl AppUI {
 
             // Emulator font
             // TODO: Move this to emulator settings
-            let current_font_name: String = self.c8_device.get_memory().get_system_font().into();
+            let current_font_name: String = self.c8_device.memory().system_font().into();
             egui::ComboBox::from_label(self.language.get_locale_string("font_small"))
                 .selected_text(current_font_name)
                 .show_ui(ui, |ui| {
@@ -869,13 +863,13 @@ impl AppUI {
                         let font_string: String = font.name.into();
 
                         ui.selectable_label(
-                            self.c8_device.get_memory_mut().get_system_font() == font.name,
+                            self.c8_device.memory_mut().system_font() == font.name,
                             font_string,
                         )
                         .on_hover_text(self.language.get_locale_string("font_hover"))
                         .clicked()
                         .then(|| {
-                            self.c8_device.get_memory_mut().load_font_small(font);
+                            self.c8_device.memory_mut().load_font_small(font);
                         });
                     }
                 });

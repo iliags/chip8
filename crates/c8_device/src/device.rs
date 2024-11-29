@@ -50,17 +50,17 @@ impl Default for C8 {
 
 impl C8 {
     /// Get the memory of the device
-    pub fn get_memory(&self) -> &Memory {
+    pub fn memory(&self) -> &Memory {
         &self.memory
     }
 
     /// Get the memory of the device (mutable)
-    pub fn get_memory_mut(&mut self) -> &mut Memory {
+    pub fn memory_mut(&mut self) -> &mut Memory {
         &mut self.memory
     }
 
     /// Get the quirks of the device
-    pub fn get_quirks(&self) -> &Quirks {
+    pub fn quirks(&self) -> &Quirks {
         &self.quirks
     }
 
@@ -70,27 +70,27 @@ impl C8 {
     }
 
     /// Get the display of the device
-    pub fn get_display(&self) -> &Display {
+    pub fn display(&self) -> &Display {
         &self.display
     }
 
     /// Get the display of the device (mutable)
-    pub fn get_display_mut(&mut self) -> &mut Display {
+    pub fn display_mut(&mut self) -> &mut Display {
         &mut self.display
     }
 
     /// Get the keypad of the device
-    pub fn get_keypad(&self) -> &Keypad {
+    pub fn keypad(&self) -> &Keypad {
         &self.keypad
     }
 
     /// Get the keypad of the device (mutable)
-    pub fn get_keypad_mut(&mut self) -> &mut Keypad {
+    pub fn keypad_mut(&mut self) -> &mut Keypad {
         &mut self.keypad
     }
 
     /// Get if the device is running
-    pub fn get_is_running(&self) -> bool {
+    pub fn is_running(&self) -> bool {
         self.is_running
     }
 

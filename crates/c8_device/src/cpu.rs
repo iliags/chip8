@@ -141,7 +141,7 @@ impl CPU {
             match task.key {
                 Some(key) => {
                     if !keypad.is_key_pressed(&key) {
-                        self.registers[task.register] = key.get_key_index() as u8;
+                        self.registers[task.register] = key.key_index() as u8;
                         self.waiting_for_key = None;
                     }
                 }
@@ -235,8 +235,8 @@ impl CPU {
             // Clear the display
             // 0x00E0
             (0, 0, 0xE, 0) => {
-                for layer in 0..display.get_plane_count() {
-                    if display.get_active_plane() & (layer + 1) == 0 {
+                for layer in 0..display.plane_count() {
+                    if display.active_plane() & (layer + 1) == 0 {
                         continue;
                     }
                     display.clear(layer);
@@ -501,7 +501,7 @@ impl CPU {
             (0xE, _, 9, 0xE) => {
                 let key = self.registers[reg_x] as usize;
 
-                if keypad.get_key(&key.into()) != 0 {
+                if keypad.key(&key.into()) != 0 {
                     self.skip_next_instruction(memory);
                 }
             }
@@ -511,7 +511,7 @@ impl CPU {
             (0xE, _, 0xA, 1) => {
                 let key = self.registers[reg_x] as usize;
 
-                if keypad.get_key(&key.into()) == 0 {
+                if keypad.key(&key.into()) == 0 {
                     self.skip_next_instruction(memory);
                 }
             }
@@ -682,7 +682,7 @@ impl CPU {
         // Quirk: The sprites are limited to 60 per second due to V-blank interrupt waiting.
         // This may be implemented in the future with a toggle.
 
-        let (screen_width, screen_height) = display.get_screen_size_xy();
+        let (screen_width, screen_height) = display.screen_size_xy();
         let x = x % screen_width;
         let y = y % screen_height;
 
@@ -696,9 +696,9 @@ impl CPU {
         let sprite_height = if height == 0 { 16 } else { height };
         let step = if height == 0 { 32 } else { height };
 
-        for layer in 0..display.get_plane_count() {
+        for layer in 0..display.plane_count() {
             crate::profile_scope!("Draw sprite");
-            if display.get_active_plane() & (layer + 1) == 0 {
+            if display.active_plane() & (layer + 1) == 0 {
                 continue;
             }
 

@@ -90,22 +90,22 @@ impl Memory {
     }
 
     /// Get memory data
-    pub fn get_data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &Vec<u8> {
         &self.data
     }
 
     /// Get mutable memory data
-    pub fn get_data_mut(&mut self) -> &mut Vec<u8> {
+    pub fn data_mut(&mut self) -> &mut Vec<u8> {
         &mut self.data
     }
 
     /// Get the system font
-    pub fn get_system_font(&self) -> FontName {
+    pub fn system_font(&self) -> FontName {
         self.system_font
     }
 
     /// Get mutable system font
-    pub fn get_system_font_mut(&mut self) -> &mut FontName {
+    pub fn system_font_mut(&mut self) -> &mut FontName {
         &mut self.system_font
     }
 }
