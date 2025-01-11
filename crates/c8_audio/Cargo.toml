@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 serde = { workspace = true }
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
+tinyaudio = "1.1"
 
 [lints]
 workspace = true

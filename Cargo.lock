@@ -509,6 +509,7 @@ version = "0.1.0"
 dependencies = [
  "cpal",
  "serde",
+ "tinyaudio",
 ]
 
 [[package]]
@@ -3250,6 +3251,23 @@ checksum = "2834e6017e3e5e4b9834939793b282bc03b37a3336245fa820e35e233e2a85de"
 dependencies = [
  "num-conv",
  "time-core",
+]
+
+[[package]]
+name = "tinyaudio"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e28f61bcbbeed46a2b3080aa12f480e059e7b319f79361f1b89af5e60d023cc9"
+dependencies = [
+ "alsa-sys",
+ "core-foundation-sys",
+ "coreaudio-sys",
+ "js-sys",
+ "ndk 0.9.0",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "winapi",
 ]
 
 [[package]]
