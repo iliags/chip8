@@ -39,21 +39,28 @@ impl TinyAudio {
         };
 
         let device = run_output_device(params, {
-            // Do stuff
+            const BUFFER_FREQ: f32 = 4000.0;
+            const PITCH_BIAS: f32 = 64.0;
+
             let mut clock = 0f32;
             let playing = self.playing.clone();
             move |data| {
+                //println!("Data: {:?}", data.len());
+                let buffer = if playing.load(Ordering::SeqCst) {
+                    &BUFFER
+                } else {
+                    &SILENCE
+                };
                 for samples in data.chunks_mut(params.channels_count) {
-                    if playing.load(Ordering::SeqCst) == false {
-                        for (i, sample) in samples.iter_mut().enumerate() {
-                            *sample = SILENCE[i] as f32 / 255.0;
-                        }
-                        continue;
-                    }
-                    clock = (clock + 1.0) % params.sample_rate as f32;
-                    let value = (clock * 440.0 * 2.0 * std::f32::consts::PI
-                        / params.sample_rate as f32)
-                        .sin();
+                    //clock = (clock + 1.0) % params.sample_rate as f32;
+                    clock = (clock + 1.0) % buffer.len() as f32;
+                    /* let value = (clock * 440.0 * 2.0 * std::f32::consts::PI
+                    / params.sample_rate as f32)
+                    .sin(); */
+                    let pitch = 64.0;
+                    let freq = BUFFER_FREQ * (2.0_f32).powf((pitch - PITCH_BIAS) / 48.0);
+                    let value = clock * freq * buffer[clock as usize] as f32;
+                    //println!("Samples: {:?}", samples.len());
                     for sample in samples {
                         *sample = value;
                     }
