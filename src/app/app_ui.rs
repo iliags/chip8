@@ -226,10 +226,14 @@ impl eframe::App for AppUI {
                 #[cfg(debug_assertions)]
                 {
                     if i.key_pressed(egui::Key::Tab) {
-                        self.load_rom(GAME_ROMS[8].data().to_vec());
-                        //self.load_rom(TEST_ROMS[0].data().to_vec());
-                        //self.load_rom(TEST_ROMS[7].data().to_vec());
-                        //self.c8_device.get_memory_mut().data_mut()[0x1FF] = 1;
+                        // Skyward
+                        //self.load_rom(GAME_ROMS[8].data().to_vec());
+
+                        // Music player 1
+                        //self.load_rom(GAME_ROMS[9].data().to_vec());
+
+                        // Music player 2
+                        self.load_rom(GAME_ROMS[10].data().to_vec());
                     }
                 }
             });
