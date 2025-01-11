@@ -4,14 +4,7 @@ use audio_settings::AudioSettings;
 
 /// Custom audio settings
 pub mod audio_settings;
-
-/// Web audio module
-#[cfg(target_arch = "wasm32")]
-mod web_audio;
-
-/// Desktop audio module
-#[cfg(not(target_arch = "wasm32"))]
-mod desktop_audio;
+mod device_audio;
 
 /// Trait for sound devices
 pub(crate) trait SoundDevice: std::fmt::Debug {
@@ -40,11 +33,7 @@ impl AudioDevice {
     /// Create a new audio device
     pub fn new() -> Self {
         Self {
-            #[cfg(target_arch = "wasm32")]
-            audio_device: Box::new(web_audio::WebAudio::new()),
-
-            #[cfg(not(target_arch = "wasm32"))]
-            audio_device: Box::new(desktop_audio::DesktopAudio::new()),
+            audio_device: Box::new(device_audio::DeviceAudio::new()),
 
             audio_settings: AudioSettings::default(),
         }

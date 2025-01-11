@@ -509,9 +509,6 @@ version = "0.1.0"
 dependencies = [
  "cpal",
  "serde",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]

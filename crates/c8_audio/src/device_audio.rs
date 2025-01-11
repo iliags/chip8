@@ -6,13 +6,13 @@ use cpal::{
     BackendSpecificError, BuildStreamError, FromSample, Sample, SizedSample, Stream,
 };
 
-pub struct DesktopAudio {
+pub struct DeviceAudio {
     stream_buffer: Option<Stream>,
     device: cpal::Device,
     config: cpal::SupportedStreamConfig,
 }
 
-impl Default for DesktopAudio {
+impl Default for DeviceAudio {
     fn default() -> Self {
         let host = cpal::default_host();
 
@@ -24,7 +24,7 @@ impl Default for DesktopAudio {
             .default_output_config()
             .expect("no default output config");
 
-        DesktopAudio {
+        DeviceAudio {
             stream_buffer: None,
             device,
             config,
@@ -32,13 +32,13 @@ impl Default for DesktopAudio {
     }
 }
 
-impl std::fmt::Debug for DesktopAudio {
+impl std::fmt::Debug for DeviceAudio {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Desktop Audio")
     }
 }
 
-impl SoundDevice for DesktopAudio {
+impl SoundDevice for DeviceAudio {
     fn play_beep(&mut self, audio_settings: AudioSettings) {
         // Constant clean tone
         const BUFFER: [u8; 16] = [
@@ -94,9 +94,9 @@ impl SoundDevice for DesktopAudio {
     }
 }
 
-impl DesktopAudio {
+impl DeviceAudio {
     pub fn new() -> Self {
-        DesktopAudio::default()
+        DeviceAudio::default()
     }
 
     fn create_stream_buffer<T>(
@@ -171,7 +171,7 @@ impl DesktopAudio {
     }
 }
 
-impl Drop for DesktopAudio {
+impl Drop for DeviceAudio {
     fn drop(&mut self) {
         self.stop();
     }
