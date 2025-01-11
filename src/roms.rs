@@ -89,4 +89,12 @@ pub const GAME_ROMS: &[ROM] = &[
         name: "Skyward",
         data: include_bytes!("../assets/games/skyward/skyward.ch8"),
     },
+    ROM {
+        name: "Music Player",
+        data: include_bytes!("../assets/games/xomusicplayer.ch8"),
+    },
+    ROM {
+        name: "Music Player 2",
+        data: include_bytes!("../assets/games/xomusicplayer2.ch8"),
+    },
 ];
