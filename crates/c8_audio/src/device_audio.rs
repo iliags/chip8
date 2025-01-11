@@ -1,4 +1,5 @@
-use std::time::Duration;
+use core::f32;
+use std::{time::Duration, vec};
 
 use crate::{audio_settings::AudioSettings, SoundDevice};
 use cpal::{
@@ -49,6 +50,7 @@ impl SoundDevice for DeviceAudio {
         self.play_buffer(audio_settings, BUFFER.to_vec(), audio_settings.frequency());
     }
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
+        //println!("Playing buffer with pitch: {}", buffer_pitch);
         if self.stream_buffer.is_none() {
             let new_stream = match self.config.sample_format() {
                 cpal::SampleFormat::F32 => Self::create_stream_buffer::<f32>(
@@ -106,10 +108,6 @@ impl DeviceAudio {
         T: SizedSample + FromSample<f32>,
     {
         let sample_rate = config.sample_rate.0 as f32;
-        let channels = config.channels as usize;
-
-        // Produce a sinusoid of maximum amplitude.
-        let mut sample_clock = 0f32;
 
         let volume = if settings.is_enabled() {
             settings.volume() * 0.5
@@ -118,15 +116,34 @@ impl DeviceAudio {
         };
 
         const BUFFER_FREQ: f32 = 4000.0;
-
+        const PITCH_BIAS: f32 = 64.0;
         let pitch = buffer_pitch;
+        let freq = BUFFER_FREQ * (2.0_f32).powf((pitch - PITCH_BIAS) / 48.0);
 
-        let calculated_pitch = BUFFER_FREQ * (2.0_f32).powf((pitch - 64.0) / 48.0);
-        let repetitions = (sample_rate / calculated_pitch) as usize;
+        //let calculated_pitch = BUFFER_FREQ * (2.0_f32).powf((pitch - 64.0) / 48.0);
+        //let repetitions = (sample_rate / calculated_pitch) as usize;
 
-        let mut samples: Vec<f32> = Vec::with_capacity(buffer.len() * 8 * repetitions);
+        //let mut samples: Vec<f32> = Vec::with_capacity(buffer.len() * 8 * repetitions);
+        let mut samples: Vec<f32> = vec![0.0; 512];
 
+        let mut index = 0;
         for byte in &buffer {
+            let mut mask: u8 = 128;
+            while mask != 0 {
+                let val = if byte & mask != 0 { 1.0 } else { 0.0 };
+                samples[index] = val;
+                index += 1;
+                samples[index] = val;
+                index += 1;
+                samples[index] = val;
+                index += 1;
+                samples[index] = val;
+                index += 1;
+
+                mask >>= 1;
+            }
+
+            /*
             for idx_bit in 0..8 {
                 let bit = byte >> (7 - idx_bit) & 0b1 == 0b1;
                 let val = if bit { 1.0 } else { 0.0 };
@@ -134,12 +151,18 @@ impl DeviceAudio {
                     samples.push(val * pitch);
                 }
             }
+             */
         }
 
-        let mut next_value = move || {
-            sample_clock = (sample_clock + 1.0) % samples.len() as f32;
+        println!("Samples: {:?}", samples);
 
-            (samples[sample_clock as usize]).sin() * volume
+        let channels = config.channels as usize;
+        let mut sample_clock = 0;
+        let mut next_value = move || {
+            sample_clock = (sample_clock + 1) % samples.len();
+
+            //(samples[sample_clock as usize]).sin() * volume
+            (samples[sample_clock]) * volume
         };
 
         let err_fn = |err| eprintln!("Stream error: {}", err);
@@ -172,3 +195,21 @@ impl Drop for DeviceAudio {
         self.stop();
     }
 }
+
+/* fn lowpass_alpha(sampling_freq: f32) -> f32 {
+    const CUTOFF: f32 = 18000.0;
+    let c = (2.0 * f32::consts::PI * CUTOFF / sampling_freq).cos();
+    c - 1.0 + (c * c - 4.0 * c + 3.0).sqrt()
+}
+
+fn lowpass_filtered_value(alpha: f32, target: u8) -> f32 {
+    const LOWPASS_STEPS: usize = 4;
+    let mut lowpass_buffer = vec![0.0; LOWPASS_STEPS + 1];
+    lowpass_buffer[0] = target as f32;
+
+    for i in 1..lowpass_buffer.len() {
+        lowpass_buffer[i] += alpha * (lowpass_buffer[i - 1] - lowpass_buffer[i]);
+    }
+    lowpass_buffer[lowpass_buffer.len() - 1]
+}
+ */
