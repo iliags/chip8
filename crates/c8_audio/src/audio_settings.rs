@@ -34,12 +34,12 @@ impl AudioSettings {
     }
 
     /// Get the frequency
-    pub fn get_frequency(&self) -> f32 {
+    pub fn frequency(&self) -> f32 {
         self.frequency
     }
 
     /// Get the volume
-    pub fn get_volume(&self) -> f32 {
+    pub fn volume(&self) -> f32 {
         self.volume
     }
 }

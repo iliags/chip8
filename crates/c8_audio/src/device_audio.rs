@@ -46,11 +46,7 @@ impl SoundDevice for DeviceAudio {
             0xFF, 0x00,
         ];
 
-        self.play_buffer(
-            audio_settings,
-            BUFFER.to_vec(),
-            audio_settings.get_frequency(),
-        );
+        self.play_buffer(audio_settings, BUFFER.to_vec(), audio_settings.frequency());
     }
     fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
         if self.stream_buffer.is_none() {
@@ -116,7 +112,7 @@ impl DeviceAudio {
         let mut sample_clock = 0f32;
 
         let volume = if settings.is_enabled() {
-            settings.get_volume() * 0.5
+            settings.volume() * 0.5
         } else {
             0.0
         };

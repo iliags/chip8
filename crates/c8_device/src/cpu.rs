@@ -98,7 +98,7 @@ impl CPU {
     }
 
     /// Get the audio buffer
-    pub fn get_audio_buffer(&self) -> &Vec<u8> {
+    pub fn audio_buffer(&self) -> &Vec<u8> {
         &self.audio_buffer
     }
 
@@ -108,22 +108,22 @@ impl CPU {
     }
 
     /// Get the buffer pitch
-    pub fn get_buffer_pitch(&self) -> f32 {
+    pub fn buffer_pitch(&self) -> f32 {
         self.buffer_pitch
     }
 
     /// Get the program counter
-    pub fn get_program_counter(&self) -> u16 {
+    pub fn program_counter(&self) -> u16 {
         self.program_counter
     }
 
     /// Get the index register
-    pub fn get_index_register(&self) -> u16 {
+    pub fn index_register(&self) -> u16 {
         self.index_register
     }
 
     /// Get the general registers
-    pub fn get_registers(&self) -> &Vec<u8> {
+    pub fn registers(&self) -> &Vec<u8> {
         &self.registers
     }
 

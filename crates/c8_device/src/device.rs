@@ -130,14 +130,12 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-                if self.audio_device.get_audio_settings().is_enabled() {
-                    if self.cpu.get_audio_buffer().is_empty() {
+                if self.audio_device.audio_settings().is_enabled() {
+                    if self.cpu.audio_buffer().is_empty() {
                         self.audio_device.play_beep();
                     } else {
-                        self.audio_device.play_buffer(
-                            self.cpu.get_audio_buffer().clone(),
-                            self.cpu.get_buffer_pitch(),
-                        );
+                        self.audio_device
+                            .play_buffer(self.cpu.audio_buffer().clone(), self.cpu.buffer_pitch());
                     }
                 }
             } else {

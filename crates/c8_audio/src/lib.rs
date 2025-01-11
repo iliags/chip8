@@ -40,7 +40,7 @@ impl AudioDevice {
     }
 
     /// Get the current audio settings
-    pub fn get_audio_settings(&self) -> &AudioSettings {
+    pub fn audio_settings(&self) -> &AudioSettings {
         &self.audio_settings
     }
 

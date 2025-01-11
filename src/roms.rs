@@ -6,12 +6,12 @@ pub struct ROM {
 
 impl ROM {
     /// Get the name of the ROM
-    pub fn get_name(&self) -> &str {
+    pub fn name(&self) -> &str {
         self.name.strip_suffix(".ch8").unwrap_or(self.name)
     }
 
     /// Get the data of the ROM
-    pub fn get_data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8] {
         self.data
     }
 }

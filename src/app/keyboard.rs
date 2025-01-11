@@ -9,7 +9,7 @@ pub enum KeyMapping {
 }
 
 impl KeyMapping {
-    pub fn get_name(&self) -> &str {
+    pub fn name(&self) -> &str {
         match self {
             KeyMapping::Qwerty => "Qwerty",
             KeyMapping::Azerty => "Azerty",
@@ -51,10 +51,10 @@ pub struct KeyboardMapping {
 
 impl KeyboardMapping {
     /// Get the key mapping for the current input mapping
-    pub fn get_key_from_mapping(&self, key: &Key) -> Option<KeypadKey> {
+    pub fn key_from_mapping(&self, key: &Key) -> Option<KeypadKey> {
         match self.mapping {
-            KeyMapping::Qwerty => self.get_key_mapping_qwerty(key),
-            KeyMapping::Azerty => self.get_key_mapping_azerty(key),
+            KeyMapping::Qwerty => self.key_mapping_qwerty(key),
+            KeyMapping::Azerty => self.key_mapping_azerty(key),
         }
     }
 
@@ -62,16 +62,16 @@ impl KeyboardMapping {
         self.mapping = mapping;
     }
 
-    pub fn get_key_mapping(&self) -> KeyMapping {
+    pub fn key_mapping(&self) -> KeyMapping {
         self.mapping
     }
 
-    pub fn get_key_mapping_mut(&mut self) -> &mut KeyMapping {
+    pub fn key_mapping_mut(&mut self) -> &mut KeyMapping {
         &mut self.mapping
     }
 
-    pub fn get_key_mapping_name(&self) -> String {
-        self.mapping.get_name().to_string()
+    pub fn key_mapping_name(&self) -> String {
+        self.mapping.name().to_string()
     }
 
     pub fn is_extra_key(&self, key: &Key) -> bool {
@@ -81,7 +81,7 @@ impl KeyboardMapping {
         )
     }
 
-    pub fn get_regular_key_from_extra_key(&self, key: &Key) -> Option<Key> {
+    pub fn regular_key_from_extra_key(&self, key: &Key) -> Option<Key> {
         match key {
             Key::ArrowUp => Some(Key::W),
             Key::ArrowDown => Some(Key::S),
@@ -92,7 +92,7 @@ impl KeyboardMapping {
         }
     }
 
-    const fn get_key_mapping_qwerty(&self, key: &Key) -> Option<KeypadKey> {
+    const fn key_mapping_qwerty(&self, key: &Key) -> Option<KeypadKey> {
         let key_match = match key {
             Key::Num1 => KeypadKey::Num1,
             Key::Num2 => KeypadKey::Num2,
@@ -116,7 +116,7 @@ impl KeyboardMapping {
         Some(key_match)
     }
 
-    const fn get_key_mapping_azerty(&self, key: &Key) -> Option<KeypadKey> {
+    const fn key_mapping_azerty(&self, key: &Key) -> Option<KeypadKey> {
         let key_match = match key {
             Key::Num1 => KeypadKey::Num1,
             Key::Num2 => KeypadKey::Num2,

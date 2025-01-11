@@ -9,12 +9,12 @@ pub struct LocaleText {
 
 impl LocaleText {
     /// Get the current language
-    pub fn get_language(&self) -> Language {
+    pub fn language(&self) -> Language {
         self.language.clone()
     }
 
     /// Get the current language mutable
-    pub fn get_language_mut(&mut self) -> &mut Language {
+    pub fn language_mut(&mut self) -> &mut Language {
         &mut self.language
     }
 
@@ -24,7 +24,7 @@ impl LocaleText {
     }
 
     /// Get a string from the current locale with the given key
-    pub fn get_locale_string(&self, key: &str) -> String {
+    pub fn locale_string(&self, key: &str) -> String {
         LOCALES.lookup(&self.language.value(), key)
     }
 }
