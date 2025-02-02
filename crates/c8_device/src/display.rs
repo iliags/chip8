@@ -330,11 +330,14 @@ mod tests {
     fn test_display_set_pixel() {
         let mut display = Display::default();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let range = 0..display.screen_size();
 
         for plane in 0..2 {
-            let (x, y) = (rng.gen_range(range.clone()), rng.gen_range(range.clone()));
+            let (x, y) = (
+                rng.random_range(range.clone()),
+                rng.random_range(range.clone()),
+            );
             let pixel_index = display.pixel_index(x, y);
 
             display.set_plane_pixel(plane, x, y);

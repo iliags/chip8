@@ -498,8 +498,8 @@ impl CPU {
             // Set Vx = random byte AND nn
             // 0xCXNN
             0xC000 => {
-                let mut rng = rand::thread_rng();
-                self.registers[reg_x] = rng.gen::<u8>() & nn;
+                let mut rng = rand::rng();
+                self.registers[reg_x] = rng.random::<u8>() & nn;
             }
 
             // Draw a sprite at position (Vx, Vy) with N bytes of sprite data starting at the address stored in the index register
