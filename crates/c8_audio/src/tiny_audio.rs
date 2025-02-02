@@ -5,6 +5,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tinyaudio::prelude::*;
 
+// TODO: Check if RWLock has better results
+
 const SAMPLE_RATE: usize = 44100;
 
 // Default buffer used for beeps
@@ -21,17 +23,11 @@ struct SquareWave {
 
 impl SquareWave {
     pub fn new() -> Self {
-        let mut sw = SquareWave::default();
-        sw.set_pattern(128, BUFFER.to_vec());
-
-        sw
-        /*
         Self {
             bit_pattern: vec![0u8; 128],
             phase_inc: Self::pitch_to_ratio(128),
             phase_bit: 0.0,
         }
-         */
     }
 
     pub fn pitch_to_ratio(pitch: u8) -> f32 {
@@ -49,14 +45,6 @@ impl SquareWave {
             .collect();
 
         self.phase_inc = Self::pitch_to_ratio(pitch);
-        //println!("{:?}", self.phase_bit);
-
-        /*
-        println!(
-            "Pitch: {:?}, pattern: {:?}",
-            self.phase_inc, self.bit_pattern
-        )
-         */
     }
 }
 
@@ -112,22 +100,6 @@ impl TinyAudio {
                             if (mutex.phase_bit + 0.5) as usize > mutex.bit_pattern.len() - 1 {
                                 mutex.phase_bit = 0.0;
                             }
-
-                            /*
-                            // TODO: Move to try_lock
-                            let mut sw = square_wave.lock().unwrap();
-
-                            *sample = if sw.bit_pattern[(sw.phase_bit + 0.5) as usize] == 1 {
-                                volume
-                            } else {
-                                -volume
-                            };
-
-                            sw.phase_bit += sw.phase_inc;
-                            if (sw.phase_bit + 0.5) as usize > sw.bit_pattern.len() - 1 {
-                                sw.phase_bit = 0.0;
-                            }
-                            */
                         }
                     }
                 }
@@ -154,7 +126,6 @@ impl SoundDevice for TinyAudio {
 
         let mut lock = self.square_wave.try_lock();
         if let Ok(ref mut mutex) = lock {
-            //**mutex = 10;
             mutex.set_pattern(128, BUFFER.to_vec());
             self.playing.store(true, Ordering::SeqCst);
         } else {
@@ -170,7 +141,6 @@ impl SoundDevice for TinyAudio {
 
         let mut lock = self.square_wave.try_lock();
         if let Ok(ref mut mutex) = lock {
-            //**mutex = 10;
             mutex.set_pattern(buffer_pitch, buffer.to_vec());
             self.playing.store(true, Ordering::SeqCst);
         } else {
