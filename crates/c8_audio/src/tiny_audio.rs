@@ -1,3 +1,4 @@
+use core::f32;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -33,37 +34,63 @@ impl TinyAudio {
         }
 
         let params = OutputDeviceParameters {
-            channels_count: 2,
+            channels_count: 1,
             sample_rate: 44100,
-            channel_sample_count: 4410,
+            //channel_sample_count: 4410,
+            channel_sample_count: 2048,
         };
 
         let device = run_output_device(params, {
-            const BUFFER_FREQ: f32 = 4000.0;
+            // Prepare data here
+            let mut clock = 0f32;
+            let is_playing = self.playing.clone();
+            let quality = (384000 / params.sample_rate) as usize;
+            let lowpass_alpha = lowpass_alpha(params.sample_rate as f32 * quality as f32);
+
+            println!("Lowpass alpha: {}", lowpass_alpha);
+
+            const FREQ: f32 = 4000.0;
             const PITCH_BIAS: f32 = 64.0;
 
-            let mut clock = 0f32;
-            let playing = self.playing.clone();
             move |data| {
                 //println!("Data: {:?}", data.len());
-                let buffer = if playing.load(Ordering::SeqCst) {
-                    &BUFFER
-                } else {
-                    &SILENCE
-                };
-                for samples in data.chunks_mut(params.channels_count) {
-                    //clock = (clock + 1.0) % params.sample_rate as f32;
-                    clock = (clock + 1.0) % buffer.len() as f32;
-                    /* let value = (clock * 440.0 * 2.0 * std::f32::consts::PI
-                    / params.sample_rate as f32)
-                    .sin(); */
-                    let pitch = 64.0;
-                    let freq = BUFFER_FREQ * (2.0_f32).powf((pitch - PITCH_BIAS) / 48.0);
-                    let value = clock * freq * buffer[clock as usize] as f32;
-                    //println!("Samples: {:?}", samples.len());
-                    for sample in samples {
-                        *sample = value;
+                // TODO: Replace with pitch from device
+                let pitch = 103.0;
+                let freq = FREQ * (2.0_f32).powf((pitch - PITCH_BIAS) / 48.0);
+                let step = freq / params.sample_rate as f32;
+                let playing = is_playing.load(Ordering::Relaxed);
+
+                // TODO: Get buffer from running device
+                let buffer = if playing { BUFFER } else { SILENCE };
+
+                let mut pos = 0;
+                let mut prev_value = 0.0;
+
+                for channel in data.chunks_mut(params.channels_count) {
+                    //println!("Channels: {:?}", channel.len());
+                    /*
+                    //let index = pos as usize % BUFFER.len();
+                    let cell = pos >> 3;
+                    let shift = pos & 7 ^ 7;
+                    //let value = lowpass_filtered_value(lowpass_alpha, buffer[cell] >> shift & 1);
+                    let value = buffer[pos] as f32;
+                    //println!("Value: {}", value);
+                    let value = ((prev_value * 0.4) + value).sin(); // % 0xFF as f32;
+
+                    //prev_value = value as f32;
+                    if value != 0.0 {
+                        println!("Value: {}", value);
                     }
+
+                    pos = (pos + (step as usize / quality)) % buffer.len();
+
+                    // TODO: Replace with buffer
+                    let volume: f32 = if playing { 0.1 } else { 0.0 };
+
+                    for sample in samples {
+                        *sample = value * volume;
+                    }
+                    */
                 }
             }
         })
@@ -111,4 +138,21 @@ impl SoundDevice for TinyAudio {
     fn update(&mut self, audio_settings: crate::audio_settings::AudioSettings) {
         todo!()
     }
+}
+
+fn lowpass_alpha(sampling_freq: f32) -> f32 {
+    const CUTOFF: f32 = 18000.0;
+    let c = (2.0 * f32::consts::PI * CUTOFF / sampling_freq).cos();
+    c - 1.0 + (c * c - 4.0 * c + 3.0).sqrt()
+}
+
+fn lowpass_filtered_value(alpha: f32, target: u8) -> f32 {
+    const LOWPASS_STEPS: usize = 4;
+    let mut lowpass_buffer = vec![0.0; LOWPASS_STEPS + 1];
+    lowpass_buffer[0] = target as f32;
+
+    for i in 1..lowpass_buffer.len() {
+        lowpass_buffer[i] += (lowpass_buffer[i - 1] - lowpass_buffer[i]) * alpha;
+    }
+    lowpass_buffer[lowpass_buffer.len() - 1]
 }
