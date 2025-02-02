@@ -69,9 +69,11 @@ pub struct CPU {
 
     audio_buffer: Vec<u8>,
 
-    buffer_pitch: f32,
+    buffer_pitch: u8,
 
     requesting_exit: bool,
+
+    sound_dirty: bool,
 }
 
 impl Default for CPU {
@@ -85,8 +87,9 @@ impl Default for CPU {
             waiting_for_key: None,
             saved_registers: vec![0; 16],
             audio_buffer: Vec::new(),
-            buffer_pitch: 64.0,
+            buffer_pitch: 64,
             requesting_exit: false,
+            sound_dirty: false,
         }
     }
 }
@@ -108,7 +111,7 @@ impl CPU {
     }
 
     /// Get the buffer pitch
-    pub fn buffer_pitch(&self) -> f32 {
+    pub fn buffer_pitch(&self) -> u8 {
         self.buffer_pitch
     }
 
@@ -125,6 +128,14 @@ impl CPU {
     /// Get the general registers
     pub fn registers(&self) -> &Vec<u8> {
         &self.registers
+    }
+
+    pub(crate) fn sound_dirty(&self) -> bool {
+        self.sound_dirty
+    }
+
+    pub(crate) fn clear_sound_dirty(&mut self) {
+        self.sound_dirty = false;
     }
 
     /// Step the CPU by one instruction
@@ -556,10 +567,11 @@ impl CPU {
                 // 0xFX02
                 0xF002 => {
                     self.audio_buffer = vec![0; 16];
-                    for z in 0..16_u16 {
-                        let index = (self.index_register + z) as usize;
-                        self.audio_buffer[z as usize] = memory.data[index];
+                    for offset in 0..16_u16 {
+                        let index = (self.index_register + offset) as usize;
+                        self.audio_buffer[offset as usize] = memory.data[index];
                     }
+                    self.sound_dirty = true;
                 }
 
                 // Set Vx to the value of the delay timer
@@ -623,7 +635,7 @@ impl CPU {
                 // Buzz pitch
                 // 0xFX3A
                 0xF03A => {
-                    self.buffer_pitch = self.registers[reg_x] as f32;
+                    self.buffer_pitch = self.registers[reg_x];
                 }
 
                 // Store V0 to Vx in memory starting at address I

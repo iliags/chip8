@@ -111,6 +111,9 @@ wasm-bindgen-futures = { workspace = true }
 web-sys = { workspace = true }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
+[profile.dev]
+opt-level = 1
+
 [profile.release]
 opt-level = 3
 lto = true

@@ -21,11 +21,17 @@ struct SquareWave {
 
 impl SquareWave {
     pub fn new() -> Self {
+        let mut sw = SquareWave::default();
+        sw.set_pattern(128, BUFFER.to_vec());
+
+        sw
+        /*
         Self {
             bit_pattern: vec![0u8; 128],
             phase_inc: Self::pitch_to_ratio(128),
             phase_bit: 0.0,
         }
+         */
     }
 
     pub fn pitch_to_ratio(pitch: u8) -> f32 {
@@ -43,11 +49,14 @@ impl SquareWave {
             .collect();
 
         self.phase_inc = Self::pitch_to_ratio(pitch);
+        //println!("{:?}", self.phase_bit);
 
+        /*
         println!(
             "Pitch: {:?}, pattern: {:?}",
             self.phase_inc, self.bit_pattern
         )
+         */
     }
 }
 
@@ -91,18 +100,34 @@ impl TinyAudio {
 
                 for samples in data.chunks_mut(params.channels_count) {
                     for sample in samples {
-                        // TODO: Move to try_lock
-                        let mut sw = square_wave.lock().unwrap();
+                        let mut lock = square_wave.try_lock();
+                        if let Ok(ref mut mutex) = lock {
+                            *sample = if mutex.bit_pattern[(mutex.phase_bit + 0.5) as usize] == 1 {
+                                volume
+                            } else {
+                                -volume
+                            };
 
-                        *sample = if sw.bit_pattern[(sw.phase_bit + 0.5) as usize] == 1 {
-                            volume
-                        } else {
-                            -volume
-                        };
+                            mutex.phase_bit += mutex.phase_inc;
+                            if (mutex.phase_bit + 0.5) as usize > mutex.bit_pattern.len() - 1 {
+                                mutex.phase_bit = 0.0;
+                            }
 
-                        sw.phase_bit += sw.phase_inc;
-                        if (sw.phase_bit + 0.5) as usize > sw.bit_pattern.len() - 1 {
-                            sw.phase_bit = 0.0;
+                            /*
+                            // TODO: Move to try_lock
+                            let mut sw = square_wave.lock().unwrap();
+
+                            *sample = if sw.bit_pattern[(sw.phase_bit + 0.5) as usize] == 1 {
+                                volume
+                            } else {
+                                -volume
+                            };
+
+                            sw.phase_bit += sw.phase_inc;
+                            if (sw.phase_bit + 0.5) as usize > sw.bit_pattern.len() - 1 {
+                                sw.phase_bit = 0.0;
+                            }
+                            */
                         }
                     }
                 }
@@ -121,23 +146,36 @@ impl std::fmt::Debug for TinyAudio {
 }
 
 impl SoundDevice for TinyAudio {
-    fn play_beep(&mut self, audio_settings: AudioSettings) {
+    // TODO: Audio settings
+    fn play_beep(&mut self, _audio_settings: AudioSettings) {
         if self.device.is_none() {
             self.init();
         }
 
-        let mut sw = self.square_wave.lock().unwrap();
-        sw.set_pattern(128, BUFFER.to_vec());
-
-        self.playing.store(true, Ordering::SeqCst);
+        let mut lock = self.square_wave.try_lock();
+        if let Ok(ref mut mutex) = lock {
+            //**mutex = 10;
+            mutex.set_pattern(128, BUFFER.to_vec());
+            self.playing.store(true, Ordering::SeqCst);
+        } else {
+            println!("play_beep: try_lock failed");
+        }
     }
 
-    // TODO: Fix the f32->u8 conversion
-    fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32) {
-        let mut sw = self.square_wave.lock().unwrap();
-        sw.set_pattern(buffer_pitch as u8, buffer.to_vec());
+    // TODO: Audio settings
+    fn play_buffer(&mut self, _audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: u8) {
+        if self.device.is_none() {
+            self.init();
+        }
 
-        self.playing.store(true, Ordering::SeqCst);
+        let mut lock = self.square_wave.try_lock();
+        if let Ok(ref mut mutex) = lock {
+            //**mutex = 10;
+            mutex.set_pattern(buffer_pitch, buffer.to_vec());
+            self.playing.store(true, Ordering::SeqCst);
+        } else {
+            println!("play_buffer: try_lock failed");
+        }
     }
 
     fn pause(&mut self) {
@@ -148,7 +186,8 @@ impl SoundDevice for TinyAudio {
         self.playing.store(false, Ordering::SeqCst);
     }
 
-    fn update(&mut self, audio_settings: crate::audio_settings::AudioSettings) {
-        todo!()
+    fn update(&mut self, _audio_settings: crate::audio_settings::AudioSettings) {
+        // TODO: Check if this is still needed
+        println!("update: Not implemented");
     }
 }

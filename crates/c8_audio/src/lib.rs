@@ -8,7 +8,7 @@ mod tiny_audio;
 /// Trait for sound devices
 pub(crate) trait SoundDevice: std::fmt::Debug {
     fn play_beep(&mut self, audio_settings: AudioSettings);
-    fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: f32);
+    fn play_buffer(&mut self, audio_settings: AudioSettings, buffer: Vec<u8>, buffer_pitch: u8);
     fn pause(&mut self);
     fn stop(&mut self);
     fn update(&mut self, audio_settings: AudioSettings);
@@ -53,7 +53,7 @@ impl AudioDevice {
     }
 
     /// Play a buffer
-    pub fn play_buffer(&mut self, buffer: Vec<u8>, buffer_pitch: f32) {
+    pub fn play_buffer(&mut self, buffer: Vec<u8>, buffer_pitch: u8) {
         self.audio_device
             .play_buffer(self.audio_settings, buffer, buffer_pitch);
     }
