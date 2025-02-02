@@ -66,8 +66,7 @@ eframe = { version = "0.30", default-features = false, features = [
     "persistence",   # Enable restoring app state when restarting the app.
 ] }
 log = "0.4"
-rfd = "0.15"
-
+rfd = { version = "0.15" }
 
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
@@ -92,6 +91,7 @@ embed-resource = { version = "3.0" }
 criterion = { version = "0.5", features = ["html_reports"] }
 rand = { workspace = true }
 
+
 #[[bench]]
 #name = "pixel_benchmark"
 #harness = false
@@ -109,7 +109,7 @@ env_logger = "0.11"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = { workspace = true }
 web-sys = { workspace = true }
-
+getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [profile.release]
 opt-level = 3
