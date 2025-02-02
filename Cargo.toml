@@ -37,11 +37,11 @@ observer = { path = "crates/observer" }
 
 # Accessibility
 fluent = "0.16"
-fluent-templates = "0.12"
+fluent-templates = "0.13"
 unic-langid = "0.9"
 
 # Random number generator
-rand = { version = "0.8" }
+rand = { version = "0.9" }
 
 # Serialization
 ron = "0.8"
@@ -109,7 +109,6 @@ env_logger = "0.11"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = { workspace = true }
 web-sys = { workspace = true }
-getrandom = { version = "0.2", features = ["js"] }
 
 
 [profile.release]
