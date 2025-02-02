@@ -233,13 +233,13 @@ impl eframe::App for AppUI {
                         //self.load_rom(GAME_ROMS[9].data().to_vec());
 
                         // Music player 2
-                        //self.load_rom(GAME_ROMS[10].data().to_vec());
+                        self.load_rom(GAME_ROMS[10].data().to_vec());
 
                         // Nyancat
                         //self.load_rom(GAME_ROMS[11].data().to_vec());
 
                         // Beep
-                        self.load_rom(TEST_ROMS[6].data().to_vec());
+                        //self.load_rom(TEST_ROMS[6].data().to_vec());
                     }
                 }
             });
