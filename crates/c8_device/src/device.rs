@@ -133,14 +133,10 @@ impl C8 {
                 if self.audio_device.audio_settings().is_enabled() {
                     if self.cpu.audio_buffer().is_empty() {
                         self.audio_device.play_beep();
-                    } else {
-                        if self.cpu.sound_dirty() {
-                            self.cpu.clear_sound_dirty();
-                            self.audio_device.play_buffer(
-                                self.cpu.audio_buffer().clone(),
-                                self.cpu.buffer_pitch(),
-                            );
-                        }
+                    } else if self.cpu.sound_dirty() {
+                        self.cpu.clear_sound_dirty();
+                        self.audio_device
+                            .play_buffer(self.cpu.audio_buffer().clone(), self.cpu.buffer_pitch());
                     }
                 }
             } else {
