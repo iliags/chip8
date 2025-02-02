@@ -58,10 +58,10 @@ fn match_instruction_multi(opcode_list: Vec<u16>) -> Vec<usize> {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let length = 2048;
     let test_vec: Vec<u16> = (0..length)
-        .map(|_| OPCODES[rng.gen_range(0..OPCODES.len())])
+        .map(|_| OPCODES[rng.random_range(0..OPCODES.len())])
         .collect();
 
     c.bench_function("single match", |b| {
