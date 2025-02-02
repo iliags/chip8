@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-/// Font data, the small Chip-8 font is the default and fallback font.
-///
-/// The non-default Chip-8 font was copied from Octo's font file.
-
 /// Static font data
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]
@@ -52,6 +47,8 @@ pub enum FontSize {
     Small,
     Large,
 }
+
+// The non-default Chip-8 font was copied from Octo's font file.
 
 /// Font data collection
 pub const FONT_DATA: &[FontData] = &[
