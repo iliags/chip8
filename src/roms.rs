@@ -97,4 +97,8 @@ pub const GAME_ROMS: &[ROM] = &[
         name: "Music Player 2",
         data: include_bytes!("../assets/games/xomusicplayer2.ch8"),
     },
+    ROM {
+        name: "Nyan",
+        data: include_bytes!("../assets/games/nyancat.ch8"),
+    },
 ];

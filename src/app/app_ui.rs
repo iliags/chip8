@@ -227,13 +227,16 @@ impl eframe::App for AppUI {
                 {
                     if i.key_pressed(egui::Key::Tab) {
                         // Skyward
-                        //self.load_rom(GAME_ROMS[8].data().to_vec());
+                        self.load_rom(GAME_ROMS[8].data().to_vec());
 
                         // Music player 1
                         //self.load_rom(GAME_ROMS[9].data().to_vec());
 
                         // Music player 2
-                        self.load_rom(GAME_ROMS[10].data().to_vec());
+                        //self.load_rom(GAME_ROMS[10].data().to_vec());
+
+                        // Beep
+                        //self.load_rom(TEST_ROMS[6].data().to_vec());
                     }
                 }
             });

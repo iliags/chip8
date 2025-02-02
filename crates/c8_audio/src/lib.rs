@@ -1,10 +1,8 @@
 //! Audio utilities for the CHIP-8 emulator.
-
 use audio_settings::AudioSettings;
 
 /// Custom audio settings
 pub mod audio_settings;
-mod device_audio;
 mod tiny_audio;
 
 /// Trait for sound devices
@@ -34,9 +32,7 @@ impl AudioDevice {
     /// Create a new audio device
     pub fn new() -> Self {
         Self {
-            //audio_device: Box::new(device_audio::DeviceAudio::new()),
             audio_device: Box::new(tiny_audio::TinyAudio::new()),
-
             audio_settings: AudioSettings::default(),
         }
     }
