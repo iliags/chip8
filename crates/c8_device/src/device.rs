@@ -1,8 +1,7 @@
 use crate::{
-    cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
-    quirks::Quirks,
+    audio::AudioDevice, cpu::CPU, display::Display, keypad::Keypad, memory::Memory,
+    message::DeviceMessage, quirks::Quirks,
 };
-use c8_audio::AudioDevice;
 
 /// Chip-8 Device
 #[derive(Debug)]

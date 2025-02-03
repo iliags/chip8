@@ -1,5 +1,8 @@
 //! Chip-8 device library
 
+/// Chip-8 audio
+pub mod audio;
+
 /// Chip-8 CPU
 pub mod cpu;
 

@@ -1,9 +1,10 @@
-use crate::audio_settings::AudioSettings;
-use crate::SoundDevice;
 use core::f32;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use tinyaudio::prelude::*;
+
+use super::audio_settings::AudioSettings;
+use super::SoundDevice;
 
 // TODO: Check if RWLock has better results
 

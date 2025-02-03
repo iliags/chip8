@@ -8,8 +8,8 @@ use super::{
     pixel_color::{PixelColors, PALETTES},
 };
 
-use c8_audio::audio_settings::AudioSettings;
 use c8_device::{
+    audio::audio_settings::AudioSettings,
     device::C8,
     display::DisplayResolution,
     fonts::FONT_DATA,
