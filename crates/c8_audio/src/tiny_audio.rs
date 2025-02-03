@@ -35,6 +35,7 @@ impl SquareWave {
     }
 
     pub fn set_pattern(&mut self, pitch: u8, pattern: Vec<u8>) {
+        // TODO: Apply filtering to the values
         // Map the 16 byte pattern to 128 bits and clamp to 0-1
         let length = 8; // = self.bit_pattern.len() / pattern.len();
         self.bit_pattern = pattern
