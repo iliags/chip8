@@ -121,4 +121,6 @@ lto = true
 opt-level = 3
 
 [features]
-default = []
+default = ["profiling"]
+#default = []
+profiling = []

@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use c8::device::C8;
 use macroquad::prelude::*;
+
+#[cfg(feature = "profiling")]
 use macroquad_profiler::ProfilerParams;
 
 fn window_conf() -> Conf {
@@ -56,6 +58,7 @@ async fn main() {
             }
         }
 
+        #[cfg(feature = "profiling")]
         macroquad_profiler::profiler(ProfilerParams {
             fps_counter_pos: Vec2::new(10.0, -35.0),
         });

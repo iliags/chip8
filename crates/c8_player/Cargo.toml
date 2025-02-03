@@ -11,3 +11,6 @@ macroquad-profiler = { workspace = true }
 
 [lints]
 #workspace = true
+
+[features]
+profiling = []
