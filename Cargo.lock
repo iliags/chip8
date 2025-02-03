@@ -539,7 +539,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "325918d6fe32f23b19878fe4b34794ae41fc19ddbe53b10571a4874d44ffd39b"
 
 [[package]]
-name = "c8_device"
+name = "c8"
 version = "0.1.0"
 dependencies = [
  "puffin",
@@ -647,7 +647,7 @@ dependencies = [
 name = "chip8"
 version = "0.1.19"
 dependencies = [
- "c8_device",
+ "c8",
  "c8_i18n",
  "criterion",
  "eframe",

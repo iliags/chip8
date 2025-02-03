@@ -26,7 +26,7 @@ missing_docs = "warn"
 unsafe_code = "deny"
 
 [workspace.dependencies]
-c8_device = { path = "crates/c8_device" }
+c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
 observer = { path = "crates/observer" }
 
@@ -70,7 +70,7 @@ unic-langid = { workspace = true }
 ron = { workspace = true }
 serde = { workspace = true }
 
-c8_device = { workspace = true }
+c8 = { workspace = true }
 c8_i18n = { workspace = true }
 
 futures = { workspace = true }

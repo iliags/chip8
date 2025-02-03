@@ -1,4 +1,4 @@
-use c8_device::keypad::KeypadKey;
+use c8::keypad::KeypadKey;
 use egui::Key;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Deserialize, serde::Serialize)]
