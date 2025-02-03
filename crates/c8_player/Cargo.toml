@@ -11,7 +11,3 @@ macroquad-profiler = { workspace = true }
 
 [lints]
 #workspace = true
-
-[[bin]]
-name = "c8_player"
-path = "src/main.rs"
