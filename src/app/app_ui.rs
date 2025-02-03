@@ -893,10 +893,12 @@ impl AppUI {
                         .text(self.language.locale_string("volume")),
                 );
 
-                ui.add(
-                    egui::Slider::new(&mut self.settings.audio_settings.frequency, 50.0..=150.0)
-                        .text(self.language.locale_string("pitch")),
-                );
+                /*
+                   ui.add(
+                       egui::Slider::new(&mut self.settings.audio_settings.frequency, 50.0..=150.0)
+                           .text(self.language.locale_string("pitch")),
+                   );
+                */
             });
 
             if ui.button(self.language.locale_string("default")).clicked() {
@@ -907,7 +909,7 @@ impl AppUI {
                 .audio_device
                 .set_audio_settings(self.settings.audio_settings);
 
-            //#[cfg(debug_assertions)]
+            #[cfg(debug_assertions)]
             {
                 ui.separator();
 

@@ -2,7 +2,7 @@ use crate::audio_settings::AudioSettings;
 use crate::SoundDevice;
 use core::f32;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, /* Mutex,*/ RwLock};
+use std::sync::{Arc, RwLock};
 use tinyaudio::prelude::*;
 
 // TODO: Check if RWLock has better results
@@ -52,6 +52,7 @@ pub struct TinyAudio {
     device: Option<OutputDevice>,
     playing: Arc<AtomicBool>,
     square_wave: Arc<RwLock<SquareWave>>,
+    volume: Arc<RwLock<f32>>,
 }
 
 impl TinyAudio {
@@ -60,6 +61,7 @@ impl TinyAudio {
             device: None,
             playing: Arc::new(AtomicBool::new(false)),
             square_wave: Arc::new(RwLock::new(SquareWave::new())),
+            volume: Arc::new(RwLock::new(0.25)),
         }
     }
 
@@ -78,6 +80,7 @@ impl TinyAudio {
             // Prepare data here
             let is_playing = self.playing.clone();
             let square_wave = self.square_wave.clone();
+            let device_volume = self.volume.clone();
 
             let mut phase_bit = 0.0f32;
 
@@ -85,7 +88,15 @@ impl TinyAudio {
                 let playing = is_playing.load(Ordering::SeqCst);
 
                 // TODO: Get volume from device
-                let volume = if playing { 0.25 } else { 0.0 };
+                let volume = if playing {
+                    if let Ok(ref mutex) = device_volume.try_read() {
+                        **mutex
+                    } else {
+                        0.0
+                    }
+                } else {
+                    0.0
+                };
 
                 for samples in data.chunks_mut(params.channels_count) {
                     for sample in samples {
@@ -190,8 +201,9 @@ impl SoundDevice for TinyAudio {
         self.playing.store(false, Ordering::SeqCst);
     }
 
-    fn update(&mut self, _audio_settings: crate::audio_settings::AudioSettings) {
-        // TODO: Check if this is still needed
-        println!("update: Not implemented");
+    fn update(&mut self, audio_settings: AudioSettings) {
+        if let Ok(ref mut mutex) = self.volume.try_write() {
+            **mutex = audio_settings.volume;
+        }
     }
 }

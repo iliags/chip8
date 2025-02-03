@@ -45,6 +45,7 @@ impl AudioDevice {
     /// Set the audio settings
     pub fn set_audio_settings(&mut self, settings: AudioSettings) {
         self.audio_settings = settings;
+        self.audio_device.update(*self.audio_settings());
     }
 
     /// Play a beep sound
