@@ -4,11 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+serde = { workspace = true }
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
+tinyaudio = "1.1"
 
 [lints]
 workspace = true

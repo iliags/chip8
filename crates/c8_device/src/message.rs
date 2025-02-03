@@ -5,8 +5,7 @@ use crate::display::DisplayResolution;
 pub enum DeviceMessage {
     /// Request to change the display resolution
     ChangeResolution(DisplayResolution),
-    /// Exit the device
-    Exit,
+
     /// Unknown OpCode
     UnknownOpCode(u16),
 

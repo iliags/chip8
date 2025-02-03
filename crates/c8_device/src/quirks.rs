@@ -50,7 +50,7 @@ pub struct CompatibilityProfile {
 
 impl CompatibilityProfile {
     /// Get the locale string key of the compatibility profile
-    pub fn get_name_key(&self) -> &str {
+    pub fn name_key(&self) -> &str {
         match self.device {
             CompatibilityDevice::Default => "default",
             CompatibilityDevice::Chip8 => "chip8",
@@ -63,7 +63,7 @@ impl CompatibilityProfile {
     pub fn find_profile_name_key(quirks: Quirks) -> &'static str {
         for profile in COMPATIBILITY_PROFILES.iter() {
             if profile.quirks == quirks {
-                return profile.get_name_key();
+                return profile.name_key();
             }
         }
         "custom"

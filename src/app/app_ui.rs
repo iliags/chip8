@@ -1,13 +1,19 @@
-use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
+use crate::{
+    profile_function, profile_scope,
+    roms::{GAME_ROMS, ROM, TEST_ROMS},
+};
 
 use super::{
-    keyboard::{get_key_mapping, KEYBOARD},
+    keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
     pixel_color::{PixelColors, PALETTES},
 };
+
+use c8_audio::audio_settings::AudioSettings;
 use c8_device::{
     device::C8,
     display::DisplayResolution,
     fonts::FONT_DATA,
+    keypad::KEYPAD_KEYS,
     message::DeviceMessage,
     quirks::{CompatibilityProfile, Quirks, COMPATIBILITY_PROFILES},
 };
@@ -62,14 +68,25 @@ pub struct AppUI {
     #[serde(skip)]
     c8_device: C8,
 
+    #[serde(skip)]
+    debug_window: bool,
+
     language: LocaleText,
 
     settings: Settings,
+
+    #[cfg(feature = "enable_puffin")]
+    show_profiler: bool,
 }
 
 impl Default for AppUI {
     fn default() -> Self {
-        let (width, height) = DisplayResolution::Low.get_resolution_size_xy();
+        #[cfg(feature = "enable_puffin")]
+        {
+            puffin::set_scopes_on(true);
+        }
+
+        let (width, height) = DisplayResolution::Low.resolution_size_xy();
         Self {
             display_image: egui::ColorImage::new([width, height], Color32::BLACK),
             display_handle: None,
@@ -80,8 +97,13 @@ impl Default for AppUI {
             file_data: Rc::new(RefCell::new(None)),
             file_name: Rc::new(RefCell::new(None)),
 
+            debug_window: false,
+
             language: LocaleText::default(),
             settings: Settings::default(),
+
+            #[cfg(feature = "enable_puffin")]
+            show_profiler: false,
         }
     }
 }
@@ -113,8 +135,9 @@ struct Settings {
     // Display is drawn under the side panels
     draw_display_underneath: bool,
 
-    // Temporary audio enable
-    temp_enable_audio: bool,
+    key_mapping: KeyboardMapping,
+
+    audio_settings: AudioSettings,
 }
 
 impl Default for Settings {
@@ -131,7 +154,9 @@ impl Default for Settings {
             display_fullscreen: false,
             draw_display_underneath: false,
 
-            temp_enable_audio: true,
+            key_mapping: KeyboardMapping::default(),
+
+            audio_settings: AudioSettings::default(),
         }
     }
 }
@@ -144,6 +169,15 @@ impl eframe::App for AppUI {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(feature = "enable_puffin")]
+        {
+            puffin::GlobalProfiler::lock().new_frame();
+
+            if self.show_profiler {
+                puffin_egui::profiler_window(ctx);
+            }
+        }
+
         // Step the emulator
         let messages = self.c8_device.step(self.settings.cpu_speed);
 
@@ -153,10 +187,6 @@ impl eframe::App for AppUI {
                 DeviceMessage::ChangeResolution(_) => {
                     self.update_resolution();
                 }
-                DeviceMessage::Exit => {
-                    println!("Exiting device");
-                    self.unload_rom();
-                }
                 DeviceMessage::UnknownOpCode(_opcode) => {
                     // TODO: Push to a list
                     //println!("Unknown OpCode: {:#06X}", op_code);
@@ -165,42 +195,53 @@ impl eframe::App for AppUI {
             }
         }
 
-        // Update the display image with the current display buffer
-        // TODO: There is some minor color blending issues with the display, probably needs a buffer
-        if self.c8_device.get_is_running() {
-            self.display_image.pixels = self
-                .c8_device
-                .get_display()
-                .get_zipped_iterator()
-                .map(|(&p0, &p1)| {
-                    let result = (p0 << 1) | p1;
-                    *self.settings.pixel_colors.get_pixel_color(result.into())
-                })
-                .collect();
-        }
-
         // Process input
         for key in KEYBOARD {
             ctx.input(|i| {
-                let current_key = &get_key_mapping(key)
+                // TODO: Refactor this
+                let current_key = &self
+                    .settings
+                    .key_mapping
+                    .key_from_mapping(key)
                     .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
 
-                /*
-                // Fast load ROM for testing
+                if self.settings.key_mapping.is_extra_key(key) {
+                    let regular_key = self
+                        .settings
+                        .key_mapping
+                        .regular_key_from_extra_key(key)
+                        .unwrap_or_else(|| panic!("No regular key found for key: {:?}", key));
+
+                    let is_down = i.key_down(regular_key) || i.key_down(*key);
+                    self.c8_device.keypad_mut().set_key(current_key, is_down);
+
+                    return;
+                } else {
+                    self.c8_device
+                        .keypad_mut()
+                        .set_key(current_key, i.key_down(*key))
+                }
+
+                // Load ROM shortcut for testing
                 #[cfg(debug_assertions)]
                 {
-                    if i.key_pressed(egui::Key::Space) {
-                        self.load_rom(GAME_ROMS[6].get_data().to_vec());
-                        //self.load_rom(TEST_ROMS[0].get_data().to_vec());
-                        //self.load_rom(TEST_ROMS[7].get_data().to_vec());
-                        //self.c8_device.get_memory_mut().get_data_mut()[0x1FF] = 1;
+                    if i.key_pressed(egui::Key::Tab) {
+                        // Skyward
+                        //self.load_rom(GAME_ROMS[8].data().to_vec());
+
+                        // Music player 1
+                        //self.load_rom(GAME_ROMS[9].data().to_vec());
+
+                        // Music player 2
+                        self.load_rom(GAME_ROMS[10].data().to_vec());
+
+                        // Nyancat
+                        //self.load_rom(GAME_ROMS[11].data().to_vec());
+
+                        // Beep
+                        //self.load_rom(TEST_ROMS[6].data().to_vec());
                     }
                 }
-                */
-
-                self.c8_device
-                    .get_keypad_mut()
-                    .set_key(current_key, i.key_down(*key))
             });
         }
 
@@ -209,14 +250,17 @@ impl eframe::App for AppUI {
             egui::menu::bar(ui, |ui| {
                 ui.toggle_value(
                     &mut self.settings.control_panel_expanded,
-                    self.language.get_locale_string("control_panel"),
+                    self.language.locale_string("control_panel"),
                 );
 
                 #[cfg(debug_assertions)]
                 ui.toggle_value(
                     &mut self.settings.visualizer_panel_expanded,
-                    self.language.get_locale_string("visualizer_panel"),
+                    self.language.locale_string("visualizer_panel"),
                 );
+
+                #[cfg(feature = "enable_puffin")]
+                ui.toggle_value(&mut self.show_profiler, "Profiler");
 
                 ui.separator();
 
@@ -248,7 +292,7 @@ impl eframe::App for AppUI {
                 if ui
                     .add_enabled(
                         !self.rom_file.is_empty(),
-                        egui::Button::new(self.language.get_locale_string("reload_rom")),
+                        egui::Button::new(self.language.locale_string("reload_rom")),
                     )
                     .clicked()
                 {
@@ -257,8 +301,8 @@ impl eframe::App for AppUI {
 
                 if ui
                     .add_enabled(
-                        self.c8_device.get_is_running(),
-                        egui::Button::new(self.language.get_locale_string("unload_rom")),
+                        self.c8_device.is_running(),
+                        egui::Button::new(self.language.locale_string("unload_rom")),
                     )
                     .clicked()
                 {
@@ -269,11 +313,17 @@ impl eframe::App for AppUI {
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                     // Global dark/light mode buttons
-                    egui::widgets::global_dark_light_mode_buttons(ui);
+                    egui::widgets::global_theme_preference_switch(ui);
 
                     ui.separator();
 
                     self.menu_about(ui);
+
+                    ui.separator();
+
+                    if ui.button("Reset").clicked() {
+                        ctx.memory_mut(|mem| *mem = Default::default());
+                    }
                 });
             });
         });
@@ -298,7 +348,7 @@ impl eframe::App for AppUI {
 
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
-        if self.c8_device.get_is_running() {
+        if self.c8_device.is_running() {
             ctx.request_repaint();
         }
     }
@@ -320,25 +370,45 @@ impl AppUI {
     }
 
     fn update_resolution(&mut self) {
-        let (width, height) = self
-            .c8_device
-            .get_display()
-            .get_resolution()
-            .get_resolution_size_xy();
-        let bg_color = self.settings.pixel_colors.get_background_color();
+        let (width, height) = self.c8_device.display().resolution().resolution_size_xy();
+        let bg_color = self.settings.pixel_colors.background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+    }
+
+    fn reset_display(&mut self) {
+        let (width, height) = DisplayResolution::Low.resolution_size_xy();
+        let bg_color = self.settings.pixel_colors.background_color();
         self.display_image = egui::ColorImage::new([width, height], *bg_color);
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        profile_function!();
+
+        // Update the display image with the current display buffer
+        // TODO: There is some minor color blending issues with the display, probably needs a buffer
+        //if self.c8_device.get_is_running() {
+        self.display_image.pixels = self
+            .c8_device
+            .display()
+            .zipped_iterator()
+            .map(|(&p0, &p1)| {
+                let result = (p0 << 1) | p1;
+                *self.settings.pixel_colors.pixel_color(result.into())
+            })
+            .collect();
+        //}
+
         // Note: This is hacky
         const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
             magnification: egui::TextureFilter::Nearest,
             minification: egui::TextureFilter::Nearest,
             wrap_mode: egui::TextureWrapMode::ClampToEdge,
+            mipmap_mode: None,
         };
 
         match &mut self.display_handle {
             Some(handle) => {
+                profile_scope!("display_window");
                 handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
             }
             None => {
@@ -360,8 +430,10 @@ impl AppUI {
         if self.settings.display_fullscreen {
             ui.add(image.fit_to_exact_size(ui.available_size()));
         } else {
+            profile_scope!("display_window");
+
             let display_title = if self.rom_name.is_empty() {
-                self.language.get_locale_string("display")
+                self.language.locale_string("display")
             } else {
                 self.rom_name.clone()
             };
@@ -382,6 +454,8 @@ impl AppUI {
             return;
         }
 
+        self.reset_display();
+
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
 
@@ -389,17 +463,19 @@ impl AppUI {
     }
 
     fn reload_rom(&mut self) {
+        self.reset_display();
         self.c8_device.load_rom(self.rom_file.clone());
     }
 
     fn unload_rom(&mut self) {
+        self.reset_display();
         self.c8_device.reset_device();
     }
 
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
-        ui.menu_button(self.language.get_locale_string("included_roms"), |ui| {
+        ui.menu_button(self.language.locale_string("included_roms"), |ui| {
             // Test rom menu
-            ui.menu_button(self.language.get_locale_string("test_roms"), |ui| {
+            ui.menu_button(self.language.locale_string("test_roms"), |ui| {
                 for rom in TEST_ROMS.iter() {
                     if self.menu_rom_button(ui, rom) {
                         break;
@@ -407,7 +483,7 @@ impl AppUI {
                 }
             });
 
-            ui.menu_button(self.language.get_locale_string("game_roms"), |ui| {
+            ui.menu_button(self.language.locale_string("game_roms"), |ui| {
                 for rom in GAME_ROMS.iter() {
                     if self.menu_rom_button(ui, rom) {
                         break;
@@ -419,11 +495,11 @@ impl AppUI {
 
     // Returns true if a ROM was selected
     fn menu_rom_button(&mut self, ui: &mut egui::Ui, rom: &ROM) -> bool {
-        if ui.button(rom.get_name()).clicked() {
-            self.load_rom(rom.get_data().to_vec());
-            self.rom_name = rom.get_name().to_string();
+        if ui.button(rom.name()).clicked() {
+            self.load_rom(rom.data().to_vec());
+            self.rom_name = rom.name().to_string();
 
-            println!("ROM loaded: {}", rom.get_name());
+            println!("ROM loaded: {}", rom.name());
 
             // Close the menu
             ui.close_menu();
@@ -435,10 +511,7 @@ impl AppUI {
     }
 
     fn menu_open_rom(&mut self, ui: &mut egui::Ui) {
-        if ui
-            .button(self.language.get_locale_string("open_rom"))
-            .clicked()
-        {
+        if ui.button(self.language.locale_string("open_rom")).clicked() {
             // Clone the file data reference
             let data_clone = Rc::clone(&self.file_data.clone());
             let name_clone = Rc::clone(&self.file_name.clone());
@@ -468,10 +541,10 @@ impl AppUI {
     }
 
     fn menu_about(&self, ui: &mut egui::Ui) {
-        ui.menu_button(self.language.get_locale_string("about"), |ui| {
+        ui.menu_button(self.language.locale_string("about"), |ui| {
             let version_label = format!(
                 "{}{}",
-                self.language.get_locale_string("version"),
+                self.language.locale_string("version"),
                 env!("CARGO_PKG_VERSION")
             );
             ui.label(version_label);
@@ -479,13 +552,13 @@ impl AppUI {
             ui.separator();
 
             ui.hyperlink_to(
-                self.language.get_locale_string("source"),
+                self.language.locale_string("source"),
                 "https://github.com/iliags/chip8",
             );
 
             ui.separator();
 
-            Self::powered_by_egui_and_eframe(ui, &self.language.get_language().value());
+            Self::powered_by_egui_and_eframe(ui, &self.language.language().value());
 
             #[cfg(debug_assertions)]
             {
@@ -541,19 +614,16 @@ impl AppUI {
     }
 
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("cpu_speed")).show(ui, |ui| {
+        egui::CollapsingHeader::new(self.language.locale_string("cpu_speed")).show(ui, |ui| {
             ui.add(
                 egui::Slider::new(&mut self.settings.cpu_speed, 1..=240)
-                    .clamp_to_range(false)
-                    .text(self.language.get_locale_string("speed")),
+                    .clamping(egui::SliderClamping::Never)
+                    .text(self.language.locale_string("speed")),
             )
-            .on_hover_text(self.language.get_locale_string("speed_hover"));
+            .on_hover_text(self.language.locale_string("speed_hover"));
 
             ui.horizontal(|ui| {
-                if ui
-                    .button(self.language.get_locale_string("default"))
-                    .clicked()
-                {
+                if ui.button(self.language.locale_string("default")).clicked() {
                     self.settings.cpu_speed = DEFAULT_CPU_SPEED;
                 }
                 for speed in (500..=1500).step_by(500) {
@@ -566,10 +636,10 @@ impl AppUI {
     }
 
     fn controls_display_scale(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("display")).show(ui, |ui| {
+        egui::CollapsingHeader::new(self.language.locale_string("display")).show(ui, |ui| {
             ui.checkbox(
                 &mut self.settings.display_fullscreen,
-                self.language.get_locale_string("display_fullscreen"),
+                self.language.locale_string("display_fullscreen"),
             );
 
             ui.separator();
@@ -577,95 +647,111 @@ impl AppUI {
             if self.settings.display_fullscreen {
                 ui.add(egui::Checkbox::new(
                     &mut self.settings.draw_display_underneath,
-                    self.language.get_locale_string("display_underneath"),
+                    self.language.locale_string("display_underneath"),
                 ))
-                .on_hover_text(self.language.get_locale_string("display_underneath_hover"));
+                .on_hover_text(self.language.locale_string("display_underneath_hover"));
             } else {
                 ui.add(
                     egui::Slider::new(&mut self.settings.display_scale, 0.5..=3.0)
-                        .text(self.language.get_locale_string("scale")),
+                        .text(self.language.locale_string("scale")),
                 );
 
-                if ui
-                    .button(self.language.get_locale_string("default"))
-                    .clicked()
-                {
+                if ui.button(self.language.locale_string("default")).clicked() {
                     self.settings.display_scale = DEFAULT_DISPLAY_SCALE;
+                }
+            }
+
+            #[cfg(debug_assertions)]
+            {
+                ui.separator();
+
+                ui.checkbox(&mut self.debug_window, "Debug window");
+
+                if self.debug_window {
+                    let pixels0 = format!("{:?}", self.c8_device.display().plane_pixels(0));
+                    let pixels1 = format!("{:?}", self.c8_device.display().plane_pixels(0));
+
+                    ui.label(pixels0);
+                    ui.label(pixels1);
                 }
             }
         });
     }
 
     fn controls_pixel_color(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("pixel_colors")).show(
-            ui,
-            |ui| {
-                let selected_text = self
-                    .language
-                    .get_locale_string(self.settings.pixel_colors.get_name_key());
+        egui::CollapsingHeader::new(self.language.locale_string("pixel_colors")).show(ui, |ui| {
+            let selected_text = self
+                .language
+                .locale_string(self.settings.pixel_colors.name_key());
 
-                egui::ComboBox::from_label(self.language.get_locale_string("color_palette"))
-                    .selected_text(selected_text)
-                    .show_ui(ui, |ui| {
-                        for palette in PALETTES.iter() {
-                            let palette_name =
-                                self.language.get_locale_string(palette.get_name_key());
-                            ui.selectable_value(
-                                &mut self.settings.pixel_colors,
-                                *palette,
-                                palette_name,
-                            );
-                        }
-                    });
-
-                /* TODO: Custom color palette
-                if ui
-                    .button(self.language.get_locale_string("default"))
-                    .clicked()
-                {
-                    self.settings.pixel_colors = PixelColors::default();
-                }
-                egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
-                    ui,
-                    |ui| {
-                        color_picker_color32(
-                            ui,
-                            self.settings.pixel_colors.get_on_color_mut(),
-                            egui::color_picker::Alpha::Opaque,
+            egui::ComboBox::from_label(self.language.locale_string("color_palette"))
+                .selected_text(selected_text)
+                .show_ui(ui, |ui| {
+                    for palette in PALETTES.iter() {
+                        let palette_name = self.language.locale_string(palette.name_key());
+                        ui.selectable_value(
+                            &mut self.settings.pixel_colors,
+                            *palette,
+                            palette_name,
                         );
-                    },
-                );
+                    }
+                });
 
-                ui.separator();
+            /* TODO: Custom color palette
+            if ui
+                .button(self.language.get_locale_string("default"))
+                .clicked()
+            {
+                self.settings.pixel_colors = PixelColors::default();
+            }
+            egui::CollapsingHeader::new(self.language.get_locale_string("pixel_on")).show(
+                ui,
+                |ui| {
+                    color_picker_color32(
+                        ui,
+                        self.settings.pixel_colors.get_on_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+                },
+            );
 
-                egui::CollapsingHeader::new(self.language.get_locale_string("pixel_off")).show(
-                    ui,
-                    |ui| {
-                        color_picker_color32(
-                            ui,
-                            self.settings.pixel_colors.get_off_color_mut(),
-                            egui::color_picker::Alpha::Opaque,
-                        );
-                    },
-                );
-                 */
-            },
-        );
+            ui.separator();
+
+            egui::CollapsingHeader::new(self.language.get_locale_string("pixel_off")).show(
+                ui,
+                |ui| {
+                    color_picker_color32(
+                        ui,
+                        self.settings.pixel_colors.get_off_color_mut(),
+                        egui::color_picker::Alpha::Opaque,
+                    );
+                },
+            );
+             */
+        });
     }
 
-    fn controls_keyboard_grid(&self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("keyboard")).show(ui, |ui| {
-            egui::Grid::new("keyboard_grid").show(ui, |ui| {
-                for (i, key) in KEYBOARD.iter().enumerate() {
-                    let key_down = self.c8_device.get_keypad().is_key_pressed(
-                        &get_key_mapping(key)
-                            .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key)),
-                    );
+    fn controls_keyboard_grid(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.language.locale_string("keyboard")).show(ui, |ui| {
+            egui::ComboBox::from_label(self.language.locale_string("mapping"))
+                .selected_text(self.settings.key_mapping.key_mapping_name())
+                .show_ui(ui, |ui| {
+                    for key_mapping in KEY_MAPPINGS {
+                        ui.selectable_value(
+                            self.settings.key_mapping.key_mapping_mut(),
+                            *key_mapping,
+                            key_mapping.name().to_owned(),
+                        );
+                    }
+                });
 
-                    let key_name = match get_key_mapping(key) {
-                        Some(key_pad) => key_pad.get_name().to_owned(),
-                        None => "Unknown".to_owned(),
-                    };
+            ui.separator();
+
+            egui::Grid::new("keyboard_grid").show(ui, |ui| {
+                for (i, key) in KEYPAD_KEYS.iter().enumerate() {
+                    let key_down = self.c8_device.keypad().is_key_pressed(key);
+
+                    let key_name = key.name();
 
                     if key_down {
                         let background_color = if ui.ctx().style().visuals.dark_mode {
@@ -691,22 +777,22 @@ impl AppUI {
     }
 
     fn controls_quirks(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("quirks")).show(ui, |ui| {
+        egui::CollapsingHeader::new(self.language.locale_string("quirks")).show(ui, |ui| {
             ui.checkbox(
                 &mut self.settings.quirk_settings.vf_zero,
-                self.language.get_locale_string("quirk_vf0"),
+                self.language.locale_string("quirk_vf0"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_vf0_hover"));
+            .on_hover_text(self.language.locale_string("quirk_vf0_hover"));
             ui.checkbox(
                 &mut self.settings.quirk_settings.i_incremented,
-                self.language.get_locale_string("quirk_i"),
+                self.language.locale_string("quirk_i"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_i_hover"));
+            .on_hover_text(self.language.locale_string("quirk_i_hover"));
             ui.checkbox(
                 &mut self.settings.quirk_settings.vx_shifted_directly,
-                self.language.get_locale_string("quirk_shift_vx"),
+                self.language.locale_string("quirk_shift_vx"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_shift_vx_hover"));
+            .on_hover_text(self.language.locale_string("quirk_shift_vx_hover"));
             /*
                ui.checkbox(
                    &mut self.settings.quirk_settings.v_blank,
@@ -716,27 +802,27 @@ impl AppUI {
             */
             ui.checkbox(
                 &mut self.settings.quirk_settings.clip_sprites,
-                self.language.get_locale_string("quirk_clip_sprites"),
+                self.language.locale_string("quirk_clip_sprites"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_clip_sprites_hover"));
+            .on_hover_text(self.language.locale_string("quirk_clip_sprites_hover"));
 
             ui.checkbox(
                 &mut self.settings.quirk_settings.jump_bits,
-                self.language.get_locale_string("quirk_jump"),
+                self.language.locale_string("quirk_jump"),
             )
-            .on_hover_text(self.language.get_locale_string("quirk_jump_hover"));
+            .on_hover_text(self.language.locale_string("quirk_jump_hover"));
 
             let profile_name =
                 CompatibilityProfile::find_profile_name_key(self.settings.quirk_settings);
 
-            egui::ComboBox::from_label(self.language.get_locale_string("compatibility_profile"))
-                .selected_text(self.language.get_locale_string(profile_name))
+            egui::ComboBox::from_label(self.language.locale_string("compatibility_profile"))
+                .selected_text(self.language.locale_string(profile_name))
                 .show_ui(ui, |ui| {
                     for profile in COMPATIBILITY_PROFILES.iter() {
                         ui.selectable_value(
                             &mut self.settings.quirk_settings,
                             profile.quirks,
-                            self.language.get_locale_string(profile.get_name_key()),
+                            self.language.locale_string(profile.name_key()),
                         );
                     }
                 });
@@ -746,14 +832,14 @@ impl AppUI {
     }
 
     fn controls_emulator(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("emulator")).show(ui, |ui| {
+        egui::CollapsingHeader::new(self.language.locale_string("emulator")).show(ui, |ui| {
             // Emulator language
-            egui::ComboBox::from_label(self.language.get_locale_string("language"))
-                .selected_text(self.language.get_language().as_str())
+            egui::ComboBox::from_label(self.language.locale_string("language"))
+                .selected_text(self.language.language().as_str())
                 .show_ui(ui, |ui| {
                     for language in LANGUAGE_LIST {
                         ui.selectable_value(
-                            &mut self.language.get_language_mut(),
+                            &mut self.language.language_mut(),
                             &mut language.clone(),
                             language.as_str(),
                         );
@@ -762,8 +848,8 @@ impl AppUI {
 
             // Emulator font
             // TODO: Move this to emulator settings
-            let current_font_name: String = self.c8_device.get_memory().get_system_font().into();
-            egui::ComboBox::from_label(self.language.get_locale_string("font_small"))
+            let current_font_name: String = self.c8_device.memory().system_font().into();
+            egui::ComboBox::from_label(self.language.locale_string("font_small"))
                 .selected_text(current_font_name)
                 .show_ui(ui, |ui| {
                     for font in FONT_DATA {
@@ -774,15 +860,13 @@ impl AppUI {
                         let font_string: String = font.name.into();
 
                         ui.selectable_label(
-                            self.c8_device.get_memory_mut().get_system_font() == font.name,
+                            self.c8_device.memory_mut().system_font() == font.name,
                             font_string,
                         )
-                        .on_hover_text(self.language.get_locale_string("font_hover"))
+                        .on_hover_text(self.language.locale_string("font_hover"))
                         .clicked()
                         .then(|| {
-                            self.c8_device
-                                .get_memory_mut()
-                                .load_font_small(font.clone());
+                            self.c8_device.memory_mut().load_font_small(font);
                         });
                     }
                 });
@@ -790,75 +874,62 @@ impl AppUI {
     }
 
     fn controls_audio(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("audio_controls")).show(
-            ui,
-            |ui| {
-                ui.label(self.language.get_locale_string("under_construction"));
+        // TODO: Add audio settings to the settings struct
+        egui::CollapsingHeader::new(self.language.locale_string("audio_controls")).show(ui, |ui| {
+            ui.label(self.language.locale_string("under_construction"));
 
+            ui.separator();
+
+            ui.checkbox(
+                &mut self.settings.audio_settings.enabled,
+                self.language.locale_string("enable_audio"),
+            );
+
+            ui.separator();
+
+            ui.vertical(|ui| {
+                ui.add(
+                    egui::Slider::new(&mut self.settings.audio_settings.volume, 0.0..=1.0)
+                        .text(self.language.locale_string("volume")),
+                );
+
+                /*
+                   ui.add(
+                       egui::Slider::new(&mut self.settings.audio_settings.frequency, 50.0..=150.0)
+                           .text(self.language.locale_string("pitch")),
+                   );
+                */
+            });
+
+            if ui.button(self.language.locale_string("default")).clicked() {
+                self.settings.audio_settings = AudioSettings::default();
+            }
+
+            self.c8_device
+                .audio_device
+                .set_audio_settings(self.settings.audio_settings);
+
+            #[cfg(debug_assertions)]
+            {
                 ui.separator();
 
-                ui.checkbox(
-                    &mut self.settings.temp_enable_audio,
-                    self.language.get_locale_string("enable_audio"),
-                );
-                self.c8_device.temp_enable_audio = self.settings.temp_enable_audio;
-
-                #[cfg(debug_assertions)]
-                {
-                    ui.separator();
-
-                    ui.horizontal(|ui| {
-                        if ui.button("Play").clicked() {
-                            self.c8_device.beeper.play();
-                        }
-
-                        if ui.button("Pause").clicked() {
-                            self.c8_device.beeper.pause();
-                        }
-
-                        /*
-                        if ui.button("Stop").clicked() {
-                            self.c8_device.beeper.stop();
-                        }
-                         */
-                    });
-
-                    #[cfg(debug_assertions)]
-                    {
-                        ui.separator();
-
-                        ui.vertical(|ui| {
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.volume,
-                                    0.0..=1.0,
-                                )
-                                .text(self.language.get_locale_string("volume")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.pitch,
-                                    20.0..=20000.0,
-                                )
-                                .text(self.language.get_locale_string("pitch")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-
-                            ui.add(
-                                egui::Slider::new(
-                                    &mut self.c8_device.beeper.settings.octave,
-                                    1.0..=4.0,
-                                )
-                                .text(self.language.get_locale_string("octave")),
-                            )
-                            .on_hover_text(self.language.get_locale_string("not_implemented"));
-                        });
+                ui.horizontal(|ui| {
+                    if ui.button("Play").clicked() {
+                        self.c8_device.audio_device.play_beep();
                     }
-                }
-            },
-        );
+
+                    if ui.button("Pause").clicked() {
+                        self.c8_device.audio_device.pause();
+                    }
+
+                    /*
+                    if ui.button("Stop").clicked() {
+                        self.c8_device.beeper.stop();
+                    }
+                     */
+                });
+            }
+        });
     }
 
     pub fn side_panel_visualizer(&mut self, ctx: &egui::Context) {
@@ -875,14 +946,14 @@ impl AppUI {
     }
 
     fn visualizer_memory(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("memory")).show(ui, |ui| {
-            ui.label(self.language.get_locale_string("under_construction"));
+        egui::CollapsingHeader::new(self.language.locale_string("memory")).show(ui, |ui| {
+            ui.label(self.language.locale_string("under_construction"));
         });
     }
 
     fn visualizer_registers(&mut self, ui: &mut egui::Ui) {
-        egui::CollapsingHeader::new(self.language.get_locale_string("registers")).show(ui, |ui| {
-            ui.label(self.language.get_locale_string("under_construction"));
+        egui::CollapsingHeader::new(self.language.locale_string("registers")).show(ui, |ui| {
+            ui.label(self.language.locale_string("under_construction"));
         });
     }
 

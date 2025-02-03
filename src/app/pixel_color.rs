@@ -64,7 +64,7 @@ impl From<&PixelColors> for [Color32; 6] {
 
 impl PixelColors {
     /// Get the color of a pixel
-    pub fn get_pixel_color(&self, layer: ColorLayer) -> &Color32 {
+    pub fn pixel_color(&self, layer: ColorLayer) -> &Color32 {
         match layer {
             ColorLayer::Background => &self.background,
             ColorLayer::Foreground1 => &self.foreground1,
@@ -73,33 +73,33 @@ impl PixelColors {
         }
     }
 
-    pub fn get_name_key(&self) -> &str {
-        self.palette.get_name_key()
+    pub fn name_key(&self) -> &str {
+        self.palette.name_key()
     }
 
-    pub fn get_background_color(&self) -> &Color32 {
+    pub fn background_color(&self) -> &Color32 {
         &self.background
     }
 
-    pub fn get_foreground1_color(&self) -> &Color32 {
+    pub fn foreground1_color(&self) -> &Color32 {
         &self.foreground1
     }
 
-    pub fn get_foreground2_color(&self) -> &Color32 {
+    pub fn foreground2_color(&self) -> &Color32 {
         &self.foreground2
     }
 
-    pub fn get_blended_color(&self) -> &Color32 {
+    pub fn blended_color(&self) -> &Color32 {
         &self.blended
     }
 
     /// Get a mutable reference to the color of an active pixel
-    pub fn get_on_color_mut(&mut self) -> &mut Color32 {
+    pub fn on_color_mut(&mut self) -> &mut Color32 {
         &mut self.foreground1
     }
 
     /// Get a reference to the color of an active pixel
-    pub fn get_on_color(&self) -> &Color32 {
+    pub fn on_color(&self) -> &Color32 {
         &self.foreground1
     }
 
@@ -109,12 +109,12 @@ impl PixelColors {
     }
 
     /// Get a mutable reference to the color of an inactive pixel
-    pub fn get_off_color_mut(&mut self) -> &mut Color32 {
+    pub fn off_color_mut(&mut self) -> &mut Color32 {
         &mut self.background
     }
 
     /// Get a reference to the color of an inactive pixel
-    pub fn get_off_color(&self) -> &Color32 {
+    pub fn off_color(&self) -> &Color32 {
         &self.background
     }
 
@@ -145,7 +145,7 @@ impl From<Palette> for PixelColors {
 
 impl Palette {
     /// Get the locale string key
-    pub fn get_name_key(&self) -> &str {
+    pub fn name_key(&self) -> &str {
         match self {
             Palette::Default => "default",
             Palette::Octo => "octo",

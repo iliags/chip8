@@ -13,9 +13,9 @@ fn pixel_map(vec: Vec<u8>) -> Vec<bool> {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let length = 8192;
-    let test_vec: Vec<u8> = (0..length).map(|_| rng.gen_range(0..1)).collect();
+    let test_vec: Vec<u8> = (0..length).map(|_| rng.random_range(0..1)).collect();
 
     let mut temp_vec = vec![false; length];
     c.bench_function("pixel for", |b| {

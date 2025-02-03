@@ -7,6 +7,7 @@ edition = "2021"
 rand = { workspace = true }
 c8_audio = { workspace = true }
 serde = { workspace = true, optional = true }
+puffin = { workspace = true, optional = true }
 
 [lints]
 workspace = true
@@ -17,4 +18,6 @@ doctest = true
 
 [features]
 default = ["serde"]
+#default = ["serde", "enable_puffin"]
 serde = ["dep:serde"]
+enable_puffin = ["dep:puffin"]

@@ -1,3 +1,5 @@
+use crate::profile_function;
+
 /// Screen width constant
 pub(crate) const DEFAULT_SCREEN_WIDTH: usize = 64;
 
@@ -31,7 +33,7 @@ pub enum DisplayResolution {
 
 impl DisplayResolution {
     /// Get the resolution size
-    pub const fn get_resolution_size(&self) -> usize {
+    pub const fn resolution_size(&self) -> usize {
         match self {
             DisplayResolution::Low => SCREEN_SIZE_LOW,
             DisplayResolution::High => SCREEN_SIZE_HIGH,
@@ -39,7 +41,7 @@ impl DisplayResolution {
     }
 
     /// Get the resolution size XY
-    pub const fn get_resolution_size_xy(&self) -> (usize, usize) {
+    pub const fn resolution_size_xy(&self) -> (usize, usize) {
         match self {
             DisplayResolution::Low => SCREEN_SIZE_LOW_XY,
             DisplayResolution::High => SCREEN_SIZE_HIGH_XY,
@@ -47,7 +49,7 @@ impl DisplayResolution {
     }
 
     /// Get the resolution as a string
-    pub const fn get_resolution_str(&self) -> &str {
+    pub const fn resolution_str(&self) -> &str {
         match self {
             DisplayResolution::Low => "Low",
             DisplayResolution::High => "High",
@@ -94,14 +96,12 @@ impl Default for Display {
 
 impl Display {
     /// Get the planes for iteration
-    pub fn get_zipped_iterator(&self) -> impl Iterator<Item = (&u8, &u8)> {
-        self.get_plane_pixels(0)
-            .iter()
-            .zip(self.get_plane_pixels(1).iter())
+    pub fn zipped_iterator(&self) -> impl Iterator<Item = (&u8, &u8)> {
+        self.plane_pixels(0).iter().zip(self.plane_pixels(1).iter())
     }
 
     /// Get the display resolution
-    pub fn get_resolution(&self) -> DisplayResolution {
+    pub fn resolution(&self) -> DisplayResolution {
         self.resolution
     }
 
@@ -112,28 +112,27 @@ impl Display {
     }
 
     /// Get the screen size XY
-    pub(crate) const fn get_screen_size_xy(&self) -> (usize, usize) {
-        self.resolution.get_resolution_size_xy()
+    pub(crate) const fn screen_size_xy(&self) -> (usize, usize) {
+        self.resolution.resolution_size_xy()
     }
 
     /// Get the screen size
-    pub(crate) const fn get_screen_size(&self) -> usize {
-        self.resolution.get_resolution_size()
+    pub(crate) const fn screen_size(&self) -> usize {
+        self.resolution.resolution_size()
     }
 
     /// Get the pixels of a plane
-    fn get_plane_pixels(&self, plane: usize) -> &Vec<u8> {
-        //let plane = self.clamp_plane_value(plane);
+    pub fn plane_pixels(&self, plane: usize) -> &Vec<u8> {
         &self.planes[plane].pixels
     }
 
     /// Clear the display
     pub(crate) fn clear(&mut self, plane: usize) {
-        self.planes[plane].pixels = vec![0; self.get_screen_size()];
+        self.planes[plane].pixels = vec![0; self.screen_size()];
     }
 
     fn clear_all(&mut self) {
-        for plane in 0..self.get_plane_count() {
+        for plane in 0..self.plane_count() {
             self.clear(plane);
         }
     }
@@ -142,8 +141,8 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
-        let plane = self.clamp_plane_value(plane);
-        let index = self.get_pixel_index(x, y);
+        profile_function!();
+        let index = self.pixel_index(x, y);
 
         let mut result = false;
 
@@ -162,29 +161,25 @@ impl Display {
 
     /// Set the active plane
     pub(crate) fn set_active_plane(&mut self, plane: usize) {
-        let plane = self.clamp_plane_value(plane);
-        self.active_plane = plane;
+        self.active_plane = plane & 0x3;
     }
 
-    const fn clamp_plane_value(&self, value: usize) -> usize {
-        value & 0x3
-    }
-
-    pub(crate) fn get_plane_count(&self) -> usize {
+    pub(crate) fn plane_count(&self) -> usize {
         self.planes.len()
     }
 
     /// Get the active plane
-    pub fn get_active_plane(&self) -> usize {
+    pub fn active_plane(&self) -> usize {
         self.active_plane
     }
 
     /// Scroll planes left by the given number of pixels
     pub(crate) fn scroll_left(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
+        profile_function!();
+        let row_size = self.screen_size_xy().0;
 
-        for layer in 0..self.get_plane_count() {
-            if self.get_active_plane() & (layer + 1) == 0 {
+        for layer in 0..self.plane_count() {
+            if self.active_plane() & (layer + 1) == 0 {
                 continue;
             }
 
@@ -203,10 +198,11 @@ impl Display {
 
     /// Scroll planes right by the given number of pixels
     pub(crate) fn scroll_right(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
+        profile_function!();
+        let row_size = self.screen_size_xy().0;
 
-        for layer in 0..self.get_plane_count() {
-            if self.get_active_plane() & (layer + 1) == 0 {
+        for layer in 0..self.plane_count() {
+            if self.active_plane() & (layer + 1) == 0 {
                 continue;
             }
 
@@ -225,54 +221,63 @@ impl Display {
 
     /// Scroll planes up by the given number of pixels
     pub(crate) fn scroll_up(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
-        let buffer_size = self.get_screen_size();
+        profile_function!();
 
-        for layer in 0..self.get_plane_count() {
-            if self.get_active_plane() & (layer + 1) == 0 {
+        let size = self.screen_size_xy().0 * pixels as usize;
+        let buffer_size = self.screen_size();
+
+        for layer in 0..self.plane_count() {
+            if self.active_plane() & (layer + 1) == 0 {
                 continue;
             }
 
-            for z in 0..buffer_size {
-                let condition = z < (buffer_size - row_size * pixels as usize);
-                self.planes[layer].pixels[z] = if condition {
-                    self.planes[layer].pixels[z + (row_size * pixels as usize)]
-                } else {
-                    0
-                };
-            }
+            self.planes[layer].pixels = self.planes[layer]
+                .pixels
+                .iter()
+                .enumerate()
+                .map(|(i, _)| {
+                    if i < buffer_size - size {
+                        self.planes[layer].pixels[i + size]
+                    } else {
+                        0
+                    }
+                })
+                .collect();
         }
     }
 
     /// Scroll planes down by the given number of pixels
     pub(crate) fn scroll_down(&mut self, pixels: u8) {
-        let row_size = self.get_screen_size_xy().0;
+        profile_function!();
 
-        for layer in 0..self.get_plane_count() {
-            if self.get_active_plane() & (layer + 1) == 0 {
+        let size = self.screen_size_xy().0 * pixels as usize;
+
+        for layer in 0..self.plane_count() {
+            if self.active_plane() & (layer + 1) == 0 {
                 continue;
             }
 
-            for z in (0..self.planes[layer].pixels.len()).rev() {
-                let condition = z >= row_size * pixels as usize;
-                self.planes[layer].pixels[z] = if condition {
-                    self.planes[layer].pixels[z - (row_size * pixels as usize)]
-                } else {
-                    0
-                };
-            }
+            self.planes[layer].pixels = self.planes[layer]
+                .pixels
+                .iter()
+                .enumerate()
+                .map(|(i, _)| {
+                    if i < size {
+                        0
+                    } else {
+                        self.planes[layer].pixels[i - size]
+                    }
+                })
+                .collect();
         }
     }
 
-    const fn get_pixel_index(&self, x: usize, y: usize) -> usize {
-        // Quirk: Sprites drawn at the bottom edge of the screen get clipped instead of wrapping around to the top of the screen.
-        // This may be implemented in the future with a toggle.
+    #[inline]
+    const fn pixel_index(&self, x: usize, y: usize) -> usize {
+        let (width, _) = self.screen_size_xy();
 
-        // If the pixels are out of bounds, wrap them around
-        let (width, height) = self.get_screen_size_xy();
-
-        let x = x % width;
-        let y = y % height;
+        //let x = x % width;
+        //let y = y % height;
 
         // Get the pixel index
         y * width + x
@@ -299,20 +304,20 @@ mod tests {
         let mut display = Display::default();
 
         display.set_resolution(DisplayResolution::High);
-        assert_eq!(display.get_resolution(), DisplayResolution::High);
-        assert_eq!(display.get_screen_size(), SCREEN_SIZE_HIGH);
+        assert_eq!(display.resolution(), DisplayResolution::High);
+        assert_eq!(display.screen_size(), SCREEN_SIZE_HIGH);
 
         display.set_resolution(DisplayResolution::Low);
-        assert_eq!(display.get_resolution(), DisplayResolution::Low);
-        assert_eq!(display.get_screen_size(), SCREEN_SIZE_LOW);
+        assert_eq!(display.resolution(), DisplayResolution::Low);
+        assert_eq!(display.screen_size(), SCREEN_SIZE_LOW);
     }
 
     #[test]
     fn test_display_clear() {
         let mut display = Display::default();
-        let screen_size = display.get_screen_size();
+        let screen_size = display.screen_size();
 
-        let active_plane = display.get_active_plane();
+        let active_plane = display.active_plane();
 
         display.planes[active_plane].pixels = vec![1; screen_size];
 
@@ -325,12 +330,15 @@ mod tests {
     fn test_display_set_pixel() {
         let mut display = Display::default();
 
-        let mut rng = rand::thread_rng();
-        let range = 0..display.get_screen_size();
+        let mut rng = rand::rng();
+        let range = 0..display.screen_size();
 
         for plane in 0..2 {
-            let (x, y) = (rng.gen_range(range.clone()), rng.gen_range(range.clone()));
-            let pixel_index = display.get_pixel_index(x, y);
+            let (x, y) = (
+                rng.random_range(range.clone()),
+                rng.random_range(range.clone()),
+            );
+            let pixel_index = display.pixel_index(x, y);
 
             display.set_plane_pixel(plane, x, y);
             assert_eq!(display.planes[plane].pixels[pixel_index], 1);
@@ -338,11 +346,11 @@ mod tests {
             display.set_plane_pixel(plane, x, y);
             assert_eq!(display.planes[plane].pixels[pixel_index], 0);
 
-            let (width, height) = display.get_screen_size_xy();
+            let (width, height) = display.screen_size_xy();
 
             display.set_plane_pixel(plane, width, height);
             assert_eq!(
-                display.planes[plane].pixels[display.get_pixel_index(width, height)],
+                display.planes[plane].pixels[display.pixel_index(width, height)],
                 1
             );
         }

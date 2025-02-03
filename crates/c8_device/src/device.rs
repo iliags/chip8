@@ -1,9 +1,8 @@
-use c8_audio::beeper::Beeper;
-
 use crate::{
     cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
     quirks::Quirks,
 };
+use c8_audio::AudioDevice;
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -29,11 +28,8 @@ pub struct C8 {
     /// Quirks
     quirks: Quirks,
 
-    /// Audio
-    pub beeper: Beeper,
-
-    /// Temporary enable/disable audio flag while controls are being implemented
-    pub temp_enable_audio: bool,
+    /// Audio device for both web and non-web targets
+    pub audio_device: AudioDevice,
 }
 
 impl Default for C8 {
@@ -46,25 +42,25 @@ impl Default for C8 {
             is_running: false,
             keypad: Keypad::default(),
             quirks: Quirks::default(),
-            beeper: Beeper::new(),
-            temp_enable_audio: true,
+
+            audio_device: AudioDevice::new(),
         }
     }
 }
 
 impl C8 {
     /// Get the memory of the device
-    pub fn get_memory(&self) -> &Memory {
+    pub fn memory(&self) -> &Memory {
         &self.memory
     }
 
     /// Get the memory of the device (mutable)
-    pub fn get_memory_mut(&mut self) -> &mut Memory {
+    pub fn memory_mut(&mut self) -> &mut Memory {
         &mut self.memory
     }
 
     /// Get the quirks of the device
-    pub fn get_quirks(&self) -> &Quirks {
+    pub fn quirks(&self) -> &Quirks {
         &self.quirks
     }
 
@@ -74,27 +70,27 @@ impl C8 {
     }
 
     /// Get the display of the device
-    pub fn get_display(&self) -> &Display {
+    pub fn display(&self) -> &Display {
         &self.display
     }
 
     /// Get the display of the device (mutable)
-    pub fn get_display_mut(&mut self) -> &mut Display {
+    pub fn display_mut(&mut self) -> &mut Display {
         &mut self.display
     }
 
     /// Get the keypad of the device
-    pub fn get_keypad(&self) -> &Keypad {
+    pub fn keypad(&self) -> &Keypad {
         &self.keypad
     }
 
     /// Get the keypad of the device (mutable)
-    pub fn get_keypad_mut(&mut self) -> &mut Keypad {
+    pub fn keypad_mut(&mut self) -> &mut Keypad {
         &mut self.keypad
     }
 
     /// Get if the device is running
-    pub fn get_is_running(&self) -> bool {
+    pub fn is_running(&self) -> bool {
         self.is_running
     }
 
@@ -102,14 +98,14 @@ impl C8 {
     pub fn load_rom(&mut self, rom: Vec<u8>) {
         self.reset_device();
 
-        self.memory.load_rom(rom);
+        self.memory.load_rom(&rom);
 
         self.is_running = true;
     }
 
     /// Resets the device
     pub fn reset_device(&mut self) {
-        self.beeper.stop();
+        self.audio_device.stop();
         let current_font = self.memory.system_font;
         *self = Self::default();
 
@@ -120,6 +116,7 @@ impl C8 {
 
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
+        crate::profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         if self.is_running {
@@ -133,15 +130,19 @@ impl C8 {
             if self.cpu.sound_timer > 0 {
                 self.cpu.sound_timer = self.cpu.sound_timer.saturating_sub(1);
 
-                // Make very sure the audio doesn't play if audio is disabled while running ROMs
-                if self.temp_enable_audio {
-                    self.beeper.play();
-                } else {
-                    self.beeper.pause();
+                if self.audio_device.audio_settings().is_enabled() {
+                    if self.cpu.audio_buffer().is_empty() {
+                        self.audio_device.play_beep();
+                    } else if self.cpu.sound_dirty() {
+                        self.cpu.clear_sound_dirty();
+                        self.audio_device
+                            .play_buffer(self.cpu.audio_buffer().clone(), self.cpu.buffer_pitch());
+                    }
                 }
             } else {
                 // TODO: Make this more ergonomic (i.e. only pause if it's playing)
-                self.beeper.pause();
+                self.cpu.clear_audio_buffer();
+                self.audio_device.pause();
             }
 
             // Execute instructions
@@ -154,17 +155,9 @@ impl C8 {
                     &self.keypad,
                 );
 
-                for message in new_messages.iter().clone() {
-                    match message {
-                        DeviceMessage::ChangeResolution(resolution) => {
-                            self.display.set_resolution(*resolution);
-                        }
-                        DeviceMessage::Exit => {
-                            //self.is_running = false;
-                            self.reset_device();
-                        }
-                        _ => {}
-                    }
+                if self.cpu.is_requesting_exit() {
+                    self.is_running = false;
+                    self.reset_device();
                 }
 
                 messages.append(new_messages.as_mut());

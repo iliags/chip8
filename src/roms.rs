@@ -6,12 +6,12 @@ pub struct ROM {
 
 impl ROM {
     /// Get the name of the ROM
-    pub fn get_name(&self) -> &str {
+    pub fn name(&self) -> &str {
         self.name.strip_suffix(".ch8").unwrap_or(self.name)
     }
 
     /// Get the data of the ROM
-    pub fn get_data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8] {
         self.data
     }
 }
@@ -89,4 +89,20 @@ pub const GAME_ROMS: &[ROM] = &[
         name: "Skyward",
         data: include_bytes!("../assets/games/skyward/skyward.ch8"),
     },
+    /*
+    ROM {
+        name: "Music Player",
+        data: include_bytes!("../assets/games/xomusicplayer.ch8"),
+    },
+     */
+    ROM {
+        name: "Music Player 2",
+        data: include_bytes!("../assets/games/xomusicplayer2.ch8"),
+    },
+    /*
+    ROM {
+        name: "Nyan",
+        data: include_bytes!("../assets/games/nyancat.ch8"),
+    },
+     */
 ];

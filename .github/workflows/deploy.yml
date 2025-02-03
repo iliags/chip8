@@ -34,6 +34,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+            persist-credentials: false
       - run: sudo apt-get install -y libasound2-dev
         if: runner.os == 'Linux'
       - uses: taiki-e/upload-rust-binary-action@v1

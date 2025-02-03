@@ -30,7 +30,7 @@ impl Default for Memory {
             system_font: FontName::CHIP8,
         };
 
-        new_self.load_font_small(FONT_DATA[FontName::CHIP8 as usize].clone());
+        new_self.load_font_small(&FONT_DATA[FontName::CHIP8 as usize]);
 
         new_self
     }
@@ -38,30 +38,28 @@ impl Default for Memory {
 
 impl Memory {
     /// Load small font data into memory
-    pub fn load_font_small(&mut self, data: FontData) {
+    pub fn load_font_small(&mut self, data: &FontData) {
         let start = 0;
         let end = data.small_data.len();
 
-        self.data
-            .splice(start..end, data.small_data.iter().cloned());
+        self.data[start..end].copy_from_slice(data.small_data);
         self.system_font = data.name;
     }
 
     /// Load large font data into memory
-    pub fn load_font_large(&mut self, data: FontData) {
+    pub fn load_font_large(&mut self, data: &FontData) {
         // Only load large font data if the XO extension is enabled
         if ENABLE_XO {
             let small_font_length = FONT_DATA[self.system_font as usize].small_data.len();
             let start = small_font_length;
             let end = start + data.large_data.len();
 
-            self.data
-                .splice(start..end, data.large_data.iter().cloned());
+            self.data[start..end].copy_from_slice(data.large_data);
         }
     }
 
     /// Load font data into memory
-    pub fn load_font(&mut self, data: FontData, size: FontSize) {
+    pub fn load_font(&mut self, data: &FontData, size: &FontSize) {
         match size {
             FontSize::Small => self.load_font_small(data),
             FontSize::Large => self.load_font_large(data),
@@ -70,11 +68,11 @@ impl Memory {
 
     /// Load font data into memory by name
     pub fn load_font_name(&mut self, name: FontName, size: FontSize) {
-        self.load_font(FONT_DATA[name as usize].clone(), size);
+        self.load_font(&FONT_DATA[name as usize], &size);
     }
 
     /// Load ROM data into memory
-    pub fn load_rom(&mut self, data: Vec<u8>) {
+    pub fn load_rom(&mut self, data: &[u8]) {
         // Make sure the ROM data is valid
         // TODO: Implement other checks
         if data.is_empty() {
@@ -88,26 +86,26 @@ impl Memory {
         let start = PROGRAM_START as usize;
         let end = start + data.len();
 
-        self.data.splice(start..end, data.iter().cloned());
+        self.data[start..end].copy_from_slice(data);
     }
 
     /// Get memory data
-    pub fn get_data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &Vec<u8> {
         &self.data
     }
 
     /// Get mutable memory data
-    pub fn get_data_mut(&mut self) -> &mut Vec<u8> {
+    pub fn data_mut(&mut self) -> &mut Vec<u8> {
         &mut self.data
     }
 
     /// Get the system font
-    pub fn get_system_font(&self) -> FontName {
+    pub fn system_font(&self) -> FontName {
         self.system_font
     }
 
     /// Get mutable system font
-    pub fn get_system_font_mut(&mut self) -> &mut FontName {
+    pub fn system_font_mut(&mut self) -> &mut FontName {
         &mut self.system_font
     }
 }
@@ -138,7 +136,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut memory = Memory::default();
-        memory.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
+        memory.load_rom(&vec![0x00, 0xE0, 0x00, 0xEE]);
 
         assert_eq!(memory.data[0x200], 0x00);
         assert_eq!(memory.data[0x201], 0xE0);

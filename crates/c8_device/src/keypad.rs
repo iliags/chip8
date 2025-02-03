@@ -20,7 +20,8 @@ pub enum KeypadKey {
     F = 0xF,
 }
 
-pub(crate) const KEYPAD_KEYS: [KeypadKey; 16] = [
+/// Keypad keys on the chip 8
+pub const KEYPAD_KEYS: [KeypadKey; 16] = [
     KeypadKey::Num1,
     KeypadKey::Num2,
     KeypadKey::Num3,
@@ -41,12 +42,12 @@ pub(crate) const KEYPAD_KEYS: [KeypadKey; 16] = [
 
 impl KeypadKey {
     /// Get the index of the key
-    pub const fn get_key_index(&self) -> usize {
+    pub const fn key_index(&self) -> usize {
         *self as usize
     }
 
     /// Get the name of the key for UI purposes
-    pub const fn get_name(&self) -> &str {
+    pub const fn name(&self) -> &str {
         match &self {
             KeypadKey::Num1 => "1",
             KeypadKey::Num2 => "2",
@@ -99,17 +100,17 @@ pub struct Keypad([u8; 16]);
 impl Keypad {
     /// Set the state of a key
     pub fn set_key(&mut self, key: &KeypadKey, state: bool) {
-        self.0[key.get_key_index()] = state as u8;
+        self.0[key.key_index()] = state as u8;
     }
 
     /// Get the state of a key
-    pub fn get_key(&self, key: &KeypadKey) -> u8 {
-        self.0[key.get_key_index()]
+    pub fn key(&self, key: &KeypadKey) -> u8 {
+        self.0[key.key_index()]
     }
 
     /// Get the state of a key as a boolean
     pub fn is_key_pressed(&self, key: &KeypadKey) -> bool {
-        self.get_key(key) == 1
+        self.key(key) == 1
     }
 }
 
@@ -132,22 +133,22 @@ mod tests {
 
     #[test]
     fn test_key_index() {
-        assert_eq!(KeypadKey::Num1.get_key_index(), 0x1);
-        assert_eq!(KeypadKey::Num2.get_key_index(), 0x2);
-        assert_eq!(KeypadKey::Num3.get_key_index(), 0x3);
-        assert_eq!(KeypadKey::C.get_key_index(), 0xC);
-        assert_eq!(KeypadKey::Num4.get_key_index(), 0x4);
-        assert_eq!(KeypadKey::Num5.get_key_index(), 0x5);
-        assert_eq!(KeypadKey::Num6.get_key_index(), 0x6);
-        assert_eq!(KeypadKey::D.get_key_index(), 0xD);
-        assert_eq!(KeypadKey::Num7.get_key_index(), 0x7);
-        assert_eq!(KeypadKey::Num8.get_key_index(), 0x8);
-        assert_eq!(KeypadKey::Num9.get_key_index(), 0x9);
-        assert_eq!(KeypadKey::E.get_key_index(), 0xE);
-        assert_eq!(KeypadKey::A.get_key_index(), 0xA);
-        assert_eq!(KeypadKey::Num0.get_key_index(), 0x0);
-        assert_eq!(KeypadKey::B.get_key_index(), 0xB);
-        assert_eq!(KeypadKey::F.get_key_index(), 0xF);
+        assert_eq!(KeypadKey::Num1.key_index(), 0x1);
+        assert_eq!(KeypadKey::Num2.key_index(), 0x2);
+        assert_eq!(KeypadKey::Num3.key_index(), 0x3);
+        assert_eq!(KeypadKey::C.key_index(), 0xC);
+        assert_eq!(KeypadKey::Num4.key_index(), 0x4);
+        assert_eq!(KeypadKey::Num5.key_index(), 0x5);
+        assert_eq!(KeypadKey::Num6.key_index(), 0x6);
+        assert_eq!(KeypadKey::D.key_index(), 0xD);
+        assert_eq!(KeypadKey::Num7.key_index(), 0x7);
+        assert_eq!(KeypadKey::Num8.key_index(), 0x8);
+        assert_eq!(KeypadKey::Num9.key_index(), 0x9);
+        assert_eq!(KeypadKey::E.key_index(), 0xE);
+        assert_eq!(KeypadKey::A.key_index(), 0xA);
+        assert_eq!(KeypadKey::Num0.key_index(), 0x0);
+        assert_eq!(KeypadKey::B.key_index(), 0xB);
+        assert_eq!(KeypadKey::F.key_index(), 0xF);
     }
 
     #[test]
