@@ -733,7 +733,6 @@ impl CPU {
         let step = if height == 0 { 32 } else { height };
 
         for layer in 0..display.plane_count() {
-            crate::profile_scope!("Draw sprite");
             if display.active_plane() & (layer + 1) == 0 {
                 continue;
             }

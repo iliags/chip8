@@ -1,5 +1,3 @@
-use crate::profile_function;
-
 /// Screen width constant
 pub(crate) const DEFAULT_SCREEN_WIDTH: usize = 64;
 
@@ -141,7 +139,6 @@ impl Display {
     ///
     /// Returns if a collision occurred
     pub(crate) fn set_plane_pixel(&mut self, plane: usize, x: usize, y: usize) -> u8 {
-        profile_function!();
         let index = self.pixel_index(x, y);
 
         let mut result = false;
@@ -175,7 +172,6 @@ impl Display {
 
     /// Scroll planes left by the given number of pixels
     pub(crate) fn scroll_left(&mut self, pixels: u8) {
-        profile_function!();
         let row_size = self.screen_size_xy().0;
 
         for layer in 0..self.plane_count() {
@@ -198,7 +194,6 @@ impl Display {
 
     /// Scroll planes right by the given number of pixels
     pub(crate) fn scroll_right(&mut self, pixels: u8) {
-        profile_function!();
         let row_size = self.screen_size_xy().0;
 
         for layer in 0..self.plane_count() {
@@ -221,8 +216,6 @@ impl Display {
 
     /// Scroll planes up by the given number of pixels
     pub(crate) fn scroll_up(&mut self, pixels: u8) {
-        profile_function!();
-
         let size = self.screen_size_xy().0 * pixels as usize;
         let buffer_size = self.screen_size();
 
@@ -248,8 +241,6 @@ impl Display {
 
     /// Scroll planes down by the given number of pixels
     pub(crate) fn scroll_down(&mut self, pixels: u8) {
-        profile_function!();
-
         let size = self.screen_size_xy().0 * pixels as usize;
 
         for layer in 0..self.plane_count() {

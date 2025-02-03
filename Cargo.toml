@@ -72,11 +72,7 @@ serde = { workspace = true }
 
 c8 = { workspace = true }
 c8_i18n = { workspace = true }
-
 futures = { workspace = true }
-
-puffin = { workspace = true, optional = true }
-puffin_egui = { workspace = true, optional = true }
 
 
 [build-dependencies]
@@ -119,5 +115,3 @@ opt-level = 3
 
 [features]
 default = []
-#default = ["enable_puffin"]
-enable_puffin = ["dep:puffin_egui", "dep:puffin"]

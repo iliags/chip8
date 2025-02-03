@@ -1,7 +1,4 @@
-use crate::{
-    profile_function, profile_scope,
-    roms::{GAME_ROMS, ROM, TEST_ROMS},
-};
+use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
     keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
@@ -74,18 +71,10 @@ pub struct AppUI {
     language: LocaleText,
 
     settings: Settings,
-
-    #[cfg(feature = "enable_puffin")]
-    show_profiler: bool,
 }
 
 impl Default for AppUI {
     fn default() -> Self {
-        #[cfg(feature = "enable_puffin")]
-        {
-            puffin::set_scopes_on(true);
-        }
-
         let (width, height) = DisplayResolution::Low.resolution_size_xy();
         Self {
             display_image: egui::ColorImage::new([width, height], Color32::BLACK),
@@ -101,9 +90,6 @@ impl Default for AppUI {
 
             language: LocaleText::default(),
             settings: Settings::default(),
-
-            #[cfg(feature = "enable_puffin")]
-            show_profiler: false,
         }
     }
 }
@@ -169,15 +155,6 @@ impl eframe::App for AppUI {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        #[cfg(feature = "enable_puffin")]
-        {
-            puffin::GlobalProfiler::lock().new_frame();
-
-            if self.show_profiler {
-                puffin_egui::profiler_window(ctx);
-            }
-        }
-
         // Step the emulator
         let messages = self.c8_device.step(self.settings.cpu_speed);
 
@@ -258,9 +235,6 @@ impl eframe::App for AppUI {
                     &mut self.settings.visualizer_panel_expanded,
                     self.language.locale_string("visualizer_panel"),
                 );
-
-                #[cfg(feature = "enable_puffin")]
-                ui.toggle_value(&mut self.show_profiler, "Profiler");
 
                 ui.separator();
 
@@ -382,8 +356,6 @@ impl AppUI {
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        profile_function!();
-
         // Update the display image with the current display buffer
         // TODO: There is some minor color blending issues with the display, probably needs a buffer
         //if self.c8_device.get_is_running() {
@@ -408,7 +380,6 @@ impl AppUI {
 
         match &mut self.display_handle {
             Some(handle) => {
-                profile_scope!("display_window");
                 handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
             }
             None => {
@@ -430,8 +401,6 @@ impl AppUI {
         if self.settings.display_fullscreen {
             ui.add(image.fit_to_exact_size(ui.available_size()));
         } else {
-            profile_scope!("display_window");
-
             let display_title = if self.rom_name.is_empty() {
                 self.language.locale_string("display")
             } else {
