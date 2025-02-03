@@ -16,10 +16,6 @@ exclude = [
 name = "chip8"
 path = "src/main.rs"
 
-#[[bin]]
-#name = "c8_compiler"
-#path = "crates/c8_compiler/src/main.rs"
-
 [workspace]
 members = ["crates/*"]
 resolver = "2"
