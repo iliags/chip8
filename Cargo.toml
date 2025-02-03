@@ -5,7 +5,8 @@ authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
-default-run = "chip8"
+#default-run = "chip8"
+default-run = "c8_player"
 exclude = [
     # Exclude source art assets
     "art/**/*",
@@ -15,6 +16,11 @@ exclude = [
 [[bin]]
 name = "chip8"
 path = "src/main.rs"
+
+[[bin]]
+name = "c8_player"
+path = "crates/c8_player/src/main.rs"
+
 
 [workspace]
 members = ["crates/*"]
@@ -28,7 +34,10 @@ unsafe_code = "deny"
 [workspace.dependencies]
 c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
-observer = { path = "crates/observer" }
+c8_player = { path = "crates/c8_player" }
+
+macroquad = "0.4"
+macroquad-profiler = "0.2"
 
 # Accessibility
 fluent = "0.16"
@@ -48,10 +57,6 @@ wasm-bindgen = "0.2"
 web-sys = "0.3"
 futures = "0.3"
 
-
-# Profiling
-puffin_egui = { version = "0.29" }
-puffin = { version = "0.19" }
 
 [dependencies]
 egui = "0.30"
@@ -73,6 +78,8 @@ serde = { workspace = true }
 c8 = { workspace = true }
 c8_i18n = { workspace = true }
 futures = { workspace = true }
+macroquad = { workspace = true }
+macroquad-profiler = { workspace = true }
 
 
 [build-dependencies]

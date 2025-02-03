@@ -17,5 +17,6 @@ doctest = true
 
 [features]
 default = ["serde", "audio"]
+#default = ["serde", "audio"]
 serde = ["dep:serde"]
 audio = ["dep:tinyaudio"]

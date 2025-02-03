@@ -1,0 +1,17 @@
+[package]
+name = "c8_player"
+description = "Chip-8 Emulator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+c8 = { workspace = true }
+macroquad = { workspace = true }
+macroquad-profiler = { workspace = true }
+
+[lints]
+#workspace = true
+
+[[bin]]
+name = "c8_player"
+path = "src/main.rs"
