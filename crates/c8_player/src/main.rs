@@ -23,6 +23,13 @@ async fn main() {
     let mut c8_device = C8::default();
 
     let test_rom = include_bytes!("../../../assets/test_roms/1-chip8-logo.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/2-ibm-logo.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/3-corax+.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/4-flags.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/5-quirks.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/6-keypad.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/7-beep.ch8");
+    //let test_rom = include_bytes!("../../../assets/test_roms/8-scrolling.ch8");
     //let test_rom = include_bytes!("../../../assets/games/octo-sample/octo-sample.ch8");
 
     let mut current_frame: Option<Texture2D> = None;
@@ -38,14 +45,27 @@ async fn main() {
         }
 
         // TODO: Fix this
+        // TODO: Scale display texture properly, this is temporary
         let pixels = c8_device.display().plane_pixels(0);
         let rgba8_pixels = convert_to_rgba8(pixels);
-        let x = (screen_width() / 2.0) - (DEFAULT_WIDTH as f32 / 4.0);
-        let y = (screen_height() / 2.0) - (DEFAULT_HEIGHT as f32 / 4.0);
+        let x = (screen_width() / 2.0) - (DEFAULT_WIDTH as f32 * 2.0);
+        let y = (screen_height() / 2.0) - (DEFAULT_HEIGHT as f32 * 2.0);
         match &current_frame {
             Some(frame) => {
                 frame.update_from_bytes(DEFAULT_WIDTH, DEFAULT_HEIGHT, &rgba8_pixels);
-                draw_texture(frame, x, y, WHITE);
+                //draw_texture(frame, x, y, WHITE);
+                let params = DrawTextureParams {
+                    dest_size: Some(Vec2 {
+                        x: (DEFAULT_WIDTH * 4) as f32,
+                        y: (DEFAULT_HEIGHT * 4) as f32,
+                    }),
+                    source: None,
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                };
+                draw_texture_ex(frame, x, y, WHITE, params);
             }
             None => {
                 let new_texture = Texture2D::from_rgba8(
@@ -53,7 +73,20 @@ async fn main() {
                     DEFAULT_HEIGHT as u16,
                     &rgba8_pixels,
                 );
-                draw_texture(&new_texture, x, y, WHITE);
+                new_texture.set_filter(FilterMode::Nearest);
+                //draw_texture(&new_texture, x, y, WHITE);
+                let params = DrawTextureParams {
+                    dest_size: Some(Vec2 {
+                        x: (DEFAULT_WIDTH * 4) as f32,
+                        y: (DEFAULT_HEIGHT * 4) as f32,
+                    }),
+                    source: None,
+                    rotation: 0.0,
+                    flip_x: false,
+                    flip_y: false,
+                    pivot: None,
+                };
+                draw_texture_ex(&new_texture, x, y, WHITE, params);
                 current_frame = Some(new_texture);
             }
         }
