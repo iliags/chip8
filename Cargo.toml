@@ -31,6 +31,9 @@ unsafe_op_in_unsafe_fn = "warn"
 missing_docs = "warn"
 unsafe_code = "deny"
 
+[workspace.lints.clippy]
+#pedantic = "warn"
+
 [workspace.dependencies]
 c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
@@ -59,8 +62,8 @@ futures = "0.3"
 
 
 [dependencies]
-egui = "0.30"
-eframe = { version = "0.30", default-features = false, features = [
+egui = "0.31"
+eframe = { version = "0.31", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
