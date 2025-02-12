@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut memory = Memory::default();
-        memory.load_rom(&vec![0x00, 0xE0, 0x00, 0xEE]);
+        memory.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
 
         assert_eq!(memory.data[0x200], 0x00);
         assert_eq!(memory.data[0x201], 0xE0);

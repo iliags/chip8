@@ -124,11 +124,11 @@ mod tests {
 
         // Test key down
         keypad.set_key(&KeypadKey::Num1, true);
-        assert_eq!(keypad.is_key_pressed(&KeypadKey::Num1), true);
+        assert!(keypad.is_key_pressed(&KeypadKey::Num1));
 
         // Test key up
         keypad.set_key(&KeypadKey::Num1, false);
-        assert_eq!(keypad.is_key_pressed(&KeypadKey::Num1), false);
+        assert!(!keypad.is_key_pressed(&KeypadKey::Num1));
     }
 
     #[test]
@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn test_from_guard() {
-        assert_eq!(KeypadKey::from(0) == KeypadKey::Num0, true);
-        assert_eq!(KeypadKey::from(66) == KeypadKey::F, true);
+        assert!(KeypadKey::from(0) == KeypadKey::Num0);
+        assert!(KeypadKey::from(66) == KeypadKey::F);
     }
 }

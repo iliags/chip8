@@ -39,12 +39,12 @@ async fn main() {
 
         // TODO: Fix this
         let pixels = c8_device.display().plane_pixels(0);
-        let rgba8_pixels = convert_to_rgba8(&pixels);
+        let rgba8_pixels = convert_to_rgba8(pixels);
         let x = (screen_width() / 2.0) - (DEFAULT_WIDTH as f32 / 4.0);
         let y = (screen_height() / 2.0) - (DEFAULT_HEIGHT as f32 / 4.0);
         match &current_frame {
             Some(frame) => {
-                frame.update_from_bytes(DEFAULT_WIDTH as u32, DEFAULT_HEIGHT as u32, &rgba8_pixels);
+                frame.update_from_bytes(DEFAULT_WIDTH, DEFAULT_HEIGHT, &rgba8_pixels);
                 draw_texture(frame, x, y, WHITE);
             }
             None => {
