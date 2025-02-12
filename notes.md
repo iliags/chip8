@@ -4,6 +4,8 @@ Notes for later things.
 
 ## Refactoring Stuff
 
+Move the `src` folder into `crates/c8_studio`.
+
 ### Device
 
 - Get rid of the ad-hoc message system
