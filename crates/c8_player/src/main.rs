@@ -48,12 +48,15 @@ async fn main() {
         // TODO: Scale display texture properly, this is temporary
         let pixels = c8_device.display().plane_pixels(0);
         let rgba8_pixels = convert_to_rgba8(pixels);
+
+        // TODO: This should be screen center minus (chip 8 display size multiplied by half of the current scaling)
         let x = (screen_width() / 2.0) - (DEFAULT_WIDTH as f32 * 2.0);
         let y = (screen_height() / 2.0) - (DEFAULT_HEIGHT as f32 * 2.0);
         match &current_frame {
             Some(frame) => {
                 frame.update_from_bytes(DEFAULT_WIDTH, DEFAULT_HEIGHT, &rgba8_pixels);
                 //draw_texture(frame, x, y, WHITE);
+                // TODO: Move this to player settings
                 let params = DrawTextureParams {
                     dest_size: Some(Vec2 {
                         x: (DEFAULT_WIDTH * 4) as f32,
