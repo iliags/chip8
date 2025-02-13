@@ -635,6 +635,7 @@ dependencies = [
  "ron",
  "serde",
  "unic-langid",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
 ]

@@ -47,12 +47,6 @@ rand = { version = "0.9" }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 
-# Web
-wasm-bindgen-futures = "0.4"
-wasm-bindgen = "0.2"
-web-sys = "0.3"
-futures = "0.3"
-
 
 [dependencies]
 egui = "0.31"
@@ -73,7 +67,6 @@ serde = { workspace = true }
 
 c8 = { workspace = true }
 c8_i18n = { workspace = true }
-futures = { workspace = true }
 
 
 [build-dependencies]
@@ -95,12 +88,13 @@ harness = false
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
-
+futures = "0.3"
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = { workspace = true }
-web-sys = { workspace = true }
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+web-sys = "0.3"
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [profile.dev]
