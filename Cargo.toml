@@ -5,8 +5,9 @@ authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
-#default-run = "chip8"
-default-run = "c8_player"
+default-run = "chip8"
+license = "MIT/Apache-2.0"
+include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
 exclude = [
     # Exclude source art assets
     "art/**/*",
@@ -16,10 +17,6 @@ exclude = [
 [[bin]]
 name = "chip8"
 path = "src/main.rs"
-
-[[bin]]
-name = "c8_player"
-path = "crates/c8_player/src/main.rs"
 
 
 [workspace]
@@ -37,10 +34,6 @@ unsafe_code = "deny"
 [workspace.dependencies]
 c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
-c8_player = { path = "crates/c8_player" }
-
-macroquad = "0.4"
-macroquad-profiler = "0.2"
 
 # Accessibility
 fluent = "0.16"
@@ -81,8 +74,6 @@ serde = { workspace = true }
 c8 = { workspace = true }
 c8_i18n = { workspace = true }
 futures = { workspace = true }
-macroquad = { workspace = true }
-macroquad-profiler = { workspace = true }
 
 
 [build-dependencies]
@@ -113,15 +104,15 @@ web-sys = { workspace = true }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [profile.dev]
-opt-level = 1
+#opt-level = 1
 
 [profile.release]
-opt-level = 3
+opt-level = 2
 lto = true
 
 # Optimize all dependencies even in debug builds
 [profile.dev.package."*"]
-opt-level = 3
+opt-level = 2
 
 [features]
 default = ["profiling"]
