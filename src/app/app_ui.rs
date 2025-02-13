@@ -419,11 +419,14 @@ impl AppUI {
 
     fn load_rom(&mut self, rom_data: Vec<u8>) {
         if rom_data.is_empty() {
-            println!("ROM data is empty");
+            eprintln!("ROM data is empty");
             return;
         }
 
         self.reset_display();
+        self.c8_device
+            .audio_device
+            .set_audio_settings(self.settings.audio_settings);
 
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
@@ -468,7 +471,7 @@ impl AppUI {
             self.load_rom(rom.data().to_vec());
             self.rom_name = rom.name().to_string();
 
-            println!("ROM loaded: {}", rom.name());
+            eprintln!("ROM loaded: {}", rom.name());
 
             // Close the menu
             ui.close_menu();
@@ -595,7 +598,7 @@ impl AppUI {
                 if ui.button(self.language.locale_string("default")).clicked() {
                     self.settings.cpu_speed = DEFAULT_CPU_SPEED;
                 }
-                for speed in (500..=1500).step_by(500) {
+                for speed in (500..=2000).step_by(500) {
                     if ui.button(speed.to_string()).clicked() {
                         self.settings.cpu_speed = speed;
                     }
