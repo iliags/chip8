@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.20
+
+- Added aarch64 for MacOS to CI
+
 ## 0.1.19
 
 - Changed the underlying emulator message system
