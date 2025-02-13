@@ -1,5 +1,6 @@
 /// Custom audio settings
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AudioSettings {
     /// Whether audio is enabled
     pub enabled: bool,
@@ -17,7 +18,7 @@ impl Default for AudioSettings {
         AudioSettings {
             enabled: true,
             frequency: 100.0,
-            volume: 0.25,
+            volume: 0.15,
         }
     }
 }

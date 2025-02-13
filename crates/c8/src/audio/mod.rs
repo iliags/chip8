@@ -3,7 +3,12 @@ use audio_settings::AudioSettings;
 
 /// Custom audio settings
 pub mod audio_settings;
+
+#[cfg(feature = "audio")]
 mod tiny_audio;
+
+#[cfg(not(feature = "audio"))]
+mod null_audio;
 
 /// Trait for sound devices
 pub(crate) trait SoundDevice: std::fmt::Debug {
@@ -32,7 +37,11 @@ impl AudioDevice {
     /// Create a new audio device
     pub fn new() -> Self {
         Self {
+            #[cfg(feature = "audio")]
             audio_device: Box::new(tiny_audio::TinyAudio::new()),
+            #[cfg(not(feature = "audio"))]
+            audio_device: Box::new(null_audio::NullAudio),
+
             audio_settings: AudioSettings::default(),
         }
     }

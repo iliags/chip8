@@ -1,11 +1,13 @@
 [package]
 name = "chip8"
-version = "0.1.18"
+version = "0.1.19"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
 build = "build.rs"
 default-run = "chip8"
+license = "MIT/Apache-2.0"
+include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
 exclude = [
     # Exclude source art assets
     "art/**/*",
@@ -16,9 +18,6 @@ exclude = [
 name = "chip8"
 path = "src/main.rs"
 
-#[[bin]]
-#name = "c8_compiler"
-#path = "crates/c8_compiler/src/main.rs"
 
 [workspace]
 members = ["crates/*"]
@@ -29,11 +28,12 @@ unsafe_op_in_unsafe_fn = "warn"
 missing_docs = "warn"
 unsafe_code = "deny"
 
+[workspace.lints.clippy]
+#pedantic = "warn"
+
 [workspace.dependencies]
-c8_audio = { path = "crates/c8_audio" }
-c8_device = { path = "crates/c8_device" }
+c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
-observer = { path = "crates/observer" }
 
 # Accessibility
 fluent = "0.16"
@@ -47,20 +47,10 @@ rand = { version = "0.9" }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 
-# Web
-wasm-bindgen-futures = "0.4"
-wasm-bindgen = "0.2"
-web-sys = "0.3"
-futures = "0.3"
-
-
-# Profiling
-puffin_egui = { version = "0.29" }
-puffin = { version = "0.19" }
 
 [dependencies]
-egui = "0.30"
-eframe = { version = "0.30", default-features = false, features = [
+egui = "0.31"
+eframe = { version = "0.31", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
@@ -75,14 +65,8 @@ unic-langid = { workspace = true }
 ron = { workspace = true }
 serde = { workspace = true }
 
-c8_audio = { workspace = true }
-c8_device = { workspace = true }
+c8 = { workspace = true }
 c8_i18n = { workspace = true }
-
-futures = { workspace = true }
-
-puffin = { workspace = true, optional = true }
-puffin_egui = { workspace = true, optional = true }
 
 
 [build-dependencies]
@@ -104,26 +88,27 @@ harness = false
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
-
+futures = "0.3"
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = { workspace = true }
-web-sys = { workspace = true }
+wasm-bindgen-futures = "0.4"
+wasm-bindgen = "0.2"
+web-sys = "0.3"
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [profile.dev]
-opt-level = 1
+#opt-level = 1
 
 [profile.release]
-opt-level = 3
+opt-level = 2
 lto = true
 
 # Optimize all dependencies even in debug builds
 [profile.dev.package."*"]
-opt-level = 3
+opt-level = 2
 
 [features]
-default = []
-#default = ["enable_puffin"]
-enable_puffin = ["dep:puffin_egui", "dep:puffin"]
+default = ["profiling"]
+#default = []
+profiling = []

@@ -53,22 +53,23 @@ The user-facing text uses [fluent-rs](https://github.com/projectfluent/fluent-rs
 - Open a terminal in the repository location
   - Most operating systems have an option to open a terminal in the current folder when right clicking in the file browser.
 - Enter ```cargo build --release``` to build but not execute, ```cargo run --release``` to build and execute
-  - The ```--release``` flag can be removed to build the debug version
+  - The ```--release``` flag can be removed to build the development version
 
 #### Linux
 
-`libasound2-dev` is required for the `cpal` crate on linux, it can be installed with `sudo apt-get install -y libasound2-dev`.
+`libasound2-dev` is required for the `cpal` (used by `tinyaudio`) crate on linux, it can be installed with `sudo apt-get install -y libasound2-dev`.
 
 In some cases, linux may also require `sudo apt-get install -y libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev`
 
 ### WASM
 
 - Install [rust](https://www.rust-lang.org/tools/install)
-- Install trunk using ```cargo install trunk```
+- Install trunk using ```cargo binstall trunk``` (recommended on Windows) or ```cargo install trunk```
   - This may take a while
 - Open a terminal in the repository location:
-  - Build ```trunk build --release```
+  - Build only ```trunk build --release```
   - Build and start a local web server ```trunk serve --release```
+  - Trunk will output the files in the `dist` folder which is created if it doesn't exist.
 
 ### Documentation
 

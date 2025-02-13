@@ -4,8 +4,18 @@ Notes for later things.
 
 ## Refactoring Stuff
 
-- Get rid of the ad-hoc message system and run the emulator on a background thread
-- Reference Octo for the audio issues
+Move the `src` folder into `crates/c8_studio`.
+
+### Device
+
+- Get rid of the ad-hoc message system
+- Make the device crate usable as a standalone library
+  
+### Emulator Frontend
+
+The idea is that ROM developers use the studio mode and gamers use the emulator mode. Studio mode should contain everything needed to develop a Chip-8 ROM (i.e. simple sprite editor, audio pattern generator, etc.) while the emulator variation is meant to play games. Controls for the emulator need to be implemented in the device crate while extra tools go in the studio crate.
+
+There is an [egui-macroquad](https://github.com/optozorax/egui-macroquad) crate, but it might be a better idea to re-implement I/O logic in their respective frameworks. Marshalling the frame data and device input might be more effort than it's worth in the long run.
 
 ## Octo `options.json`
 

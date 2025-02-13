@@ -1,4 +1,5 @@
 /// Quirks for the Chip-8 device
+// TODO: Refactor this
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Quirks {
@@ -61,7 +62,7 @@ impl CompatibilityProfile {
 
     /// Find the profile name based on the quirks
     pub fn find_profile_name_key(quirks: Quirks) -> &'static str {
-        for profile in COMPATIBILITY_PROFILES.iter() {
+        for profile in &COMPATIBILITY_PROFILES {
             if profile.quirks == quirks {
                 return profile.name_key();
             }

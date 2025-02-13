@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use std::hint::black_box;
 
-fn pixel_for(vec: Vec<u8>, new_vec: &mut Vec<bool>) {
+fn pixel_for(vec: Vec<u8>, new_vec: &mut [bool]) {
     for (i, pixel) in vec.iter().enumerate() {
         new_vec[i] = *pixel > 0;
     }

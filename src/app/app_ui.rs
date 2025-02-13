@@ -1,15 +1,13 @@
-use crate::{
-    profile_function, profile_scope,
-    roms::{GAME_ROMS, ROM, TEST_ROMS},
-};
+use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
+    is_mobile,
     keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
     pixel_color::{PixelColors, PALETTES},
 };
 
-use c8_audio::audio_settings::AudioSettings;
-use c8_device::{
+use c8::{
+    audio::audio_settings::AudioSettings,
     device::C8,
     display::DisplayResolution,
     fonts::FONT_DATA,
@@ -74,18 +72,10 @@ pub struct AppUI {
     language: LocaleText,
 
     settings: Settings,
-
-    #[cfg(feature = "enable_puffin")]
-    show_profiler: bool,
 }
 
 impl Default for AppUI {
     fn default() -> Self {
-        #[cfg(feature = "enable_puffin")]
-        {
-            puffin::set_scopes_on(true);
-        }
-
         let (width, height) = DisplayResolution::Low.resolution_size_xy();
         Self {
             display_image: egui::ColorImage::new([width, height], Color32::BLACK),
@@ -101,9 +91,6 @@ impl Default for AppUI {
 
             language: LocaleText::default(),
             settings: Settings::default(),
-
-            #[cfg(feature = "enable_puffin")]
-            show_profiler: false,
         }
     }
 }
@@ -169,15 +156,6 @@ impl eframe::App for AppUI {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        #[cfg(feature = "enable_puffin")]
-        {
-            puffin::GlobalProfiler::lock().new_frame();
-
-            if self.show_profiler {
-                puffin_egui::profiler_window(ctx);
-            }
-        }
-
         // Step the emulator
         let messages = self.c8_device.step(self.settings.cpu_speed);
 
@@ -195,10 +173,224 @@ impl eframe::App for AppUI {
             }
         }
 
+        // Process debug input
+        #[cfg(debug_assertions)]
+        {
+            ctx.input(|i| {
+                // Load ROM shortcut for testing
+                if i.key_pressed(egui::Key::Tab) {
+                    // Chip-8 Logo
+                    self.load_rom(TEST_ROMS[0].data().to_vec());
+
+                    // Skyward
+                    //self.load_rom(GAME_ROMS[8].data().to_vec());
+
+                    // Music player 1
+                    //self.load_rom(GAME_ROMS[9].data().to_vec());
+
+                    // Music player 2
+                    //self.load_rom(GAME_ROMS[10].data().to_vec());
+
+                    // Nyancat
+                    //self.load_rom(GAME_ROMS[11].data().to_vec());
+
+                    // Beep
+                    //self.load_rom(TEST_ROMS[6].data().to_vec());
+                }
+            });
+        }
+
+        // By default, egui will only repaint if input is detected. This isn't
+        // ideal for this application, so we request a repaint every frame if running.
+        if self.c8_device.is_running() {
+            ctx.request_repaint();
+        }
+
+        if is_mobile(ctx) {
+            // TODO: Portrait and landscape
+            self.ui_mobile_portrait(ctx);
+        } else {
+            self.ui_desktop(ctx);
+        }
+    }
+}
+
+impl AppUI {
+    /// Called once before the first frame.
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // This is also where app-wide settings can be set, such as fonts and visuals.
+        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+
+        // Load previous app state (if any).
+        // Note that you must enable the `persistence` feature for this to work.
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
+        Default::default()
+    }
+
+    fn update_resolution(&mut self) {
+        let (width, height) = self.c8_device.display().resolution().resolution_size_xy();
+        let bg_color = self.settings.pixel_colors.background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+    }
+
+    fn reset_display(&mut self) {
+        let (width, height) = DisplayResolution::Low.resolution_size_xy();
+        let bg_color = self.settings.pixel_colors.background_color();
+        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+    }
+
+    fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        // Update the display image with the current display buffer
+        // TODO: There is some minor color blending issues with the display, probably needs a buffer
+        //if self.c8_device.get_is_running() {
+        self.display_image.pixels = self
+            .c8_device
+            .display()
+            .zipped_iterator()
+            .map(|(&p0, &p1)| {
+                let result = (p0 << 1) | p1;
+                *self.settings.pixel_colors.pixel_color(result.into())
+            })
+            .collect();
+        //}
+
+        // Note: This is hacky
+        const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
+            magnification: egui::TextureFilter::Nearest,
+            minification: egui::TextureFilter::Nearest,
+            wrap_mode: egui::TextureWrapMode::ClampToEdge,
+            mipmap_mode: None,
+        };
+
+        match &mut self.display_handle {
+            Some(handle) => {
+                handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
+            }
+            None => {
+                self.display_handle = Some(ctx.load_texture(
+                    "DisplayTexture",
+                    self.display_image.clone(),
+                    TEXTURE_OPTIONS,
+                ));
+            }
+        }
+
+        let image = match &self.display_handle {
+            Some(handle) => egui::Image::new(handle),
+            None => {
+                panic!("Display handle is None, this should never happen");
+            }
+        };
+
+        if self.settings.display_fullscreen || is_mobile(ctx) {
+            ui.add(image.fit_to_exact_size(ui.available_size()));
+        } else {
+            let display_title = if self.rom_name.is_empty() {
+                self.language.locale_string("display")
+            } else {
+                self.rom_name.clone()
+            };
+            egui::Window::new(display_title)
+                .resizable(false)
+                .id("display_window".into())
+                .show(ctx, |ui| {
+                    ui.add(
+                        image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
+                    );
+                });
+        }
+    }
+
+    fn load_rom(&mut self, rom_data: Vec<u8>) {
+        if rom_data.is_empty() {
+            eprintln!("ROM data is empty");
+            return;
+        }
+
+        self.reset_display();
+        self.c8_device
+            .audio_device
+            .set_audio_settings(self.settings.audio_settings);
+
+        // Assign the rom data to the rom file copy
+        self.rom_file = rom_data.clone();
+
+        self.c8_device.load_rom(&self.rom_file.clone());
+    }
+
+    fn reload_rom(&mut self) {
+        self.reset_display();
+        self.c8_device.load_rom(&self.rom_file.clone());
+    }
+
+    fn unload_rom(&mut self) {
+        self.reset_display();
+        self.c8_device.reset_device();
+    }
+
+    pub fn ui_mobile_portrait(&mut self, ctx: &egui::Context) {
+        /*
+           Screen
+        */
+        egui::TopBottomPanel::top("display_mobile")
+            .min_height(100.0)
+            .show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
+
+        /*
+           Bottom menu
+        */
+        egui::TopBottomPanel::bottom("bottom_menu").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                let toggle = egui::SelectableLabel::new(
+                    self.settings.control_panel_expanded,
+                    self.language.locale_string("control_panel"),
+                );
+                let response = ui.add_sized([100.0, 50.0], toggle);
+
+                if response.clicked() {
+                    self.settings.control_panel_expanded = !self.settings.control_panel_expanded;
+                }
+
+                self.menu_roms(ui);
+            });
+        });
+
+        self.side_panel_controls(ctx);
+
+        /*
+           Keyboard buttons
+        */
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.add_space(80.0);
+            egui::Grid::new("keyboard_grid")
+                .num_columns(4)
+                .show(ui, |ui| {
+                    for (i, key) in KEYPAD_KEYS.iter().enumerate() {
+                        let key_name = key.name();
+
+                        let button = ui.add_sized([90.0, 90.0], egui::Button::new(key_name));
+
+                        self.c8_device
+                            .keypad_mut()
+                            .set_key(key, button.is_pointer_button_down_on());
+
+                        if i % 4 == 3 {
+                            ui.end_row();
+                        }
+                    }
+                });
+        });
+    }
+
+    pub fn ui_desktop(&mut self, ctx: &egui::Context) {
         // Process input
         for key in KEYBOARD {
             ctx.input(|i| {
-                // TODO: Refactor this
                 let current_key = &self
                     .settings
                     .key_mapping
@@ -214,37 +406,13 @@ impl eframe::App for AppUI {
 
                     let is_down = i.key_down(regular_key) || i.key_down(*key);
                     self.c8_device.keypad_mut().set_key(current_key, is_down);
-
-                    return;
                 } else {
                     self.c8_device
                         .keypad_mut()
                         .set_key(current_key, i.key_down(*key))
                 }
-
-                // Load ROM shortcut for testing
-                #[cfg(debug_assertions)]
-                {
-                    if i.key_pressed(egui::Key::Tab) {
-                        // Skyward
-                        //self.load_rom(GAME_ROMS[8].data().to_vec());
-
-                        // Music player 1
-                        //self.load_rom(GAME_ROMS[9].data().to_vec());
-
-                        // Music player 2
-                        self.load_rom(GAME_ROMS[10].data().to_vec());
-
-                        // Nyancat
-                        //self.load_rom(GAME_ROMS[11].data().to_vec());
-
-                        // Beep
-                        //self.load_rom(TEST_ROMS[6].data().to_vec());
-                    }
-                }
             });
         }
-
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
             egui::menu::bar(ui, |ui| {
@@ -258,9 +426,6 @@ impl eframe::App for AppUI {
                     &mut self.settings.visualizer_panel_expanded,
                     self.language.locale_string("visualizer_panel"),
                 );
-
-                #[cfg(feature = "enable_puffin")]
-                ui.toggle_value(&mut self.show_profiler, "Profiler");
 
                 ui.separator();
 
@@ -345,131 +510,6 @@ impl eframe::App for AppUI {
                 self.update_display_window(ctx, ui);
             });
         }
-
-        // By default, egui will only repaint if input is detected. This isn't
-        // ideal for this application, so we request a repaint every frame if running.
-        if self.c8_device.is_running() {
-            ctx.request_repaint();
-        }
-    }
-}
-
-impl AppUI {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where app-wide settings can be set, such as fonts and visuals.
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
-
-        Default::default()
-    }
-
-    fn update_resolution(&mut self) {
-        let (width, height) = self.c8_device.display().resolution().resolution_size_xy();
-        let bg_color = self.settings.pixel_colors.background_color();
-        self.display_image = egui::ColorImage::new([width, height], *bg_color);
-    }
-
-    fn reset_display(&mut self) {
-        let (width, height) = DisplayResolution::Low.resolution_size_xy();
-        let bg_color = self.settings.pixel_colors.background_color();
-        self.display_image = egui::ColorImage::new([width, height], *bg_color);
-    }
-
-    fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        profile_function!();
-
-        // Update the display image with the current display buffer
-        // TODO: There is some minor color blending issues with the display, probably needs a buffer
-        //if self.c8_device.get_is_running() {
-        self.display_image.pixels = self
-            .c8_device
-            .display()
-            .zipped_iterator()
-            .map(|(&p0, &p1)| {
-                let result = (p0 << 1) | p1;
-                *self.settings.pixel_colors.pixel_color(result.into())
-            })
-            .collect();
-        //}
-
-        // Note: This is hacky
-        const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
-            magnification: egui::TextureFilter::Nearest,
-            minification: egui::TextureFilter::Nearest,
-            wrap_mode: egui::TextureWrapMode::ClampToEdge,
-            mipmap_mode: None,
-        };
-
-        match &mut self.display_handle {
-            Some(handle) => {
-                profile_scope!("display_window");
-                handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
-            }
-            None => {
-                self.display_handle = Some(ctx.load_texture(
-                    "DisplayTexture",
-                    self.display_image.clone(),
-                    TEXTURE_OPTIONS,
-                ));
-            }
-        }
-
-        let image = match &self.display_handle {
-            Some(handle) => egui::Image::new(handle),
-            None => {
-                panic!("Display handle is None, this should never happen");
-            }
-        };
-
-        if self.settings.display_fullscreen {
-            ui.add(image.fit_to_exact_size(ui.available_size()));
-        } else {
-            profile_scope!("display_window");
-
-            let display_title = if self.rom_name.is_empty() {
-                self.language.locale_string("display")
-            } else {
-                self.rom_name.clone()
-            };
-            egui::Window::new(display_title)
-                .resizable(false)
-                .id("display_window".into())
-                .show(ctx, |ui| {
-                    ui.add(
-                        image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
-                    );
-                });
-        }
-    }
-
-    fn load_rom(&mut self, rom_data: Vec<u8>) {
-        if rom_data.is_empty() {
-            println!("ROM data is empty");
-            return;
-        }
-
-        self.reset_display();
-
-        // Assign the rom data to the rom file copy
-        self.rom_file = rom_data.clone();
-
-        self.c8_device.load_rom(self.rom_file.clone());
-    }
-
-    fn reload_rom(&mut self) {
-        self.reset_display();
-        self.c8_device.load_rom(self.rom_file.clone());
-    }
-
-    fn unload_rom(&mut self) {
-        self.reset_display();
-        self.c8_device.reset_device();
     }
 
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
@@ -499,7 +539,7 @@ impl AppUI {
             self.load_rom(rom.data().to_vec());
             self.rom_name = rom.name().to_string();
 
-            println!("ROM loaded: {}", rom.name());
+            eprintln!("ROM loaded: {}", rom.name());
 
             // Close the menu
             ui.close_menu();
@@ -626,7 +666,7 @@ impl AppUI {
                 if ui.button(self.language.locale_string("default")).clicked() {
                     self.settings.cpu_speed = DEFAULT_CPU_SPEED;
                 }
-                for speed in (500..=1500).step_by(500) {
+                for speed in (500..=2000).step_by(500) {
                     if ui.button(speed.to_string()).clicked() {
                         self.settings.cpu_speed = speed;
                     }

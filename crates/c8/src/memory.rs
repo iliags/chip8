@@ -67,8 +67,8 @@ impl Memory {
     }
 
     /// Load font data into memory by name
-    pub fn load_font_name(&mut self, name: FontName, size: FontSize) {
-        self.load_font(&FONT_DATA[name as usize], &size);
+    pub fn load_font_name(&mut self, name: FontName, size: &FontSize) {
+        self.load_font(&FONT_DATA[name as usize], size);
     }
 
     /// Load ROM data into memory
@@ -76,7 +76,7 @@ impl Memory {
         // Make sure the ROM data is valid
         // TODO: Implement other checks
         if data.is_empty() {
-            println!("No ROM data provided");
+            eprintln!("No ROM data provided");
             return;
         } else if data.len() > MAX_ROM_SIZE {
             eprintln!("ROM data is too large");
@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut memory = Memory::default();
-        memory.load_rom(&vec![0x00, 0xE0, 0x00, 0xEE]);
+        memory.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
 
         assert_eq!(memory.data[0x200], 0x00);
         assert_eq!(memory.data[0x201], 0xE0);

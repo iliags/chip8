@@ -1,8 +1,7 @@
 use crate::{
-    cpu::CPU, display::Display, keypad::Keypad, memory::Memory, message::DeviceMessage,
-    quirks::Quirks,
+    audio::AudioDevice, cpu::CPU, display::Display, keypad::Keypad, memory::Memory,
+    message::DeviceMessage, quirks::Quirks,
 };
-use c8_audio::AudioDevice;
 
 /// Chip-8 Device
 #[derive(Debug)]
@@ -95,10 +94,10 @@ impl C8 {
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
-    pub fn load_rom(&mut self, rom: Vec<u8>) {
+    pub fn load_rom(&mut self, rom: &[u8]) {
         self.reset_device();
 
-        self.memory.load_rom(&rom);
+        self.memory.load_rom(rom);
 
         self.is_running = true;
     }
@@ -111,12 +110,11 @@ impl C8 {
 
         // Reload font data
         self.memory
-            .load_font_name(current_font, crate::fonts::FontSize::Small)
+            .load_font_name(current_font, &crate::fonts::FontSize::Small);
     }
 
     /// Step the device
     pub fn step(&mut self, cpu_speed: u32) -> Vec<DeviceMessage> {
-        crate::profile_function!();
         let mut messages: Vec<DeviceMessage> = Vec::new();
 
         if self.is_running {
@@ -147,7 +145,7 @@ impl C8 {
 
             // Execute instructions
             for _ in 0..cpu_speed {
-                let mut new_messages = self.cpu.step(
+                let new_message = self.cpu.step(
                     &mut self.memory,
                     &mut self.display,
                     &mut self.stack,
@@ -160,7 +158,10 @@ impl C8 {
                     self.reset_device();
                 }
 
-                messages.append(new_messages.as_mut());
+                // Collect messages that the device has
+                if let Some(message) = new_message {
+                    messages.push(message);
+                }
             }
         }
 
@@ -177,7 +178,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut c8 = C8::default();
-        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
         assert_eq!(c8.memory.data[0x200], 0x00);
         assert_eq!(c8.memory.data[0x201], 0xE0);
         assert_eq!(c8.memory.data[0x202], 0x00);
@@ -201,7 +202,7 @@ mod tests {
     #[test]
     fn test_step_timers() {
         let mut c8 = C8::default();
-        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
         c8.cpu.delay_timer = 1;
         c8.cpu.sound_timer = 1;
         c8.step(1);

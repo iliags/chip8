@@ -146,7 +146,7 @@ impl CPU {
         stack: &mut Vec<u16>,
         quirks: &quirks::Quirks,
         keypad: &Keypad,
-    ) -> Vec<DeviceMessage> {
+    ) -> Option<DeviceMessage> {
         // Note: This feels very hacky and should be refactored
         if let Some(task) = self.waiting_for_key.as_mut() {
             match task.key {
@@ -165,7 +165,7 @@ impl CPU {
                     }
                 }
             }
-            return Vec::new();
+            return None;
         }
 
         let pc = self.program_counter as usize;
@@ -185,34 +185,34 @@ impl CPU {
 
         self.program_counter += 2;
 
-        let messages = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
+        let message = self.execute_instruction(opcode, memory, display, stack, *quirks, keypad);
 
-        for message in messages.iter() {
-            if let DeviceMessage::WaitingForKey(register) = message {
-                self.waiting_for_key = Some(WaitingForKey {
-                    register: register.unwrap_or_else(|| {
-                        // TODO: Shift to user facing error
-                        eprintln!("Register not set");
-                        0
-                    }),
-                    key: None,
-                });
-            }
+        if let Some(DeviceMessage::WaitingForKey(register)) = message {
+            self.waiting_for_key = Some(WaitingForKey {
+                register: register.unwrap_or_else(|| {
+                    // TODO: Shift to user facing error
+                    eprintln!("Register not set");
+                    0
+                }),
+                key: None,
+            });
         }
 
-        messages
+        message
     }
 
+    // Intentionally allowing too many lines
+    #[allow(clippy::too_many_lines)]
     fn execute_instruction(
         &mut self,
         opcode: u16,
         memory: &mut Memory,
         display: &mut display::Display,
         stack: &mut Vec<u16>,
-        quirks: &quirks::Quirks,
+        quirks: quirks::Quirks,
         keypad: &Keypad,
-    ) -> Vec<DeviceMessage> {
-        let mut messages: Vec<DeviceMessage> = Vec::new();
+    ) -> Option<DeviceMessage> {
+        let mut message = None;
 
         //println!("Executing opcode: {:#X}", opcode);
 
@@ -261,7 +261,9 @@ impl CPU {
                             stack.pop().unwrap_or_else(|| panic!("Stack underflow"));
                     }
 
-                    _ => unknown_opcode(opcode),
+                    _ => {
+                        message = unknown_opcode(opcode);
+                    }
                 },
 
                 0x00F0 => match opcode & 0xF0FF {
@@ -290,20 +292,24 @@ impl CPU {
                     // 0x00FE
                     0x00FE => {
                         display.set_resolution(DisplayResolution::Low);
-                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::Low));
+                        message = Some(DeviceMessage::ChangeResolution(DisplayResolution::Low));
                     }
 
                     // Enable high-res
                     // 0x00FF
                     0x00FF => {
                         display.set_resolution(DisplayResolution::High);
-                        messages.push(DeviceMessage::ChangeResolution(DisplayResolution::High));
+                        message = Some(DeviceMessage::ChangeResolution(DisplayResolution::High));
                     }
 
-                    _ => unknown_opcode(opcode),
+                    _ => {
+                        message = unknown_opcode(opcode);
+                    }
                 },
 
-                _ => unknown_opcode(opcode),
+                _ => {
+                    message = unknown_opcode(opcode);
+                }
             },
 
             // Jump to address nnn
@@ -369,7 +375,9 @@ impl CPU {
                             memory.data[(self.index_register + z as u16) as usize];
                     }
                 }
-                _ => unknown_opcode(opcode),
+                _ => {
+                    message = unknown_opcode(opcode);
+                }
             },
 
             // Set Vx = nn
@@ -478,7 +486,9 @@ impl CPU {
                     self.registers[reg_x] = quirk_y << 1;
                     self.registers[Register::VF as usize] = quirk_y >> 7;
                 }
-                _ => unknown_opcode(opcode),
+                _ => {
+                    message = unknown_opcode(opcode);
+                }
             },
 
             // Skip next instruction if Vx != Vy
@@ -545,7 +555,9 @@ impl CPU {
                     }
                 }
 
-                _ => unknown_opcode(opcode),
+                _ => {
+                    message = unknown_opcode(opcode);
+                }
             },
 
             0xF000 => match opcode & 0xF0FF {
@@ -583,7 +595,7 @@ impl CPU {
                 // Wait for a key press and store the result in Vx
                 // 0xFX0A
                 0xF00A => {
-                    messages.push(DeviceMessage::WaitingForKey(Some(reg_x)));
+                    message = Some(DeviceMessage::WaitingForKey(Some(reg_x)));
                 }
 
                 // Set the delay timer to Vx
@@ -683,14 +695,18 @@ impl CPU {
                     }
                 }
 
-                _ => unknown_opcode(opcode),
+                _ => {
+                    message = unknown_opcode(opcode);
+                }
             },
 
             // Unknown opcode
-            _ => unknown_opcode(opcode),
+            _ => {
+                message = unknown_opcode(opcode);
+            }
         }
 
-        messages
+        message
     }
 
     #[inline]
@@ -733,7 +749,6 @@ impl CPU {
         let step = if height == 0 { 32 } else { height };
 
         for layer in 0..display.plane_count() {
-            crate::profile_scope!("Draw sprite");
             if display.active_plane() & (layer + 1) == 0 {
                 continue;
             }
@@ -787,6 +802,7 @@ impl CPU {
     }
 }
 
-fn unknown_opcode(opcode: u16) {
-    println!("Unknown opcode: {:#X}", opcode);
+fn unknown_opcode(opcode: u16) -> Option<DeviceMessage> {
+    eprintln!("Unknown opcode: {:#X}", opcode);
+    Some(DeviceMessage::UnknownOpCode(opcode))
 }
