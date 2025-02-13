@@ -227,7 +227,10 @@ impl AppUI {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
 
-        Default::default()
+        let mut new_self = Self::default();
+        new_self.settings.control_panel_expanded = !is_mobile(&cc.egui_ctx);
+
+        new_self
     }
 
     fn update_resolution(&mut self) {
@@ -336,7 +339,7 @@ impl AppUI {
            Screen
         */
         egui::TopBottomPanel::top("display_mobile")
-            .min_height(100.0)
+            .min_height(250.0)
             .show(ctx, |ui| {
                 self.update_display_window(ctx, ui);
             });

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## 0.1.20
 
 - Added aarch64 for MacOS to CI
+- Mobile UI tweaks
 
 ## 0.1.19
 
