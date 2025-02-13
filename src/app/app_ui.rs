@@ -1,6 +1,5 @@
 use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
-#[allow(unused_imports)]
 use super::{
     is_mobile,
     keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
@@ -174,52 +173,29 @@ impl eframe::App for AppUI {
             }
         }
 
-        // Process input
-        for key in KEYBOARD {
+        // Process debug input
+        #[cfg(debug_assertions)]
+        {
             ctx.input(|i| {
-                // TODO: Refactor this
-                let current_key = &self
-                    .settings
-                    .key_mapping
-                    .key_from_mapping(key)
-                    .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
-
-                if self.settings.key_mapping.is_extra_key(key) {
-                    let regular_key = self
-                        .settings
-                        .key_mapping
-                        .regular_key_from_extra_key(key)
-                        .unwrap_or_else(|| panic!("No regular key found for key: {:?}", key));
-
-                    let is_down = i.key_down(regular_key) || i.key_down(*key);
-                    self.c8_device.keypad_mut().set_key(current_key, is_down);
-
-                    return;
-                } else {
-                    self.c8_device
-                        .keypad_mut()
-                        .set_key(current_key, i.key_down(*key))
-                }
-
                 // Load ROM shortcut for testing
-                #[cfg(debug_assertions)]
-                {
-                    if i.key_pressed(egui::Key::Tab) {
-                        // Skyward
-                        //self.load_rom(GAME_ROMS[8].data().to_vec());
+                if i.key_pressed(egui::Key::Tab) {
+                    // Chip-8 Logo
+                    self.load_rom(TEST_ROMS[0].data().to_vec());
 
-                        // Music player 1
-                        //self.load_rom(GAME_ROMS[9].data().to_vec());
+                    // Skyward
+                    //self.load_rom(GAME_ROMS[8].data().to_vec());
 
-                        // Music player 2
-                        self.load_rom(GAME_ROMS[10].data().to_vec());
+                    // Music player 1
+                    //self.load_rom(GAME_ROMS[9].data().to_vec());
 
-                        // Nyancat
-                        //self.load_rom(GAME_ROMS[11].data().to_vec());
+                    // Music player 2
+                    //self.load_rom(GAME_ROMS[10].data().to_vec());
 
-                        // Beep
-                        //self.load_rom(TEST_ROMS[6].data().to_vec());
-                    }
+                    // Nyancat
+                    //self.load_rom(GAME_ROMS[11].data().to_vec());
+
+                    // Beep
+                    //self.load_rom(TEST_ROMS[6].data().to_vec());
                 }
             });
         }
@@ -230,18 +206,12 @@ impl eframe::App for AppUI {
             ctx.request_repaint();
         }
 
-        /* TODO
-        #[cfg(target_arch = "wasm32")]
         if is_mobile(ctx) {
-            self.ui_mobile(ctx);
+            // TODO: Portrait and landscape
+            self.ui_mobile_portrait(ctx);
         } else {
             self.ui_desktop(ctx);
         }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        self.ui_desktop(ctx);
-         */
-        self.ui_desktop(ctx);
     }
 }
 
@@ -315,7 +285,7 @@ impl AppUI {
             }
         };
 
-        if self.settings.display_fullscreen {
+        if self.settings.display_fullscreen || is_mobile(ctx) {
             ui.add(image.fit_to_exact_size(ui.available_size()));
         } else {
             let display_title = if self.rom_name.is_empty() {
@@ -361,7 +331,86 @@ impl AppUI {
         self.c8_device.reset_device();
     }
 
+    pub fn ui_mobile_portrait(&mut self, ctx: &egui::Context) {
+        /*
+           Screen
+        */
+        egui::TopBottomPanel::top("display_mobile").show(ctx, |ui| {
+            self.update_display_window(ctx, ui);
+        });
+
+        /*
+           Bottom menu
+        */
+        egui::TopBottomPanel::bottom("bottom_menu").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                let toggle = egui::SelectableLabel::new(
+                    self.settings.control_panel_expanded,
+                    self.language.locale_string("control_panel"),
+                );
+                let response = ui.add_sized([100.0, 50.0], toggle);
+
+                if response.clicked() {
+                    self.settings.control_panel_expanded = !self.settings.control_panel_expanded;
+                }
+
+                self.menu_roms(ui);
+            });
+        });
+
+        self.side_panel_controls(ctx);
+
+        /*
+           Keyboard buttons
+        */
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.add_space(80.0);
+            egui::Grid::new("keyboard_grid")
+                .num_columns(4)
+                .show(ui, |ui| {
+                    for (i, key) in KEYPAD_KEYS.iter().enumerate() {
+                        let key_name = key.name();
+
+                        let button = ui.add_sized([90.0, 90.0], egui::Button::new(key_name));
+
+                        self.c8_device
+                            .keypad_mut()
+                            .set_key(key, button.is_pointer_button_down_on());
+
+                        if i % 4 == 3 {
+                            ui.end_row();
+                        }
+                    }
+                });
+        });
+    }
+
     pub fn ui_desktop(&mut self, ctx: &egui::Context) {
+        // Process input
+        for key in KEYBOARD {
+            ctx.input(|i| {
+                let current_key = &self
+                    .settings
+                    .key_mapping
+                    .key_from_mapping(key)
+                    .unwrap_or_else(|| panic!("Key mapping not found for key: {:?}", key));
+
+                if self.settings.key_mapping.is_extra_key(key) {
+                    let regular_key = self
+                        .settings
+                        .key_mapping
+                        .regular_key_from_extra_key(key)
+                        .unwrap_or_else(|| panic!("No regular key found for key: {:?}", key));
+
+                    let is_down = i.key_down(regular_key) || i.key_down(*key);
+                    self.c8_device.keypad_mut().set_key(current_key, is_down);
+                } else {
+                    self.c8_device
+                        .keypad_mut()
+                        .set_key(current_key, i.key_down(*key))
+                }
+            });
+        }
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
             egui::menu::bar(ui, |ui| {
@@ -460,8 +509,6 @@ impl AppUI {
             });
         }
     }
-
-    pub fn ui_mobile(&mut self, _ctx: &egui::Context) {}
 
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
         ui.menu_button(self.language.locale_string("included_roms"), |ui| {

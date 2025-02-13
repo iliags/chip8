@@ -18,7 +18,7 @@ impl Default for AudioSettings {
         AudioSettings {
             enabled: true,
             frequency: 100.0,
-            volume: 0.25,
+            volume: 0.15,
         }
     }
 }
