@@ -1,6 +1,8 @@
 use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
+#[allow(unused_imports)]
 use super::{
+    is_mobile,
     keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
     pixel_color::{PixelColors, PALETTES},
 };
@@ -228,108 +230,18 @@ impl eframe::App for AppUI {
             ctx.request_repaint();
         }
 
-        // TODO: Add mobile interface
-
-        /*
-           Desktop UI
-        */
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // Menu bar
-            egui::menu::bar(ui, |ui| {
-                ui.toggle_value(
-                    &mut self.settings.control_panel_expanded,
-                    self.language.locale_string("control_panel"),
-                );
-
-                #[cfg(debug_assertions)]
-                ui.toggle_value(
-                    &mut self.settings.visualizer_panel_expanded,
-                    self.language.locale_string("visualizer_panel"),
-                );
-
-                ui.separator();
-
-                self.menu_roms(ui);
-
-                ui.separator();
-
-                // Open ROM button
-                self.menu_open_rom(ui);
-
-                // Check if the file data has been updated
-                if let Some(file_data) = self.file_data.take() {
-                    // Update the file name
-                    if let Some(file_name) = self.file_name.take() {
-                        let name = file_name.strip_suffix(".ch8").unwrap_or(&file_name);
-                        self.rom_name = name.to_string();
-
-                        // Reset the file name
-                        self.file_name = Rc::new(RefCell::new(None));
-                    }
-
-                    // Load the ROM
-                    self.load_rom(file_data);
-
-                    // Reset the file data
-                    self.file_data = Rc::new(RefCell::new(None));
-                }
-
-                if ui
-                    .add_enabled(
-                        !self.rom_file.is_empty(),
-                        egui::Button::new(self.language.locale_string("reload_rom")),
-                    )
-                    .clicked()
-                {
-                    self.reload_rom();
-                }
-
-                if ui
-                    .add_enabled(
-                        self.c8_device.is_running(),
-                        egui::Button::new(self.language.locale_string("unload_rom")),
-                    )
-                    .clicked()
-                {
-                    self.unload_rom();
-                }
-
-                ui.separator();
-
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-                    // Global dark/light mode buttons
-                    egui::widgets::global_theme_preference_switch(ui);
-
-                    ui.separator();
-
-                    self.menu_about(ui);
-
-                    ui.separator();
-
-                    if ui.button("Reset").clicked() {
-                        ctx.memory_mut(|mem| *mem = Default::default());
-                    }
-                });
-            });
-        });
-
-        if self.settings.draw_display_underneath {
-            // Central panel with display window
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.update_display_window(ctx, ui);
-            });
-
-            self.side_panel_visualizer(ctx);
-            self.side_panel_controls(ctx);
+        /* TODO
+        #[cfg(target_arch = "wasm32")]
+        if is_mobile(ctx) {
+            self.ui_mobile(ctx);
         } else {
-            self.side_panel_controls(ctx);
-            self.side_panel_visualizer(ctx);
-
-            // Central panel with display window
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.update_display_window(ctx, ui);
-            });
+            self.ui_desktop(ctx);
         }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        self.ui_desktop(ctx);
+         */
+        self.ui_desktop(ctx);
     }
 }
 
@@ -448,6 +360,108 @@ impl AppUI {
         self.reset_display();
         self.c8_device.reset_device();
     }
+
+    pub fn ui_desktop(&mut self, ctx: &egui::Context) {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            // Menu bar
+            egui::menu::bar(ui, |ui| {
+                ui.toggle_value(
+                    &mut self.settings.control_panel_expanded,
+                    self.language.locale_string("control_panel"),
+                );
+
+                #[cfg(debug_assertions)]
+                ui.toggle_value(
+                    &mut self.settings.visualizer_panel_expanded,
+                    self.language.locale_string("visualizer_panel"),
+                );
+
+                ui.separator();
+
+                self.menu_roms(ui);
+
+                ui.separator();
+
+                // Open ROM button
+                self.menu_open_rom(ui);
+
+                // Check if the file data has been updated
+                if let Some(file_data) = self.file_data.take() {
+                    // Update the file name
+                    if let Some(file_name) = self.file_name.take() {
+                        let name = file_name.strip_suffix(".ch8").unwrap_or(&file_name);
+                        self.rom_name = name.to_string();
+
+                        // Reset the file name
+                        self.file_name = Rc::new(RefCell::new(None));
+                    }
+
+                    // Load the ROM
+                    self.load_rom(file_data);
+
+                    // Reset the file data
+                    self.file_data = Rc::new(RefCell::new(None));
+                }
+
+                if ui
+                    .add_enabled(
+                        !self.rom_file.is_empty(),
+                        egui::Button::new(self.language.locale_string("reload_rom")),
+                    )
+                    .clicked()
+                {
+                    self.reload_rom();
+                }
+
+                if ui
+                    .add_enabled(
+                        self.c8_device.is_running(),
+                        egui::Button::new(self.language.locale_string("unload_rom")),
+                    )
+                    .clicked()
+                {
+                    self.unload_rom();
+                }
+
+                ui.separator();
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
+                    // Global dark/light mode buttons
+                    egui::widgets::global_theme_preference_switch(ui);
+
+                    ui.separator();
+
+                    self.menu_about(ui);
+
+                    ui.separator();
+
+                    if ui.button("Reset").clicked() {
+                        ctx.memory_mut(|mem| *mem = Default::default());
+                    }
+                });
+            });
+        });
+
+        if self.settings.draw_display_underneath {
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
+
+            self.side_panel_visualizer(ctx);
+            self.side_panel_controls(ctx);
+        } else {
+            self.side_panel_controls(ctx);
+            self.side_panel_visualizer(ctx);
+
+            // Central panel with display window
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
+        }
+    }
+
+    pub fn ui_mobile(&mut self, _ctx: &egui::Context) {}
 
     fn menu_roms(&mut self, ui: &mut egui::Ui) {
         ui.menu_button(self.language.locale_string("included_roms"), |ui| {
