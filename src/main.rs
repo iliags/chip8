@@ -18,17 +18,15 @@ fn main() -> eframe::Result<()> {
             .with_min_inner_size([566.0, 424.0])
             .with_icon(
                 // NOE: Adding an icon is optional
-                eframe::icon_data::from_png_bytes(
-                    &include_bytes!("../../../assets/icon-256.png")[..],
-                )
-                .unwrap(),
+                eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+                    .unwrap(),
             ),
         ..Default::default()
     };
     eframe::run_native(
         "Chip 8",
         native_options,
-        Box::new(|cc| Ok(Box::new(c8_studio::app::app_ui::AppUI::new(cc)))),
+        Box::new(|cc| Ok(Box::new(chip8::app::app_ui::AppUI::new(cc)))),
     )
 }
 
@@ -58,7 +56,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(c8_studio::app::app_ui::AppUI::new(cc)))),
+                Box::new(|cc| Ok(Box::new(chip8::app::app_ui::AppUI::new(cc)))),
             )
             .await;
 

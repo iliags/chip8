@@ -3,20 +3,17 @@ name = "c8_player"
 description = "Chip-8 Emulator"
 version = "0.1.0"
 edition = "2021"
-build = "build.rs"
 
+[dependencies]
+c8 = { workspace = true }
+macroquad = { workspace = true }
+macroquad-profiler = { workspace = true }
 
 [lints]
 #workspace = true
 
-[dependencies]
-c8 = { workspace = true }
-macroquad = "0.4"
-macroquad-profiler = "0.2"
-
-[build-dependencies]
-embed-resource = { version = "3.0" }
-
 [features]
-default = ["profiling"]
 profiling = []
+
+[[bin]]
+name = "c8_player"

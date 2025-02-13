@@ -9,7 +9,7 @@ fn main() {
         let target = env::var("TARGET").unwrap();
         if target.contains("windows") {
             // Set an icon for the executable
-            let _ = embed_resource::compile("../../assets/windows/icon.rc", embed_resource::NONE);
+            let _ = embed_resource::compile("assets/windows/icon.rc", embed_resource::NONE);
         }
     }
 }

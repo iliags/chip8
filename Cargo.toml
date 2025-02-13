@@ -4,10 +4,22 @@ version = "0.1.19"
 authors = ["James Lennon"]
 edition = "2021"
 publish = false
+build = "build.rs"
+#default-run = "chip8"
+default-run = "c8_player"
 exclude = [
     # Exclude source art assets
     "art/**/*",
 ]
+
+
+[[bin]]
+name = "chip8"
+path = "src/main.rs"
+
+[[bin]]
+name = "c8_player"
+path = "crates/c8_player/src/main.rs"
 
 
 [workspace]
@@ -23,12 +35,12 @@ unsafe_code = "deny"
 #pedantic = "warn"
 
 [workspace.dependencies]
-# Local crates
 c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
 c8_player = { path = "crates/c8_player" }
-c8_studio = { path = "crates/c8_studio" }
 
+macroquad = "0.4"
+macroquad-profiler = "0.2"
 
 # Accessibility
 fluent = "0.16"
@@ -49,18 +61,59 @@ web-sys = "0.3"
 futures = "0.3"
 
 
+[dependencies]
+egui = "0.31"
+eframe = { version = "0.31", default-features = false, features = [
+    "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+    "wayland",
+] }
+log = "0.4"
+rfd = { version = "0.15" }
+
+fluent = { workspace = true }
+fluent-templates = { workspace = true }
+unic-langid = { workspace = true }
+ron = { workspace = true }
+serde = { workspace = true }
+
+c8 = { workspace = true }
+c8_i18n = { workspace = true }
+futures = { workspace = true }
+macroquad = { workspace = true }
+macroquad-profiler = { workspace = true }
+
+
+[build-dependencies]
+embed-resource = { version = "3.0" }
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 rand = { workspace = true }
 
 
+#[[bench]]
+#name = "pixel_benchmark"
+#harness = false
+
 [[bench]]
 name = "match_benchmark"
 harness = false
 
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11"
+
+
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = { workspace = true }
+web-sys = { workspace = true }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [profile.dev]
-#opt-level = 1
+opt-level = 1
 
 [profile.release]
 opt-level = 3
@@ -71,6 +124,6 @@ lto = true
 opt-level = 3
 
 [features]
-#default = ["profiling"]
+default = ["profiling"]
 #default = []
-#profiling = []
+profiling = []
