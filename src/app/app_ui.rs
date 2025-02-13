@@ -335,9 +335,11 @@ impl AppUI {
         /*
            Screen
         */
-        egui::TopBottomPanel::top("display_mobile").show(ctx, |ui| {
-            self.update_display_window(ctx, ui);
-        });
+        egui::TopBottomPanel::top("display_mobile")
+            .min_height(100.0)
+            .show(ctx, |ui| {
+                self.update_display_window(ctx, ui);
+            });
 
         /*
            Bottom menu
