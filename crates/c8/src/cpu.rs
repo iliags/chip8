@@ -185,7 +185,7 @@ impl CPU {
 
         self.program_counter += 2;
 
-        let message = self.execute_instruction(opcode, memory, display, stack, quirks, keypad);
+        let message = self.execute_instruction(opcode, memory, display, stack, *quirks, keypad);
 
         if let Some(DeviceMessage::WaitingForKey(register)) = message {
             self.waiting_for_key = Some(WaitingForKey {
@@ -201,13 +201,15 @@ impl CPU {
         message
     }
 
+    // Intentionally allowing too many lines
+    #[allow(clippy::too_many_lines)]
     fn execute_instruction(
         &mut self,
         opcode: u16,
         memory: &mut Memory,
         display: &mut display::Display,
         stack: &mut Vec<u16>,
-        quirks: &quirks::Quirks,
+        quirks: quirks::Quirks,
         keypad: &Keypad,
     ) -> Option<DeviceMessage> {
         let mut message = None;

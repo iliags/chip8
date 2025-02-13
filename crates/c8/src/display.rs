@@ -285,7 +285,7 @@ mod tests {
     fn test_display_default() {
         let display = Display::default();
 
-        for plane in display.planes.iter() {
+        for plane in display.planes {
             assert_eq!(plane.pixels, vec![0; SCREEN_SIZE_LOW]);
         }
     }

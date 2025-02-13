@@ -67,8 +67,8 @@ impl Memory {
     }
 
     /// Load font data into memory by name
-    pub fn load_font_name(&mut self, name: FontName, size: FontSize) {
-        self.load_font(&FONT_DATA[name as usize], &size);
+    pub fn load_font_name(&mut self, name: FontName, size: &FontSize) {
+        self.load_font(&FONT_DATA[name as usize], size);
     }
 
     /// Load ROM data into memory

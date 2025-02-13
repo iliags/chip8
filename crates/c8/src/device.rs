@@ -94,10 +94,10 @@ impl C8 {
     }
 
     /// Resets the device, loads ROM and font data into memory, and starts the device
-    pub fn load_rom(&mut self, rom: Vec<u8>) {
+    pub fn load_rom(&mut self, rom: &[u8]) {
         self.reset_device();
 
-        self.memory.load_rom(&rom);
+        self.memory.load_rom(rom);
 
         self.is_running = true;
     }
@@ -110,7 +110,7 @@ impl C8 {
 
         // Reload font data
         self.memory
-            .load_font_name(current_font, crate::fonts::FontSize::Small)
+            .load_font_name(current_font, &crate::fonts::FontSize::Small);
     }
 
     /// Step the device
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn test_load_rom() {
         let mut c8 = C8::default();
-        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
         assert_eq!(c8.memory.data[0x200], 0x00);
         assert_eq!(c8.memory.data[0x201], 0xE0);
         assert_eq!(c8.memory.data[0x202], 0x00);
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_step_timers() {
         let mut c8 = C8::default();
-        c8.load_rom(vec![0x00, 0xE0, 0x00, 0xEE]);
+        c8.load_rom(&[0x00, 0xE0, 0x00, 0xEE]);
         c8.cpu.delay_timer = 1;
         c8.cpu.sound_timer = 1;
         c8.step(1);

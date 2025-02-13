@@ -222,6 +222,17 @@ impl eframe::App for AppUI {
             });
         }
 
+        // By default, egui will only repaint if input is detected. This isn't
+        // ideal for this application, so we request a repaint every frame if running.
+        if self.c8_device.is_running() {
+            ctx.request_repaint();
+        }
+
+        // TODO: Add mobile interface
+
+        /*
+           Desktop UI
+        */
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
             egui::menu::bar(ui, |ui| {
@@ -318,12 +329,6 @@ impl eframe::App for AppUI {
             egui::CentralPanel::default().show(ctx, |ui| {
                 self.update_display_window(ctx, ui);
             });
-        }
-
-        // By default, egui will only repaint if input is detected. This isn't
-        // ideal for this application, so we request a repaint every frame if running.
-        if self.c8_device.is_running() {
-            ctx.request_repaint();
         }
     }
 }
@@ -431,12 +436,12 @@ impl AppUI {
         // Assign the rom data to the rom file copy
         self.rom_file = rom_data.clone();
 
-        self.c8_device.load_rom(self.rom_file.clone());
+        self.c8_device.load_rom(&self.rom_file.clone());
     }
 
     fn reload_rom(&mut self) {
         self.reset_display();
-        self.c8_device.load_rom(self.rom_file.clone());
+        self.c8_device.load_rom(&self.rom_file.clone());
     }
 
     fn unload_rom(&mut self) {

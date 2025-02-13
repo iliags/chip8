@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.1.19 (WIP)
+## 0.1.19
+
+- Changed the underlying emulator message system
+- Update dependencies
+- Removed unused internal crate
 
 ## 0.1.18
 

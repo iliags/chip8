@@ -6,7 +6,7 @@ pub enum DeviceMessage {
     /// Request to change the display resolution
     ChangeResolution(DisplayResolution),
 
-    /// Unknown OpCode
+    /// Unknown `OpCode`
     UnknownOpCode(u16),
 
     /// Waiting for a key to be pressed
