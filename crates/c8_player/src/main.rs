@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use c8::device::C8;
-use c8_player::settings::PlayerSettings;
+//use c8_player::settings::PlayerSettings;
 use macroquad::prelude::*;
 
 #[cfg(feature = "profiling")]
@@ -23,7 +23,7 @@ const DEFAULT_HEIGHT: u32 = 32;
 async fn main() {
     let mut c8_device = C8::default();
 
-    let mut settings = PlayerSettings::new();
+    //let mut settings = PlayerSettings::new();
 
     let test_rom = include_bytes!("../../../assets/test_roms/1-chip8-logo.ch8");
     //let test_rom = include_bytes!("../../../assets/test_roms/2-ibm-logo.ch8");
