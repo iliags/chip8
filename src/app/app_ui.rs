@@ -369,7 +369,7 @@ impl AppUI {
            Keyboard buttons
         */
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add_space(80.0);
+            ui.add_space(50.0);
             egui::Grid::new("keyboard_grid")
                 .num_columns(4)
                 .show(ui, |ui| {
