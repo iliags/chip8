@@ -145,7 +145,7 @@ impl C8 {
 
             // Execute instructions
             for _ in 0..cpu_speed {
-                let mut new_messages = self.cpu.step(
+                let new_message = self.cpu.step(
                     &mut self.memory,
                     &mut self.display,
                     &mut self.stack,
@@ -158,7 +158,10 @@ impl C8 {
                     self.reset_device();
                 }
 
-                messages.append(new_messages.as_mut());
+                // Collect messages that the device has
+                if let Some(message) = new_message {
+                    messages.push(message);
+                }
             }
         }
 

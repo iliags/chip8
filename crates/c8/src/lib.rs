@@ -29,7 +29,3 @@ pub mod message;
 
 /// Program entry point
 pub const PROGRAM_START: u16 = 0x200;
-
-//use macroquad::telemetry;
-// telemetry::begin_zone("Zone name");
-// telemetry::end_zone();

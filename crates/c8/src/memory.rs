@@ -76,7 +76,7 @@ impl Memory {
         // Make sure the ROM data is valid
         // TODO: Implement other checks
         if data.is_empty() {
-            println!("No ROM data provided");
+            eprintln!("No ROM data provided");
             return;
         } else if data.len() > MAX_ROM_SIZE {
             eprintln!("ROM data is too large");
