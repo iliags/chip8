@@ -94,6 +94,7 @@ impl Default for Display {
 
 impl Display {
     /// Get the planes for iteration
+    #[inline]
     pub fn zipped_iterator(&self) -> impl Iterator<Item = (&u8, &u8)> {
         self.plane_pixels(0).iter().zip(self.plane_pixels(1).iter())
     }

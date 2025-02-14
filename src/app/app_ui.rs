@@ -248,7 +248,6 @@ impl AppUI {
     fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         // Update the display image with the current display buffer
         // TODO: There is some minor color blending issues with the display, probably needs a buffer
-        //if self.c8_device.get_is_running() {
         self.display_image.pixels = self
             .c8_device
             .display()
@@ -258,7 +257,6 @@ impl AppUI {
                 *self.settings.pixel_colors.pixel_color(result.into())
             })
             .collect();
-        //}
 
         // Note: This is hacky
         const TEXTURE_OPTIONS: TextureOptions = TextureOptions {
