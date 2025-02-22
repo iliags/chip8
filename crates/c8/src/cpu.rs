@@ -170,7 +170,7 @@ impl CPU {
 
         let pc = self.program_counter as usize;
         //println!("Program counter: {:#X}", pc);
-        let opcode = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
+        let opcode = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
 
         // TODO: Move to a UI window
         /*
@@ -565,7 +565,7 @@ impl CPU {
                 // 0xF000
                 0xF000 => {
                     let pc: usize = self.program_counter as usize;
-                    let address = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
+                    let address = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
 
                     self.index_register = address;
                     self.program_counter += 2;
@@ -712,7 +712,7 @@ impl CPU {
     #[inline]
     fn skip_next_instruction(&mut self, memory: &Memory) {
         let pc = self.program_counter as usize;
-        let next_op = (memory.data[pc] as u16) << 8 | (memory.data[pc + 1] as u16);
+        let next_op = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
 
         // Check if the next instruction is an XO instruction
         let result = if next_op == 0xF000 { 4 } else { 2 };
@@ -756,7 +756,7 @@ impl CPU {
             for a in 0..sprite_height {
                 let line: u16 = if height == 0 {
                     let read_index = (2 * a) + i;
-                    (memory.data[read_index] as u16) << 8 | memory.data[read_index + 1] as u16
+                    ((memory.data[read_index] as u16) << 8) | memory.data[read_index + 1] as u16
                 } else {
                     memory.data[i + a] as u16
                 };

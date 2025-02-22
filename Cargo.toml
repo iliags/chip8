@@ -2,7 +2,7 @@
 name = "chip8"
 version = "0.1.21"
 authors = ["James Lennon"]
-edition = "2021"
+edition = "2024"
 publish = false
 build = "build.rs"
 default-run = "chip8"
