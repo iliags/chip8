@@ -44,7 +44,7 @@ unic-langid = "0.9"
 rand = { version = "0.9" }
 
 # Serialization
-ron = "0.8"
+ron = "0.10"
 serde = { version = "1", features = ["derive"] }
 
 
