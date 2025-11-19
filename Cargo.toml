@@ -36,7 +36,7 @@ c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
 
 # Accessibility
-fluent = "0.16"
+fluent = "0.17"
 fluent-templates = "0.13"
 unic-langid = "0.9"
 
@@ -44,13 +44,13 @@ unic-langid = "0.9"
 rand = { version = "0.9" }
 
 # Serialization
-ron = "0.10"
+ron = "0.12"
 serde = { version = "1", features = ["derive"] }
 
 
 [dependencies]
-egui = "0.31"
-eframe = { version = "0.31", default-features = false, features = [
+egui = "0.33"
+eframe = { version = "0.33", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.

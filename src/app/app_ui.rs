@@ -2,8 +2,8 @@ use crate::roms::{GAME_ROMS, ROM, TEST_ROMS};
 
 use super::{
     is_mobile,
-    keyboard::{KeyboardMapping, KEYBOARD, KEY_MAPPINGS},
-    pixel_color::{PixelColors, PALETTES},
+    keyboard::{KEY_MAPPINGS, KEYBOARD, KeyboardMapping},
+    pixel_color::{PALETTES, PixelColors},
 };
 
 use c8::{
@@ -13,7 +13,7 @@ use c8::{
     fonts::FONT_DATA,
     keypad::KEYPAD_KEYS,
     message::DeviceMessage,
-    quirks::{CompatibilityProfile, Quirks, COMPATIBILITY_PROFILES},
+    quirks::{COMPATIBILITY_PROFILES, CompatibilityProfile, Quirks},
 };
 use c8_i18n::{
     locale_text::LocaleText,
@@ -78,7 +78,7 @@ impl Default for AppUI {
     fn default() -> Self {
         let (width, height) = DisplayResolution::Low.resolution_size_xy();
         Self {
-            display_image: egui::ColorImage::new([width, height], Color32::BLACK),
+            display_image: egui::ColorImage::filled([width, height], Color32::BLACK),
             display_handle: None,
             rom_file: Vec::new(),
             rom_name: String::new(),
@@ -236,13 +236,13 @@ impl AppUI {
     fn update_resolution(&mut self) {
         let (width, height) = self.c8_device.display().resolution().resolution_size_xy();
         let bg_color = self.settings.pixel_colors.background_color();
-        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+        self.display_image = egui::ColorImage::filled([width, height], *bg_color);
     }
 
     fn reset_display(&mut self) {
         let (width, height) = DisplayResolution::Low.resolution_size_xy();
         let bg_color = self.settings.pixel_colors.background_color();
-        self.display_image = egui::ColorImage::new([width, height], *bg_color);
+        self.display_image = egui::ColorImage::filled([width, height], *bg_color);
     }
 
     fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
@@ -347,10 +347,13 @@ impl AppUI {
         */
         egui::TopBottomPanel::bottom("bottom_menu").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                let toggle = egui::SelectableLabel::new(
-                    self.settings.control_panel_expanded,
-                    self.language.locale_string("control_panel"),
-                );
+                // let toggle = egui::SelectableLabel::new(
+                //     self.settings.control_panel_expanded,
+                //     self.language.locale_string("control_panel"),
+                // );
+                let toggle = egui::Button::new(self.language.locale_string("control_panel"))
+                    .selected(self.settings.control_panel_expanded);
+
                 let response = ui.add_sized([100.0, 50.0], toggle);
 
                 if response.clicked() {
@@ -416,7 +419,7 @@ impl AppUI {
         }
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // Menu bar
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.toggle_value(
                     &mut self.settings.control_panel_expanded,
                     self.language.locale_string("control_panel"),
@@ -543,7 +546,7 @@ impl AppUI {
             eprintln!("ROM loaded: {}", rom.name());
 
             // Close the menu
-            ui.close_menu();
+            ui.close();
 
             return true;
         }
