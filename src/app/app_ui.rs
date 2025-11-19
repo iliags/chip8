@@ -347,10 +347,6 @@ impl AppUI {
         */
         egui::TopBottomPanel::bottom("bottom_menu").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                // let toggle = egui::SelectableLabel::new(
-                //     self.settings.control_panel_expanded,
-                //     self.language.locale_string("control_panel"),
-                // );
                 let toggle = egui::Button::new(self.language.locale_string("control_panel"))
                     .selected(self.settings.control_panel_expanded);
 
