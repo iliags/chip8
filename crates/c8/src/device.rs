@@ -4,7 +4,7 @@ use crate::{
 };
 
 /// Chip-8 Device
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct C8 {
     /// The RAM (4kb)
     memory: Memory,
@@ -29,22 +29,6 @@ pub struct C8 {
 
     /// Audio device for both web and non-web targets
     pub audio_device: AudioDevice,
-}
-
-impl Default for C8 {
-    fn default() -> Self {
-        Self {
-            memory: Memory::default(),
-            display: Display::default(),
-            cpu: CPU::default(),
-            stack: vec![],
-            is_running: false,
-            keypad: Keypad::default(),
-            quirks: Quirks::default(),
-
-            audio_device: AudioDevice::new(),
-        }
-    }
 }
 
 impl C8 {
