@@ -57,7 +57,7 @@ eframe = { version = "0.33", default-features = false, features = [
     "wayland",
 ] }
 log = "0.4"
-rfd = { version = "0.16" }
+rfd = { version = "0.17" }
 
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
@@ -113,6 +113,6 @@ debug = true
 opt-level = 2
 
 [features]
-default = ["profiling"]
-#default = []
+#default = ["profiling"]
+default = []
 profiling = []
