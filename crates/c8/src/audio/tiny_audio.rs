@@ -31,7 +31,7 @@ impl SquareWave {
 
     pub fn pitch_to_ratio(pitch: u8) -> f32 {
         let base = 2.0f32;
-        let sr = 4000.0 * base.powf((pitch as f32 - 64.0) / 48.0);
+        let sr = 4000.0 * base.powf((f32::from(pitch) - 64.0) / 48.0);
         sr / SAMPLE_RATE as f32
     }
 
@@ -152,7 +152,7 @@ impl SoundDevice for TinyAudio {
         }
 
         if let Ok(ref mut mutex) = self.square_wave.try_write() {
-            mutex.set_pattern(buffer_pitch, buffer.to_vec());
+            mutex.set_pattern(buffer_pitch, buffer.clone());
             self.playing.store(true, Ordering::SeqCst);
         } else {
             eprintln!("play_beep: try_write failed");

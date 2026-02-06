@@ -90,6 +90,7 @@ impl Memory {
     }
 
     /// Get memory data
+    #[must_use] 
     pub fn data(&self) -> &Vec<u8> {
         &self.data
     }
@@ -100,6 +101,7 @@ impl Memory {
     }
 
     /// Get the system font
+    #[must_use] 
     pub fn system_font(&self) -> FontName {
         self.system_font
     }

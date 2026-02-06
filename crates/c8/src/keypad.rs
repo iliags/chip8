@@ -42,11 +42,13 @@ pub const KEYPAD_KEYS: [KeypadKey; 16] = [
 
 impl KeypadKey {
     /// Get the index of the key
+    #[must_use] 
     pub const fn key_index(&self) -> usize {
         *self as usize
     }
 
     /// Get the name of the key for UI purposes
+    #[must_use] 
     pub const fn name(&self) -> &str {
         match &self {
             KeypadKey::Num1 => "1",
@@ -100,15 +102,17 @@ pub struct Keypad([u8; 16]);
 impl Keypad {
     /// Set the state of a key
     pub fn set_key(&mut self, key: &KeypadKey, state: bool) {
-        self.0[key.key_index()] = state as u8;
+        self.0[key.key_index()] = u8::from(state);
     }
 
     /// Get the state of a key
+    #[must_use] 
     pub fn key(&self, key: &KeypadKey) -> u8 {
         self.0[key.key_index()]
     }
 
     /// Get the state of a key as a boolean
+    #[must_use] 
     pub fn is_key_pressed(&self, key: &KeypadKey) -> bool {
         self.key(key) == 1
     }

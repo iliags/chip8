@@ -33,6 +33,7 @@ pub struct C8 {
 
 impl C8 {
     /// Get the memory of the device
+    #[must_use] 
     pub fn memory(&self) -> &Memory {
         &self.memory
     }
@@ -43,6 +44,7 @@ impl C8 {
     }
 
     /// Get the quirks of the device
+    #[must_use] 
     pub fn quirks(&self) -> &Quirks {
         &self.quirks
     }
@@ -53,6 +55,7 @@ impl C8 {
     }
 
     /// Get the display of the device
+    #[must_use] 
     pub fn display(&self) -> &Display {
         &self.display
     }
@@ -63,6 +66,7 @@ impl C8 {
     }
 
     /// Get the keypad of the device
+    #[must_use] 
     pub fn keypad(&self) -> &Keypad {
         &self.keypad
     }
@@ -73,6 +77,7 @@ impl C8 {
     }
 
     /// Get if the device is running
+    #[must_use] 
     pub fn is_running(&self) -> bool {
         self.is_running
     }
