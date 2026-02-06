@@ -29,7 +29,7 @@ missing_docs = "warn"
 unsafe_code = "deny"
 
 [workspace.lints.clippy]
-#pedantic = "warn"
+pedantic = "warn"
 
 [workspace.dependencies]
 c8 = { path = "crates/c8" }
