@@ -1,3 +1,5 @@
+#![allow(clippy::cast_possible_truncation)]
+
 use std::vec;
 
 use crate::{
@@ -802,7 +804,8 @@ impl CPU {
     }
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn unknown_opcode(opcode: u16) -> Option<DeviceMessage> {
-    eprintln!("Unknown opcode: {:#X}", opcode);
+    eprintln!("Unknown opcode: {opcode:#X}");
     Some(DeviceMessage::UnknownOpCode(opcode))
 }
