@@ -2,13 +2,13 @@
 
 Notes for later things.
 
-## Refactoring Stuff
+## Profiling
 
-Move the `src` folder into `crates/c8_studio`.
+```cargo build --profile profiling```
+```samply record ./target/profiling/chip8```
 
 ### Device
 
-- Get rid of the ad-hoc message system
 - Make the device crate usable as a standalone library
   
 ### Emulator Frontend

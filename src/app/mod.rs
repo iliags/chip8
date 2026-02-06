@@ -12,7 +12,7 @@ pub fn is_mobile(ctx: &egui::Context) -> bool {
     #[cfg(target_arch = "wasm32")]
     {
         // TODO: Portrait and landscape
-        let screen_size = ctx.screen_rect().size();
+        let screen_size = ctx.content_rect().size();
         screen_size.x < 550.0
     }
 

@@ -25,21 +25,25 @@ impl Default for AudioSettings {
 
 impl AudioSettings {
     /// Create a new audio settings
+    #[must_use] 
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Is audio enabled
+    #[must_use] 
     pub fn is_enabled(&self) -> bool {
         self.enabled && self.volume > 0.0
     }
 
     /// Get the frequency
+    #[must_use] 
     pub fn frequency(&self) -> f32 {
         self.frequency
     }
 
     /// Get the volume
+    #[must_use] 
     pub fn volume(&self) -> f32 {
         self.volume
     }

@@ -4,19 +4,14 @@ use fluent_templates::static_loader;
 use unic_langid::{langid, LanguageIdentifier};
 
 /// The languages available for localization
-#[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, PartialEq, Clone, serde::Deserialize, serde::Serialize, Default)]
 pub enum Language {
+    #[default]
     English,
 }
 
 /// Array of available languages for iteration
 pub const LANGUAGE_LIST: [Language; 1] = [Language::English];
-
-impl Default for Language {
-    fn default() -> Self {
-        Self::English
-    }
-}
 
 impl Language {
     pub fn value(&self) -> LanguageIdentifier {

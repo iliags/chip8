@@ -1,8 +1,8 @@
 [package]
 name = "chip8"
-version = "0.1.20"
+version = "0.1.21"
 authors = ["James Lennon"]
-edition = "2021"
+edition = "2024"
 publish = false
 build = "build.rs"
 default-run = "chip8"
@@ -36,7 +36,7 @@ c8 = { path = "crates/c8" }
 c8_i18n = { path = "crates/c8_i18n" }
 
 # Accessibility
-fluent = "0.16"
+fluent = "0.17"
 fluent-templates = "0.13"
 unic-langid = "0.9"
 
@@ -44,20 +44,20 @@ unic-langid = "0.9"
 rand = { version = "0.9" }
 
 # Serialization
-ron = "0.8"
+ron = "0.12"
 serde = { version = "1", features = ["derive"] }
 
 
 [dependencies]
-egui = "0.31"
-eframe = { version = "0.31", default-features = false, features = [
+egui = "0.33"
+eframe = { version = "0.33", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.
     "wayland",
 ] }
 log = "0.4"
-rfd = { version = "0.15" }
+rfd = { version = "0.17" }
 
 fluent = { workspace = true }
 fluent-templates = { workspace = true }
@@ -73,7 +73,7 @@ c8_i18n = { workspace = true }
 embed-resource = { version = "3.0" }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 rand = { workspace = true }
 
 
@@ -104,11 +104,15 @@ getrandom = { version = "0.3", features = ["wasm_js"] }
 opt-level = 2
 lto = true
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 # Optimize all dependencies even in debug builds
 [profile.dev.package."*"]
 opt-level = 2
 
 [features]
-default = ["profiling"]
-#default = []
+#default = ["profiling"]
+default = []
 profiling = []
