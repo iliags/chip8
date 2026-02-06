@@ -180,7 +180,7 @@ impl eframe::App for AppUI {
                 // Load ROM shortcut for testing
                 if i.key_pressed(egui::Key::Tab) {
                     // Chip-8 Logo
-                    self.load_rom(TEST_ROMS[0].data().to_vec());
+                    //self.load_rom(TEST_ROMS[0].data().to_vec());
 
                     // Skyward
                     //self.load_rom(GAME_ROMS[8].data().to_vec());
@@ -195,7 +195,7 @@ impl eframe::App for AppUI {
                     //self.load_rom(GAME_ROMS[11].data().to_vec());
 
                     // Beep
-                    //self.load_rom(TEST_ROMS[6].data().to_vec());
+                    self.load_rom(TEST_ROMS[6].data().to_vec());
                 }
             });
         }
