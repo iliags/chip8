@@ -103,6 +103,7 @@ impl CPU {
     }
 
     /// Get the audio buffer
+    #[must_use]
     pub fn audio_buffer(&self) -> &Vec<u8> {
         &self.audio_buffer
     }
@@ -113,21 +114,25 @@ impl CPU {
     }
 
     /// Get the buffer pitch
+    #[must_use]
     pub fn buffer_pitch(&self) -> u8 {
         self.buffer_pitch
     }
 
     /// Get the program counter
+    #[must_use]
     pub fn program_counter(&self) -> u16 {
         self.program_counter
     }
 
     /// Get the index register
+    #[must_use]
     pub fn index_register(&self) -> u16 {
         self.index_register
     }
 
     /// Get the general registers
+    #[must_use]
     pub fn registers(&self) -> &Vec<u8> {
         &self.registers
     }
@@ -172,7 +177,7 @@ impl CPU {
 
         let pc = self.program_counter as usize;
         //println!("Program counter: {:#X}", pc);
-        let opcode = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
+        let opcode = (u16::from(memory.data[pc]) << 8) | u16::from(memory.data[pc + 1]);
 
         // TODO: Move to a UI window
         /*
@@ -512,9 +517,9 @@ impl CPU {
             0xB000 => {
                 self.program_counter = if quirks.jump_bits {
                     let index = (nnn >> 8) & 0xF;
-                    nnn + self.registers[index as usize] as u16
+                    nnn + u16::from(self.registers[index as usize])
                 } else {
-                    nnn + self.registers[Register::V0 as usize] as u16
+                    nnn + u16::from(self.registers[Register::V0 as usize])
                 }
             }
 
@@ -567,7 +572,8 @@ impl CPU {
                 // 0xF000
                 0xF000 => {
                     let pc: usize = self.program_counter as usize;
-                    let address = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
+                    let address =
+                        (u16::from(memory.data[pc]) << 8) | u16::from(memory.data[pc + 1]);
 
                     self.index_register = address;
                     self.program_counter += 2;
@@ -619,13 +625,13 @@ impl CPU {
                 // Add Vx to the index register
                 // 0xFX1E
                 0xF01E => {
-                    self.index_register += self.registers[reg_x] as u16;
+                    self.index_register += u16::from(self.registers[reg_x]);
                 }
 
                 // Set I to the location of the sprite for the character in Vx
                 // 0xFX29
                 0xF029 => {
-                    self.index_register = (self.registers[reg_x] * 5) as u16;
+                    self.index_register = u16::from(self.registers[reg_x] * 5);
                 }
 
                 // Load I with big sprite
@@ -633,7 +639,7 @@ impl CPU {
                 0xF030 => {
                     let block = (self.registers[reg_x] & 0xF) * 10;
                     let font_size = &FONT_DATA[memory.system_font as usize].small_data.len();
-                    self.index_register = (block + *font_size as u8) as u16;
+                    self.index_register = u16::from(block + *font_size as u8);
                 }
 
                 // Store the binary-coded decimal representation of Vx at the addresses I, I+1, and I+2
@@ -670,7 +676,7 @@ impl CPU {
                 // 0xFX65
                 0xF065 => {
                     // TODO: Check if this is correct
-                    for i in 0..reg_x + 1 {
+                    for i in 0..=reg_x {
                         self.registers[i] = memory.data[(self.index_register + i as u16) as usize];
                     }
 
@@ -758,9 +764,10 @@ impl CPU {
             for a in 0..sprite_height {
                 let line: u16 = if height == 0 {
                     let read_index = (2 * a) + i;
-                    ((memory.data[read_index] as u16) << 8) | memory.data[read_index + 1] as u16
+                    (u16::from(memory.data[read_index]) << 8)
+                        | u16::from(memory.data[read_index + 1])
                 } else {
-                    memory.data[i + a] as u16
+                    u16::from(memory.data[i + a])
                 };
 
                 for b in 0..sprite_width {
