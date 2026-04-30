@@ -155,7 +155,7 @@ impl eframe::App for AppUI {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         // Step the emulator
         let messages = self.c8_device.step(self.settings.cpu_speed);
 
@@ -176,7 +176,7 @@ impl eframe::App for AppUI {
         // Process debug input
         #[cfg(debug_assertions)]
         {
-            ctx.input(|i| {
+            ui.input(|i| {
                 // Load ROM shortcut for testing
                 if i.key_pressed(egui::Key::Tab) {
                     // Chip-8 Logo
@@ -203,14 +203,14 @@ impl eframe::App for AppUI {
         // By default, egui will only repaint if input is detected. This isn't
         // ideal for this application, so we request a repaint every frame if running.
         if self.c8_device.is_running() {
-            ctx.request_repaint();
+            ui.request_repaint();
         }
 
-        if is_mobile(ctx) {
+        if is_mobile(ui) {
             // TODO: Portrait and landscape
-            self.ui_mobile_portrait(ctx);
+            self.ui_mobile_portrait(ui);
         } else {
-            self.ui_desktop(ctx);
+            self.ui_desktop(ui);
         }
     }
 }
@@ -228,7 +228,8 @@ impl AppUI {
         }
 
         let mut new_self = Self::default();
-        new_self.settings.control_panel_expanded = !is_mobile(&cc.egui_ctx);
+
+        new_self.settings.control_panel_expanded = !super::is_mobile_ctx(&cc.egui_ctx);
 
         new_self
     }
@@ -245,7 +246,7 @@ impl AppUI {
         self.display_image = egui::ColorImage::filled([width, height], *bg_color);
     }
 
-    fn update_display_window(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+    fn update_display_window(&mut self, ui: &mut egui::Ui) {
         // Update the display image with the current display buffer
         // TODO: There is some minor color blending issues with the display, probably needs a buffer
         self.display_image.pixels = self
@@ -271,7 +272,7 @@ impl AppUI {
                 handle.set(self.display_image.clone(), TEXTURE_OPTIONS);
             }
             None => {
-                self.display_handle = Some(ctx.load_texture(
+                self.display_handle = Some(ui.load_texture(
                     "DisplayTexture",
                     self.display_image.clone(),
                     TEXTURE_OPTIONS,
@@ -286,7 +287,7 @@ impl AppUI {
             }
         };
 
-        if self.settings.display_fullscreen || is_mobile(ctx) {
+        if self.settings.display_fullscreen || is_mobile(ui) {
             ui.add(image.fit_to_exact_size(ui.available_size()));
         } else {
             let display_title = if self.rom_name.is_empty() {
@@ -297,7 +298,7 @@ impl AppUI {
             egui::Window::new(display_title)
                 .resizable(false)
                 .id("display_window".into())
-                .show(ctx, |ui| {
+                .show(ui, |ui| {
                     ui.add(
                         image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
                     );
@@ -332,20 +333,21 @@ impl AppUI {
         self.c8_device.reset_device();
     }
 
-    pub fn ui_mobile_portrait(&mut self, ctx: &egui::Context) {
+    pub fn ui_mobile_portrait(&mut self, ui: &mut egui::Ui) {
         /*
            Screen
         */
-        egui::TopBottomPanel::top("display_mobile")
-            .min_height(250.0)
-            .show(ctx, |ui| {
-                self.update_display_window(ctx, ui);
+
+        egui::Panel::top("display_mobile")
+            .min_size(250.0)
+            .show_inside(ui, |ui| {
+                self.update_display_window(ui);
             });
 
         /*
            Bottom menu
         */
-        egui::TopBottomPanel::bottom("bottom_menu").show(ctx, |ui| {
+        egui::Panel::bottom("bottom_menu").show_inside(ui, |ui| {
             ui.horizontal(|ui| {
                 let toggle = egui::Button::new(self.language.locale_string("control_panel"))
                     .selected(self.settings.control_panel_expanded);
@@ -360,12 +362,12 @@ impl AppUI {
             });
         });
 
-        self.side_panel_controls(ctx);
+        self.side_panel_controls(ui);
 
         /*
            Keyboard buttons
         */
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.add_space(50.0);
             egui::Grid::new("keyboard_grid")
                 .num_columns(4)
@@ -387,10 +389,10 @@ impl AppUI {
         });
     }
 
-    pub fn ui_desktop(&mut self, ctx: &egui::Context) {
+    pub fn ui_desktop(&mut self, ui: &mut egui::Ui) {
         // Process input
         for key in KEYBOARD {
-            ctx.input(|i| {
+            ui.input(|i| {
                 let current_key = &self
                     .settings
                     .key_mapping
@@ -413,7 +415,8 @@ impl AppUI {
                 }
             });
         }
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+
+        egui::Panel::top("top_panel").show_inside(ui, |ui| {
             // Menu bar
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.toggle_value(
@@ -487,7 +490,7 @@ impl AppUI {
                     ui.separator();
 
                     if ui.button("Reset").clicked() {
-                        ctx.memory_mut(|mem| *mem = Default::default());
+                        ui.memory_mut(|mem| *mem = Default::default());
                     }
                 });
             });
@@ -495,19 +498,19 @@ impl AppUI {
 
         if self.settings.draw_display_underneath {
             // Central panel with display window
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.update_display_window(ctx, ui);
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.update_display_window(ui);
             });
 
-            self.side_panel_visualizer(ctx);
-            self.side_panel_controls(ctx);
+            self.side_panel_visualizer(ui);
+            self.side_panel_controls(ui);
         } else {
-            self.side_panel_controls(ctx);
-            self.side_panel_visualizer(ctx);
+            self.side_panel_controls(ui);
+            self.side_panel_visualizer(ui);
 
             // Central panel with display window
-            egui::CentralPanel::default().show(ctx, |ui| {
-                self.update_display_window(ctx, ui);
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                self.update_display_window(ui);
             });
         }
     }
@@ -609,10 +612,10 @@ impl AppUI {
         });
     }
 
-    pub fn side_panel_controls(&mut self, ctx: &egui::Context) {
+    pub fn side_panel_controls(&mut self, ui: &mut egui::Ui) {
         // Control panel
-        egui::SidePanel::new(egui::panel::Side::Left, "ControlPanel").show_animated(
-            ctx,
+        egui::Panel::left("ControlPanel").show_animated_inside(
+            ui,
             self.settings.control_panel_expanded,
             |ui| {
                 ui.add_space(5.0);
@@ -794,7 +797,7 @@ impl AppUI {
                     let key_name = key.name();
 
                     if key_down {
-                        let background_color = if ui.ctx().style().visuals.dark_mode {
+                        let background_color = if ui.ctx().global_style().visuals.dark_mode {
                             Color32::DARK_GRAY
                         } else {
                             Color32::LIGHT_GRAY
@@ -972,9 +975,9 @@ impl AppUI {
         });
     }
 
-    pub fn side_panel_visualizer(&mut self, ctx: &egui::Context) {
-        egui::SidePanel::new(egui::panel::Side::Right, "VisualizerPanel").show_animated(
-            ctx,
+    pub fn side_panel_visualizer(&mut self, ui: &mut egui::Ui) {
+        egui::Panel::right("VisualizerPanel").show_animated_inside(
+            ui,
             self.settings.visualizer_panel_expanded,
             |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
