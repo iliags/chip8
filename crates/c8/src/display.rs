@@ -327,16 +327,15 @@ mod tests {
     #[test]
     fn test_display_set_pixel() {
         let mut display = Display::default();
-
         let mut rng = rand::rng();
-        let range = 0..display.screen_size();
+
+        let (width, height) = display.screen_size_xy();
 
         for plane in 0..2 {
-            let (x, y) = (
-                rng.random_range(range.clone()),
-                rng.random_range(range.clone()),
-            );
+            let (x, y) = (rng.random_range(0..width), rng.random_range(0..height));
             let pixel_index = display.pixel_index(x, y);
+
+            eprintln!("Index: {pixel_index}, x: {x}, y: {y}");
 
             display.set_plane_pixel(plane, x, y);
             assert_eq!(display.planes[plane].pixels[pixel_index], 1);
@@ -344,11 +343,9 @@ mod tests {
             display.set_plane_pixel(plane, x, y);
             assert_eq!(display.planes[plane].pixels[pixel_index], 0);
 
-            let (width, height) = display.screen_size_xy();
-
-            display.set_plane_pixel(plane, width, height);
+            display.set_plane_pixel(plane, width - 1, height - 1);
             assert_eq!(
-                display.planes[plane].pixels[display.pixel_index(width, height)],
+                display.planes[plane].pixels[display.pixel_index(width - 1, height - 1)],
                 1
             );
         }
