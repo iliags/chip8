@@ -1,5 +1,5 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use rand::Rng;
+use criterion::{Criterion, criterion_group, criterion_main};
+use rand::RngExt;
 use std::hint::black_box;
 
 const OPCODES: &[u16] = &[

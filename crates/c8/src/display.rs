@@ -31,7 +31,7 @@ pub enum DisplayResolution {
 
 impl DisplayResolution {
     /// Get the resolution size
-    #[must_use] 
+    #[must_use]
     pub const fn resolution_size(&self) -> usize {
         match self {
             DisplayResolution::Low => SCREEN_SIZE_LOW,
@@ -40,7 +40,7 @@ impl DisplayResolution {
     }
 
     /// Get the resolution size XY
-    #[must_use] 
+    #[must_use]
     pub const fn resolution_size_xy(&self) -> (usize, usize) {
         match self {
             DisplayResolution::Low => SCREEN_SIZE_LOW_XY,
@@ -49,7 +49,7 @@ impl DisplayResolution {
     }
 
     /// Get the resolution as a string
-    #[must_use] 
+    #[must_use]
     pub const fn resolution_str(&self) -> &str {
         match self {
             DisplayResolution::Low => "Low",
@@ -103,7 +103,7 @@ impl Display {
     }
 
     /// Get the display resolution
-    #[must_use] 
+    #[must_use]
     pub fn resolution(&self) -> DisplayResolution {
         self.resolution
     }
@@ -125,7 +125,7 @@ impl Display {
     }
 
     /// Get the pixels of a plane
-    #[must_use] 
+    #[must_use]
     pub fn plane_pixels(&self, plane: usize) -> &Vec<u8> {
         &self.planes[plane].pixels
     }
@@ -172,7 +172,7 @@ impl Display {
     }
 
     /// Get the active plane
-    #[must_use] 
+    #[must_use]
     pub fn active_plane(&self) -> usize {
         self.active_plane
     }
@@ -284,7 +284,7 @@ impl Display {
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 

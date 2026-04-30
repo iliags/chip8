@@ -37,11 +37,11 @@ c8_i18n = { path = "crates/c8_i18n" }
 
 # Accessibility
 fluent = "0.17"
-fluent-templates = "0.13"
+fluent-templates = "0.14"
 unic-langid = "0.9"
 
 # Random number generator
-rand = { version = "0.9" }
+rand = { version = "0.10" }
 
 # Serialization
 ron = "0.12"
@@ -95,7 +95,7 @@ futures = "0.3"
 wasm-bindgen-futures = "0.4"
 wasm-bindgen = "0.2"
 web-sys = "0.3"
-getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [profile.dev]
 #opt-level = 1
