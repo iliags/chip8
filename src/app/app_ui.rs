@@ -229,7 +229,7 @@ impl AppUI {
 
         let mut new_self = Self::default();
 
-        new_self.settings.control_panel_expanded = !super::is_mobile_ctx(&cc.egui_ctx);
+        new_self.settings.control_panel_expanded = !is_mobile(&cc.egui_ctx);
 
         new_self
     }
