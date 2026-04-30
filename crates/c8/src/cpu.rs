@@ -159,7 +159,7 @@ impl CPU {
                     }
                 }
                 None => {
-                    for key in KEYPAD_KEYS.iter() {
+                    for key in &KEYPAD_KEYS {
                         if keypad.is_key_pressed(key) {
                             task.key = Some(*key);
                             break;
@@ -440,7 +440,7 @@ impl CPU {
                     let (result, overflow) =
                         self.registers[reg_x].overflowing_add(self.registers[reg_y]);
                     self.registers[reg_x] = result;
-                    self.registers[Register::VF as usize] = overflow as u8;
+                    self.registers[Register::VF as usize] = u8::from(overflow);
                 }
 
                 // Set Vx = Vx - Vy, set VF = NOT borrow
@@ -449,7 +449,7 @@ impl CPU {
                     let (result, overflow) =
                         self.registers[reg_x].overflowing_sub(self.registers[reg_y]);
                     self.registers[reg_x] = result;
-                    self.registers[Register::VF as usize] = !overflow as u8;
+                    self.registers[Register::VF as usize] = u8::from(!overflow);
                 }
 
                 // Vx >>= 1
@@ -472,7 +472,7 @@ impl CPU {
                     let (result, overflow) =
                         self.registers[reg_y].overflowing_sub(self.registers[reg_x]);
                     self.registers[reg_x] = result;
-                    self.registers[Register::VF as usize] = !overflow as u8;
+                    self.registers[Register::VF as usize] = u8::from(!overflow);
                 }
 
                 // Vx <<= 1

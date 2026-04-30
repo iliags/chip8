@@ -9,6 +9,7 @@ pub struct LocaleText {
 
 impl LocaleText {
     /// Get the current language
+    #[must_use]
     pub fn language(&self) -> Language {
         self.language.clone()
     }

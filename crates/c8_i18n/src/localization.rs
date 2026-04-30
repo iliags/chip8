@@ -14,6 +14,7 @@ pub enum Language {
 pub const LANGUAGE_LIST: [Language; 1] = [Language::English];
 
 impl Language {
+    #[must_use]
     pub fn value(&self) -> LanguageIdentifier {
         match self {
             Self::English => langid!("en-US"),
@@ -21,6 +22,7 @@ impl Language {
     }
 
     // Note: Make sure the text matches the native form (i.e. "Français" for French)
+    #[must_use]
     pub fn as_str(&self) -> &str {
         match self {
             Self::English => "English",
