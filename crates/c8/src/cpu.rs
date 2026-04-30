@@ -720,7 +720,7 @@ impl CPU {
     #[inline]
     fn skip_next_instruction(&mut self, memory: &Memory) {
         let pc = self.program_counter as usize;
-        let next_op = ((memory.data[pc] as u16) << 8) | (memory.data[pc + 1] as u16);
+        let next_op = (u16::from(memory.data[pc]) << 8) | u16::from(memory.data[pc + 1]);
 
         // Check if the next instruction is an XO instruction
         let result = if next_op == 0xF000 { 4 } else { 2 };
