@@ -37,7 +37,7 @@ c8_i18n = { path = "crates/c8_i18n" }
 
 # Accessibility
 fluent = "0.17"
-fluent-templates = "0.14"
+fluent-templates = "0.15"
 unic-langid = "0.9"
 
 # Random number generator
@@ -49,8 +49,8 @@ serde = { version = "1", features = ["derive"] }
 
 
 [dependencies]
-egui = "0.34"
-eframe = { version = "0.34", default-features = false, features = [
+egui = "0.36"
+eframe = { version = "0.36", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
     "persistence",   # Enable restoring app state when restarting the app.

@@ -340,14 +340,14 @@ impl AppUI {
 
         egui::Panel::top("display_mobile")
             .min_size(250.0)
-            .show_inside(ui, |ui| {
+            .show(ui, |ui| {
                 self.update_display_window(ui);
             });
 
         /*
            Bottom menu
         */
-        egui::Panel::bottom("bottom_menu").show_inside(ui, |ui| {
+        egui::Panel::bottom("bottom_menu").show(ui, |ui| {
             ui.horizontal(|ui| {
                 let toggle = egui::Button::new(self.language.locale_string("control_panel"))
                     .selected(self.settings.control_panel_expanded);
@@ -367,7 +367,7 @@ impl AppUI {
         /*
            Keyboard buttons
         */
-        egui::CentralPanel::default().show_inside(ui, |ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
             ui.add_space(50.0);
             egui::Grid::new("keyboard_grid")
                 .num_columns(4)
@@ -416,7 +416,7 @@ impl AppUI {
             });
         }
 
-        egui::Panel::top("top_panel").show_inside(ui, |ui| {
+        egui::Panel::top("top_panel").show(ui, |ui| {
             // Menu bar
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.toggle_value(
@@ -498,7 +498,7 @@ impl AppUI {
 
         if self.settings.draw_display_underneath {
             // Central panel with display window
-            egui::CentralPanel::default().show_inside(ui, |ui| {
+            egui::CentralPanel::default().show(ui, |ui| {
                 self.update_display_window(ui);
             });
 
@@ -509,7 +509,7 @@ impl AppUI {
             self.side_panel_visualizer(ui);
 
             // Central panel with display window
-            egui::CentralPanel::default().show_inside(ui, |ui| {
+            egui::CentralPanel::default().show(ui, |ui| {
                 self.update_display_window(ui);
             });
         }
@@ -614,46 +614,45 @@ impl AppUI {
 
     pub fn side_panel_controls(&mut self, ui: &mut egui::Ui) {
         // Control panel
-        egui::Panel::left("ControlPanel").show_animated_inside(
-            ui,
-            self.settings.control_panel_expanded,
-            |ui| {
-                ui.add_space(5.0);
+        let mut visible = self.settings.control_panel_expanded;
 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    self.controls_cpu_speed(ui);
+        egui::Panel::left("ControlPanel").show_collapsible(ui, &mut visible, |ui| {
+            ui.add_space(5.0);
 
-                    ui.separator();
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                self.controls_cpu_speed(ui);
 
-                    self.controls_display_scale(ui);
+                ui.separator();
 
-                    ui.separator();
+                self.controls_display_scale(ui);
 
-                    self.controls_pixel_color(ui);
+                ui.separator();
 
-                    ui.separator();
+                self.controls_pixel_color(ui);
 
-                    self.controls_keyboard_grid(ui);
+                ui.separator();
 
-                    ui.separator();
+                self.controls_keyboard_grid(ui);
 
-                    self.controls_quirks(ui);
+                ui.separator();
 
-                    ui.separator();
+                self.controls_quirks(ui);
 
-                    self.controls_emulator(ui);
+                ui.separator();
 
-                    ui.separator();
+                self.controls_emulator(ui);
 
-                    self.controls_audio(ui);
+                ui.separator();
 
-                    #[cfg(debug_assertions)]
-                    {
-                        //ui.separator();
-                    }
-                });
-            },
-        );
+                self.controls_audio(ui);
+
+                #[cfg(debug_assertions)]
+                {
+                    //ui.separator();
+                }
+            });
+        });
+        self.settings.control_panel_expanded = visible;
     }
 
     fn controls_cpu_speed(&mut self, ui: &mut egui::Ui) {
@@ -976,16 +975,16 @@ impl AppUI {
     }
 
     pub fn side_panel_visualizer(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::right("VisualizerPanel").show_animated_inside(
-            ui,
-            self.settings.visualizer_panel_expanded,
-            |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    self.visualizer_memory(ui);
-                    self.visualizer_registers(ui);
-                });
-            },
-        );
+        let mut visible = self.settings.visualizer_panel_expanded;
+
+        egui::Panel::right("VisualizerPanel").show_collapsible(ui, &mut visible, |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                self.visualizer_memory(ui);
+                self.visualizer_registers(ui);
+            });
+        });
+
+        self.settings.visualizer_panel_expanded = visible;
     }
 
     fn visualizer_memory(&mut self, ui: &mut egui::Ui) {
