@@ -30,6 +30,19 @@ unsafe_code = "deny"
 
 [workspace.lints.clippy]
 #pedantic = "warn"
+#unwrap_used = "deny"
+# expect_used = "deny"
+# indexing_slicing = "deny"
+# arithmetic_side_effects = "deny"
+# unreachable = "deny"
+# unimplemented = "deny"
+# unchecked_time_subtraction = "deny"
+# todo = "deny"
+# string_slice = "deny"
+# panic_in_result_fn = "deny"
+# panic = "deny"
+# exit = "deny"
+# as_conversions = "deny"
 
 [workspace.dependencies]
 c8 = { path = "crates/c8" }
@@ -46,6 +59,9 @@ rand = { version = "0.10" }
 # Serialization
 ron = "0.12"
 serde = { version = "1", features = ["derive"] }
+
+# Used for audio
+ringbuf = "0.5.2"
 
 
 [dependencies]
