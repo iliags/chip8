@@ -1,4 +1,5 @@
 use core::f32;
+use ringbuf::{traits::*, HeapRb};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use tinyaudio::prelude::*;
@@ -11,6 +12,7 @@ use super::SoundDevice;
 // TODO: Replace threading with https://crates.io/crates/ringbuf
 
 const SAMPLE_RATE: usize = 44100;
+const SAMPLE_COUNT: usize = 2048;
 
 // Default buffer used for beeps
 const BUFFER: [u8; 16] = [
@@ -57,6 +59,7 @@ pub struct TinyAudio {
     playing: Arc<AtomicBool>,
     square_wave: Arc<RwLock<SquareWave>>,
     volume: Arc<RwLock<f32>>,
+    ring_buf: Option<HeapRb<f32>>,
 }
 
 impl TinyAudio {
@@ -66,6 +69,7 @@ impl TinyAudio {
             playing: Arc::new(AtomicBool::new(false)),
             square_wave: Arc::new(RwLock::new(SquareWave::new())),
             volume: Arc::new(RwLock::new(0.15)),
+            ring_buf: Some(HeapRb::<f32>::new(SAMPLE_COUNT)),
         }
     }
 
@@ -77,7 +81,7 @@ impl TinyAudio {
         let params = OutputDeviceParameters {
             channels_count: 1,
             sample_rate: SAMPLE_RATE,
-            channel_sample_count: 2048,
+            channel_sample_count: SAMPLE_COUNT,
         };
 
         let device = run_output_device(params, {
@@ -157,7 +161,7 @@ impl SoundDevice for TinyAudio {
             mutex.set_pattern(buffer_pitch, buffer.clone());
             self.playing.store(true, Ordering::SeqCst);
         } else {
-            eprintln!("play_beep: try_write failed");
+            eprintln!("play_buffer: try_write failed");
         }
     }
 
