@@ -8,6 +8,8 @@ use super::SoundDevice;
 
 // TODO: Check if RWLock has better results
 
+// TODO: Replace threading with https://crates.io/crates/ringbuf
+
 const SAMPLE_RATE: usize = 44100;
 
 // Default buffer used for beeps
