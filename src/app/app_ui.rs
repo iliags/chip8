@@ -19,7 +19,7 @@ use c8_i18n::{
     locale_text::LocaleText,
     localization::{LANGUAGE_LIST, LOCALES},
 };
-use egui::{Color32, TextureOptions, Vec2};
+use egui::{Color32, Id, TextureOptions, Vec2};
 use fluent_templates::Loader;
 use rfd::AsyncFileDialog;
 use std::{cell::RefCell, rc::Rc};
@@ -297,7 +297,7 @@ impl AppUI {
             };
             egui::Window::new(display_title)
                 .resizable(false)
-                .id("display_window".into())
+                .id(Id::unique("display_window"))
                 .show(ui, |ui| {
                     ui.add(
                         image.fit_to_exact_size(DEFAULT_DISPLAY_SIZE * self.settings.display_scale),
@@ -481,7 +481,7 @@ impl AppUI {
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                     // Global dark/light mode buttons
-                    egui::widgets::global_theme_preference_switch(ui);
+                    egui::widgets::global_theme_preference_buttons(ui);
 
                     ui.separator();
 
