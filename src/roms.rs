@@ -17,7 +17,7 @@ impl ROM {
 }
 
 /// List of ROMs used for testing the emulator
-pub const TEST_ROMS: &[ROM] = &[
+pub static TEST_ROMS: &[ROM] = &[
     ROM {
         name: "chip8-logo.ch8",
         data: include_bytes!("../assets/test_roms/1-chip8-logo.ch8"),
@@ -52,7 +52,7 @@ pub const TEST_ROMS: &[ROM] = &[
     },
 ];
 
-pub const GAME_ROMS: &[ROM] = &[
+pub static GAME_ROMS: &[ROM] = &[
     ROM {
         name: "An Evening to Die For",
         data: include_bytes!("../assets/games/anEveningToDieFor.ch8"),

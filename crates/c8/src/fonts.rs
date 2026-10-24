@@ -51,7 +51,7 @@ pub enum FontSize {
 // The non-default Chip-8 font was copied from Octo's font file.
 
 /// Font data collection
-pub const FONT_DATA: &[FontData] = &[
+pub static FONT_DATA: &[FontData] = &[
     FontData {
         name: FontName::CHIP8,
         small_data: &[
